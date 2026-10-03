@@ -12,19 +12,19 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 
 ## Phase 1: Setup Gates
 
-- [ ] T001 Verificar que spec.md, plan.md, research.md y data-model.md están aprobados y sin `OPEN_DECISIONS` abiertas. Confirmar referencias a rama `feat/003-panel-establecimiento` y a los commits de Gate 3.
-- [ ] T002 Confirmar `docs/openapi.yaml` con los 4 endpoints (tag `comercio`) ya existe en este branch (commit c995877). Ejecutar `npx --yes @redocly/cli@2 lint docs/openapi.yaml` → 0 errores, 4 warnings preexistentes aceptables.
-- [ ] T003 Crear `specs/003-panel-establecimiento/contracts/merchant-openapi-fragment.yaml` con el fragmento correspondiente a los 4 endpoints. No modificar archivos fuera de `contracts/` en esta tarea.
-- [ ] T004 Crear directorios necesarios: `apps/api/tool/`, `apps/api/lib/domain/loyalty/`, `apps/api/lib/application/merchant/`, `apps/api/lib/application/merchant/use_cases/`, `apps/api/lib/adapters/in/middleware/`, `apps/api/lib/adapters/out/postgres/`, `apps/api/lib/adapters/out/rate_limit/`, `apps/api/lib/adapters/out/auth/`, `apps/api/routes/merchant/customers/`, `apps/api/routes/merchant/purchases/`, `apps/api/routes/merchant/movements/`, `apps/mobile/lib/features/merchant/{presentation,application,data}`.
+- [x] T001 Verificar que spec.md, plan.md, research.md y data-model.md están aprobados y sin `OPEN_DECISIONS` abiertas. Confirmar referencias a rama `feat/003-panel-establecimiento` y a los commits de Gate 3.
+- [x] T002 Confirmar `docs/openapi.yaml` con los 4 endpoints (tag `comercio`) ya existe en este branch (commit c995877). Ejecutar `npx --yes @redocly/cli@2 lint docs/openapi.yaml` → 0 errores, 4 warnings preexistentes aceptables.
+- [x] T003 Crear `specs/003-panel-establecimiento/contracts/merchant-openapi-fragment.yaml` con el fragmento correspondiente a los 4 endpoints. No modificar archivos fuera de `contracts/` en esta tarea.
+- [x] T004 Crear directorios necesarios: `apps/api/tool/`, `apps/api/lib/domain/loyalty/`, `apps/api/lib/application/merchant/`, `apps/api/lib/application/merchant/use_cases/`, `apps/api/lib/adapters/in/middleware/`, `apps/api/lib/adapters/out/postgres/`, `apps/api/lib/adapters/out/rate_limit/`, `apps/api/lib/adapters/out/auth/`, `apps/api/routes/merchant/customers/`, `apps/api/routes/merchant/purchases/`, `apps/api/routes/merchant/movements/`, `apps/mobile/lib/features/merchant/{presentation,application,data}`.
 
 ## Phase 2: Foundational Blocking Tasks
 
 ### Migraciones (inmutables, nuevas)
 
-- [ ] T010 [D1] [US-Infra] `infra/migrations/V004__comercios.sql`: `establishments`, `branches`, `establishment_staff`. Trigger `AFTER INSERT` sobre `establishments` que crea sucursal "Principal". `CHECK`/FK coherentes. `GRANT` mínimos a `paseo_app` (SELECT/INSERT según necesidad). No tocar `V001`–`V003`.
-- [ ] T011 [D2] [US-Infra] `infra/migrations/V005__conversion.sql`: `points_rules` con `scope`, `type`, `priority`, `points_awarded`, `amount_per_tier_cents`, `multiplier_bp`, `max_points_per_purchase`, `min_purchase_cents`, `rounding`. Índices útiles. `GRANT` mínimos a `paseo_app`.
-- [ ] T012 [D3] [US-Infra] `infra/migrations/V006__compras_y_ledger.sql`: `purchases`, `points_ledger`, `customer_balances`. Trigger para mantener saldo (`SECURITY DEFINER` aceptado según plan, anotado). `CHECK (balance >= 0)`. Índices únicos: `(establishment_id, idempotency_key)` y `(establishment_id, invoice_ref)` (full unique; `invoice_ref NOT NULL`). `REVOKE UPDATE, DELETE, TRUNCATE` sobre `points_ledger`; `REVOKE UPDATE` sobre `customer_balances`. `GRANT` mínimos a `paseo_app`.
-- [ ] T013 [D4] [US-Infra] Verificar migraciones desde cero: levantar BD y aplicar todas hasta V006. No modificar migraciones aplicadas.
+- [x] T010 [D1] [US-Infra] `infra/migrations/V004__comercios.sql`: `establishments`, `branches`, `establishment_staff`. Trigger `AFTER INSERT` sobre `establishments` que crea sucursal "Principal". `CHECK`/FK coherentes. `GRANT` mínimos a `paseo_app` (SELECT/INSERT según necesidad). No tocar `V001`–`V003`.
+- [x] T011 [D2] [US-Infra] `infra/migrations/V005__conversion.sql`: `points_rules` con `scope`, `type`, `priority`, `points_awarded`, `amount_per_tier_cents`, `multiplier_bp`, `max_points_per_purchase`, `min_purchase_cents`, `rounding`. Índices útiles. `GRANT` mínimos a `paseo_app`.
+- [x] T012 [D3] [US-Infra] `infra/migrations/V006__compras_y_ledger.sql`: `purchases`, `points_ledger`, `customer_balances`. Trigger para mantener saldo (`SECURITY DEFINER` aceptado según plan, anotado). `CHECK (balance >= 0)`. Índices únicos: `(establishment_id, idempotency_key)` y `(establishment_id, invoice_ref)` (full unique; `invoice_ref NOT NULL`). `REVOKE UPDATE, DELETE, TRUNCATE` sobre `points_ledger`; `REVOKE UPDATE` sobre `customer_balances`. `GRANT` mínimos a `paseo_app`.
+- [x] T013 [D4] [US-Infra] Verificar migraciones desde cero: levantar BD y aplicar todas hasta V006. No modificar migraciones aplicadas.
 
 ### Seed + tooling
 
