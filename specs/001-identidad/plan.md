@@ -1,116 +1,97 @@
-# Implementation Plan: 001-identidad
+# Identidad (001) — Implementation Plan
 
-**Branch**: `feat/001-identidad` | **Date**: 2026-10-03 | **Spec**: `specs/001-identidad/spec.md`
+> **For agentic workers:** REQUIRED SUB-SKILL: use `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans` para implementar este plan tarea a tarea. Los pasos usan checkbox (`- [ ]`).
 
-**Input**: Feature specification from `specs/001-identidad/spec.md` (Approved)
+**Goal:** Registro/verificación de cliente, login por audiencia, refresh rotativo, logout y recuperación de contraseña sobre PostgreSQL con RLS, según `specs/001-identidad/spec.md` (**aprobada**).
 
-**Authority**: `AGENTS.md` and `.specify/memory/constitution.md` govern this plan.
+**Architecture:** API Dart Frog con hexagonal (`adapters → application → domain`), PostgreSQL con RLS y contexto por transacción (`set_config(..., true)`), identidad tras puertos (`OtpSender`, `EmailSender`, `PasswordHasher`, `TokenSigner`). El router es fino: valida DTO → llama **un** caso de uso → mapea a RFC 9457.
 
-## Summary
+**Tech Stack:** Dart 3.13 / FVM 3.47.6 · `dart_frog` 1.2.6 · `postgres` 3.5.18 · `dart_jsonwebtoken` 3.4.1 · `mailer` 7.2.0 (`SmtpEmailSender`, Gmail) · `crypto` 3.0.7 · `uuid` 4.6.0 · `mocktail` 1.0.5 · `test` 1.32.0 · **Argon2id: librería pendiente de benchmark (Task R0; decisión humana)**.
 
-Implementar identidad de cliente y sesiones: V002 (usuarios/clientes/OTP/recuperación/refresh/auditoría mínima con RLS + prueba de aislamiento), contrato OpenAPI actualizado **antes** de rutas, esqueleto Dart Frog, dominio y casos de uso con puertos, adaptadores Postgres/JWT/Argon2id/SMTP/consola y el job de limpieza del worker. No resuelve `OPEN_DECISIONS`: la librería Argon2id se decide con un benchmark en la Tarea 7 (salida en `research.md`, elección humana); SMS/correo van tras puertos.
+**Spec:** `specs/001-identidad/spec.md`
 
-## Technical Context
+## Global Constraints
 
-**Language/Version**: Dart 3.13.5 / Flutter 3.47.6 vía FVM (`.fvmrc`)
-**Primary Dependencies**: `dart_frog` (API), driver PostgreSQL y librerías JWT/Argon2id/SMTP **a verificar en pub.dev en el momento de cada tarea** (AGENTS.md §14: nunca de memoria).
-**Storage**: PostgreSQL vía Flyway (`V002__identidad.sql`); RLS con contexto por transacción (`set_config`).
-**Testing**: `dart test` (dominio), integración contra PostgreSQL efímero (rol `paseo_app`), `infra/tests/rls/002_*.sql` en CI, `redocly lint`, `dart analyze`/`dart format`.
-**Target Platform**: `api`, `worker` (job de limpieza). Clientes Flutter: solo consumo posterior del contrato (fuera de esta feature).
-**Constraints**: server authoritative, RLS, auditabilidad, idempotencia, sin datos personales en JWT/logs, Argon2id, cookies por audiencia.
-**Scale/Scope**: 9 endpoints de auth, 6 tablas, 1 job del worker.
-
-## Constitution Check
-
-*GATE: Must pass before implementation and again before review.*
-
-- [x] `docs/openapi.yaml` updated before any endpoint implementation → **Tarea 1 precede a todas las rutas**
-- [x] Backend preserves `adapters → application → domain` → estructura fijada; `CI` de arquitectura en esta feature
-- [x] No business rules in routes or Flutter presentation/data layers → rutas solo validan/llaman un caso de uso
-- [x] New tables include RLS, policies, minimum `GRANT`, and isolation tests → **Tarea 2**
-- [x] Critical writes include `Idempotency-Key` and `audit_log` → auditoría en Tarea 8; idempotencia de escrituras de auth no aplica por naturaleza (login/verify no son efectos financieros); se revisa en la tarea de rutas
-- [x] JWT claims contain no personal data → claims fijados por spec
-- [x] Uploads N/A
-- [x] `OPEN_DECISIONS` remain open → librería Argon2id se decide por benchmark (Tarea 7) con elección humana; proveedores SMS/SMTP tras puertos
-
-## Project Structure
-
-### Documentation (this feature)
-
-```text
-specs/001-identidad/
-├── spec.md
-├── plan.md      # este archivo
-├── research.md  # benchmark Argon2id + verificación de versiones pub.dev (salida de Tareas 0/7)
-└── tasks.md     # se genera tras aprobar este plan
-```
-
-### Source Code (repository root)
-
-```text
-apps/api/
-├── bin/server.dart                 # entrypoint Dart Frog
-├── bin/worker.dart                 # job de limpieza (OTP/password_resets/QR vencidos)
-├── routes/                         # Dart Frog: index /health,/ready + /api/v1/auth/*
-├── middleware + _middleware.dart
-└── lib/
-    ├── domain/                     # PhoneBO, PasswordPolicy, OtpCode, errors
-    ├── application/                # use cases + ports
-    └── adapters/{in,out}/          # DTOs/rutas + Postgres/Jwt/Argon2/Smtp/Console
-packages/paseo_shared/              # DTOs y códigos de error del contrato auth
-.github/workflows/ci.yml            # hook RLS ya existe; el test vive en infra/tests/rls/
-infra/migrations/V002__identidad.sql
-infra/tests/rls/002_identidad.sql
-```
-
-**Prueba de regla hexagonal**: `tool/check_architecture.dart` (o script equivalente) que falla si `application`/`domain` importan `adapters` o paquetes externos no permitidos; se añade al job `dart` de CI.
-
-## Data / Contract / Infrastructure Impact
-
-- **API contract**: ajustar `POST /auth/otp/verify` → `POST /auth/phone/verify`, `POST /auth/otp/resend` → `POST /auth/phone/send-otp`; añadir `POST /auth/verify-email`. Respuestas y códigos según spec §User Stories (ver spec, acceptance scenarios).
-- **Database**: `V002__identidad.sql` con `users`, `customers`, `verification_codes`, `password_resets`, `refresh_tokens`, `audit_log` (mínima): RLS + políticas + `GRANT` mínimos a `paseo_app` + prueba de aislamiento en `infra/tests/rls/002_identidad.sql`.
-- **Infrastructure**: ninguna nueva variable; `EMAIL_SENDER=smtp` ya en `.env.example` (03/10).
-- **Security**: Argon2id (PHC, parámetros OWASP, fuera del hilo principal); JWT con claims §6 y `kid`; cookies web propias; `X-Paseo-Client` + validación de `Origin` en refresh; rate limiting lógico sobre OTP (intentos/reenvío) y hook de rate limit HTTP.
-- **Notifications/jobs**: worker: limpieza horaria de `verification_codes` y `password_resets` vencidos (y QR cuando exista tabla).
-
-## Test Strategy
-
-- **Domain tests**: tabla de casos para teléfono (`+591` ok, otros prefijos → `PHONE_NOT_SUPPORTED`), política de contraseña, vigencia/intentos del OTP, rotación/detección de reutilización de refresh (máquina de estados pura).
-- **Integration tests**: repositorios contra PostgreSQL (servicio `db` del compose local / efímero en CI) con rol `paseo_app`; transacción con `set_config`; concurrencia: dos refresh paralelos → uno 200, otro 401; `reset` → `token_version++` y revocación.
-- **API tests**: matriz de autorización/audiencias (mobile body refresh vs web cookie), RFC 9457 con `code` en cada error, siempre-202 en `forgot` y en `phone/send-otp`.
-- **RLS tests**: `infra/tests/rls/002_identidad.sql` ejecutado por CI con `paseo_app`.
-- **Verification commands**: `fvm dart format --set-exit-if-changed .`, `fvm dart analyze --fatal-warnings`, `fvm dart test` (apps/api, packages/paseo_shared), `npx @redocly/cli lint docs/openapi.yaml`, `docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --wait db && docker compose ... run --rm migrate`, `docker build -f infra/api.Dockerfile .` (solo tras la Tarea 3).
+- Reglas 1–10 de `AGENTS.md` §2; claims exactos `iss, aud, sub, iat, exp, jti, role, cid, est, br, pv, ev, tv`; access ≤ 900 s; sin datos personales en JWT ni logs.
+- Teléfonos `+591` E.164, regex laxa `^\+591[0-9]{8}$` (endurecer solo tras decisión).
+- Contraseña: **Argon2id**, formato PHC, parámetros mínimos OWASP, fuera del hilo principal.
+- OTP: 6 dígitos, solo hash, 5 min, 5 intentos, reenvío ≥ 60 s, tope diario por teléfono e IP.
+- `forgot` **siempre 202**; token ≥ 32 bytes, hasheado, 30 min, un solo uso; `reset` → `token_version++` y revoca refreshes.
+- Cookies web: `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`, nombres `__Secure-rt_merchant` / `__Secure-rt_admin`; refresh web exige `X-Paseo-Client` y valida `Origin`.
+- `docs/openapi.yaml` se actualiza **antes** que cualquier ruta (Task A0).
+- Toda tabla nueva: `ENABLE ROW LEVEL SECURITY` + políticas + `GRANT` mínimos + prueba de aislamiento en `infra/tests/rls/`.
+- Migraciones inmutables; la app nunca ejecuta DDL; el CI de migraciones ya corre (job `migrations`).
+- `OPEN_DECISIONS` de la spec permanecen abiertas salvo la marcada como decidida (correo: Gmail + `SmtpEmailSender`).
 
 ## Review Focus
 
-1. OTP propio es criptografía-adyacente: vigencia, comparación y hash deben ser exactos (Tarea 6, tests de vencimiento/intentos/consumo).
-2. Detección de reutilización de refresh bajo carrera (Tarea 10; test de concurrencia).
-3. Cookie/audiencia cruzadas entre webs (Tarea 11; test de matriz de audiencias).
-4. `token_version++` y revocación en `reset` (Tarea 12; test).
-5. Logs libres de secretos (Tarea 13; test de forma de log/respuesta, ningún OTP/token/teléfono completo).
+1. **Reutilización de refresh en carrera** (dos `refresh` paralelos): exactamente uno 200, otro 401; fijado en test de concurrencia del caso de uso (Task C6/T4).
+2. **`pv` desactualizado en el token** (usuario verificado hace <15 min): la verificación otorga sesión fresca; se prueba login tras verify.
+3. **Reloj/hora UTC en OTP y tokens** (5 min exactos, borde incluido): tests de dominio con `Clock` inyectado.
+4. **Respuesta uniforme de `forgot`** (nada distingue existencia de correo): test de contrato comparando cuerpos.
+5. **`audit_log` sin datos personales** (payload mínimo): test de integración inspecciona columnas.
 
-## Implementation Sequence
+## Constitution Check
 
-> Detail ejecutable hasta paso/nombre; código completo solo donde signature+test no lo determinan.
+- [x] `docs/openapi.yaml` antes que las rutas (Task A0 precede a R*).
+- [x] `adapters → application → domain` (sin imports hacia atrás; CI lo verificará cuando exista el job de arquitectura — pendiente).
+- [x] Rutas sin reglas de negocio (solo DTO→caso de uso→RFC 9457).
+- [x] V002 con RLS+GRANT+pruebas; `audit_log` mínima adelantada (decisión aprobada en spec).
+- [ ] Job de CI "arquitectura hexagonal" aún no existe → se añade en Task CI1.
+- [x] Sin datos personales en JWT/listados.
 
-- **T0. Research (verificación de versiones)**: consultar pub.dev y fijar en `pubspec`/`research.md`: `dart_frog`, driver Postgres, JWT, SMTP, librerías Argon2id candidatas. Nada se fija "de memoria".
-- **T1. Contrato OpenAPI** (renombrar/añadir los 3 endpoints; ajustar respuestas de register/verify) + `redocly lint` verde. *Sin este, ninguna ruta.*
-- **T2. V002 migración + RLS + grants + prueba de aislamiento** en `infra/tests/rls/002_identidad.sql`; CI la ejecuta. Verificación: `migrate validate` + prueba RLS verde.
-- **T3. Esqueleto API/worker**: `bin/server.dart`, `bin/worker.dart`, middleware JSON + `Problem`, `/health` `/ready`; chequeo de regla hexagonal integrado al job `dart` de CI (falla si `application`/`domain` importan de `adapters`); `docker build` verde.
-- **T4. paseo_shared**: DTOs/códigos de auth del contrato.
-- **T5. domain**: `PhoneBO` (E.164 `+591`), `PasswordPolicy`, `OtpCode` (6 dígitos, 5 min, 5 intentos), errores de identidad. Tests por tabla.
-- **T6. application: puertos + casos de uso de emisión** (registro, envío/verificación OTP, verify-email) con puertos `OtpSender`, `EmailSender`, `PasswordHasher`, `TokenService`, repos y `AuditLog`, `Clock`, `IdGenerator`. Tests con dobles.
-- **T7. Research Argon2id** → `research.md` con benchmark de candidatas; **elección humana registrada** (decisión abierta). *Bloquea solo la T8-hasher, no el resto.*
-- **T8. application: casos de uso de sesión** (Login, Refresh, Logout, Forgot, Reset) + máquina de rotación/revocación. Tests con dobles (incluye reutilización → `TOKEN_REUSE_DETECTED`).
-- **T9. adapters/out Postgres**: repos de T6/T8 + transacción con `set_config` de contexto RLS; integración real.
-- **T10. adapters/out JWT + Argon2id + senders**: `JwtTokenService` (claims §6, `kid`, `aud` por cliente), hasher elegido en T7 (PHC, fuera del hilo), `SmtpEmailSender`, `ConsoleOtpSender`, `ConsoleEmailSender`.
-- **T11. adapters/in**: middleware de autenticación/audiencias + contexto RLS desde claims; rutas de los 9 endpoints; mapeo de errores a `problem+json` con `code`.
-- **T12. worker**: job horario de limpieza de OTP/tokens vencidos.
-- **T13. Verificación E2E del criterio SC-001/002/003**: flujo completo en local + matriz de pruebas del cap. 9 para identidad + checklist de logs sin PII.
+## Project Structure
 
-Pruebas primero en cada tarea (TDD); commits frecuentes con Conventional Commits referenciando HU-01/HU-02.
+```text
+apps/api/
+├── bin/{server.dart,worker.dart}
+├── routes/
+│   ├── health.dart · ready.dart
+│   └── auth/{register,phone/verify,phone/send-otp,verify-email,login,refresh,logout,password/forgot,password/reset}.dart
+├── lib/
+│   ├── domain/{identity/…}
+│   ├── application/{identity/{ports,use_cases},…}
+│   └── adapters/{in/{http/{dto,middleware}},out/{postgres,jwt,smtp,console,argon2}}
+packages/paseo_shared/lib/src/auth/…  # DTOs y códigos de error
+infra/migrations/V002__identidad.sql
+infra/tests/rls/002_identity.sql
+```
+
+## Data / Contract / Infrastructure Impact
+
+- **API contract**: renombrar `otp/verify`→`phone/verify`, `otp/resend`→`phone/send-otp`, añadir `POST /auth/verify-email` (Task A0).
+- **Database**: `V002__identidad.sql` — `users`, `customers`, `verification_codes`, `password_resets`, `refresh_tokens`, `audit_log` (mínima) en esquema `app`, con RLS, grants y pruebas (Task D1).
+- **Infrastructure**: `api.Dockerfile` pasa a usarse de verdad (Task A2 verifica build); sin nuevas variables (Gmail ya en `.env.example`).
+- **Security**: JWT con `darty_jsonwebtoken`→ **`dart_jsonwebtoken`** 3.4.1; cookies por audiencia; rate limit en login/OTP/recuperación (middleware).
+- **Notifications/jobs**: worker con job de limpieza de OTP/resets vencidos (Task W1).
+
+## Test Strategy
+
+- **Domain tests**: tablas de casos (teléfono `+591`, OTP expira/intentos, rotación/reuso de refresh, claims sin PII).
+- **Integration tests**: PostgreSQL real (contenedor, rol `paseo_app`): repos + transacción con `set_config`, aislamiento RLS (`infra/tests/rls/002_identity.sql` lo corre CI), concurrencia de refresh.
+- **API tests**: contrato RFC 9457, códigos estables (`PHONE_NOT_SUPPORTED`, `OTP_*`, `CREDENTIALS_INVALID`, `TOKEN_REUSE_DETECTED`, `RATE_LIMITED`), cookies web, respuesta uniforme de `forgot`.
+- **Verification commands**: `fvm dart format --set-exit-if-changed . && fvm dart analyze --fatal-warnings && fvm dart test` en `apps/api` y `packages/paseo_shared`; `docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --wait db && … run --rm migrate && migrate validate`; `redocly lint docs/openapi.yaml` (CI).
 
 ## Rollback / Forward Fix
 
-- V002 es inmutable tras aplicarse; cualquier corrección es una migración nueva.
-- La API se puede reconstruir/revertir a voluntad: la base marca el estado real del contrato de datos.
+- Nada se deshace: errores de esquema se corrigen con `V003+`. Compatibilidad del contrato garantizada porque las rutas nacen del `openapi.yaml` aprobado.
+
+## Implementation Sequence
+
+Orden (cada tarea termina en verde con sus pruebas y commit propio):
+
+- [ ] **T-A0** Contrato: actualizar `docs/openapi.yaml` (renombres + `verify-email`) → `redocly lint` verde.
+- [ ] **T-R0** Research: benchmark Argon2id (`cryptography` 2.9.0 si incluye Argon2id, `argon2_ffi` 1.0.0+2, `argon2` 1.0.1 queda descartada por `sdk <3.0.0` salvo fork) → `specs/001-identidad/research.md` + **aprobación humana** de la librería (OPEN_DECISION).
+- [ ] **T-A1** Esqueleto Dart Frog: `routes/health.dart`, `routes/ready.dart` (ready falla sin BD), pipeline con `problem+json`.
+- [ ] **T-A2** Dockerfile: `dart_frog build` (pin de `dart_frog_cli` registrado en el Dockerfile tras verificar versión) y `docker build` verde localmente.
+- [ ] **T-D1** `V002__identidad.sql` (tablas + RLS + GRANT) + `infra/tests/rls/002_identity.sql`; `migrate` desde cero en verde.
+- [ ] **T-S1** `paseo_shared`: DTOs de auth + enum `ApiErrorCode` (solo contrato).
+- [ ] **T-DO1** Dominio: `Email`, `PhoneBO`, `OtpChallenge` (TTL/intentos/ventana), `RefreshChain` (rotación/reuso), `AuthClaims` — tests de tabla.
+- [ ] **T-AP1** Puertos + casos de uso: `RegisterCustomer`, `VerifyPhoneOtp`, `ResendPhoneOtp`, `VerifyEmail`, `Login`, `RefreshSession`, `Logout`, `ForgotPassword`, `ResetPassword`, `CleanupExpiredCredentials` — tests con mocks.
+- [ ] **T-AD1** Adapters out Postgres (repos + `TransactionRunner` con `set_config(..., true)`) — tests contra contenedor con `paseo_app`.
+- [ ] **T-AD2** Adapters out de terceros: `JwtTokenSigner` (HS256 desde `JWT_SECRET`+`JWT_KID`), `Argon2idPasswordHasher` (aislado; librería aprobada en T-R0), `SmtpEmailSender` (mailer 7.2.0, credenciales Gmail), `ConsoleOtpSender`/`ConsoleEmailSender`.
+- [ ] **T-R1…T-R9** Rutas auth (una por endpoint) + middles (auth/contexto RLS/rate limit) — tests de API.
+- [ ] **T-W1** Worker: job de limpieza (OTP, resets, QR n/a) cada hora.
+- [ ] **T-G1** Gates finales: CI verde, auditoría §16, PR con trazabilidad.
+
+El detalle ejecutable (archivos, firmas, tests y comandos por paso) está en `tasks.md`.
