@@ -49,7 +49,7 @@ El cliente abre el enlace/token recibido por correo y su cuenta queda con correo
 
 **Why this priority**: Habilita recuperación de cuenta; no bloquea la acumulación (decisión del equipo).
 
-**Independent Test**: Tras registrarse con Mailpit (dev), tomar el token del correo y verificar; comprobar el flag en base.
+**Independent Test**: Tras registrarse con SMTP real configurado (o `EMAIL_SENDER=console`), tomar el token del correo (buzón real o log) y verificar; comprobar el flag en base.
 
 **Acceptance Scenarios**:
 
@@ -93,7 +93,7 @@ El cliente pide restablecer su contraseña por correo y la define con el token r
 
 **Why this priority**: Cuenta recuperable sin soporte manual; requiere correo verificado.
 
-**Independent Test**: `forgot` con correo existente y no existente (misma respuesta 202), `reset` con el token recibido en Mailpit.
+**Independent Test**: `forgot` con correo existente y no existente (misma respuesta 202), `reset` con el token recibido por correo (SMTP real vía `SmtpEmailSender`; en pruebas, un `EmailSender` de doble captura).
 
 **Acceptance Scenarios**:
 

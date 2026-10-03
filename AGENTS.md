@@ -116,7 +116,7 @@ Si la API se conecta como superusuario o dueño, **RLS deja de funcionar** (lo s
 - `POST /auth/password/forgot` **siempre responde 202**. Token ≥ 32 bytes aleatorios, hasheado, 30 min, un solo uso. Al restablecer: `token_version++` y revocar refresh tokens.
 - El comercio ve nombre **enmascarado**; teléfono completo exacto; sin búsquedas parciales.
 - `identify` devuelve un **ticket firmado** (~5 min, ligado al comercio); `purchases` recibe el ticket, no el teléfono.
-- Envío de OTP y correo **siempre tras puertos** (`OtpSender`, `EmailSender`). En dev: adaptador de consola y Mailpit. **No hardcodees un proveedor.**
+- Envío de OTP y correo **siempre tras puertos** (`OtpSender`, `EmailSender`). `EmailSender` tiene implementación **SMTP real propia** (`SmtpEmailSender`); sin Mailpit (decisión del equipo 03/10/2026). En dev, el OTP sale por consola (`OTP_SENDER=console`); el correo requiere credenciales SMTP reales, con `EMAIL_SENDER=console` solo como opción local. **No hardcodees un proveedor.**
 - **CI no se usa como identificador.**
 - Nunca registres en logs: contraseñas, OTP, tokens, teléfonos completos ni correos completos.
 

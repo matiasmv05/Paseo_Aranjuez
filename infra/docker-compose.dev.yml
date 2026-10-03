@@ -1,7 +1,7 @@
 name: paseo-aranjuez
 
 # Override de desarrollo: `docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d`
-# Añade semillas, Mailpit, puerto de BD solo en loopback y adaptadores de consola.
+# Añade semillas, puerto de BD solo en loopback y adaptadores de consola.
 
 services:
   db:
@@ -17,14 +17,5 @@ services:
 
   api:
     environment:
-      OTP_SENDER: console # dev: OTP por log; en prod el adaptador real (por decidir)
-      SMTP_HOST: mailpit
-      SMTP_PORT: "1025"
-
-  mailpit:
-    image: axllent/mailpit:v1.27.9 # verificado 03/10/2026
-    ports:
-      - "127.0.0.1:8025:8025" # UI: http://127.0.0.1:8025
-      - "127.0.0.1:1025:1025"
-    networks: [paseo_net]
-    restart: unless-stopped
+      OTP_SENDER: console # dev: OTP por log
+      EMAIL_SENDER: smtp # correo real vía SmtpEmailSender (sin Mailpit, decisión 03/10/2026); usa `console` si no tienes credenciales

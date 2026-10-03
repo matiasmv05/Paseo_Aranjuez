@@ -22,7 +22,8 @@ Todo se levanta con **un comando**, sin Kubernetes ni microservicios. Un VPS con
 | `worker` | misma imagen que `api`, comando `worker` | `paseo_app` | — | — | Jobs programados |
 | `caddy` | `caddy:2` | — | 80, **443** (web comercio) y **8443** (web administración), públicos | volúmenes `caddy_data`, `caddy_config` | TLS, proxy y dos builds web |
 | `backup` | `postgres:18-alpine` + `infra/backup/backup.sh` | `paseo_backup` | — | volumen `backups` | `pg_dump` periódico |
-| `mailpit` | `axllent/mailpit` (solo `dev`) | — | 8025 (UI), 1025 (SMTP), solo `127.0.0.1` | — | Captura correos de prueba |
+
+> **Correo (decisión 03/10/2026): sin Mailpit.** La API envía correo real con su implementación propia `SmtpEmailSender` (puerto `EmailSender`) contra un proveedor SMTP elegido por el equipo. `EMAIL_SENDER=console` queda como opción local sin credenciales.
 
 ### Orden de arranque
 ```
@@ -224,7 +225,7 @@ volumes:
   uploads: {}
 ```
 
-`docker-compose.dev.yml` añade: `db` publicado en `127.0.0.1:5432`, `mailpit` (perfil `dev`), semilla en `migrate` y variables de desarrollo (`OTP_SENDER=console`, `SMTP_HOST=mailpit`).
+`docker-compose.dev.yml` añade: `db` publicado en `127.0.0.1:${DB_DEV_PORT:-5432}`, semilla en `migrate` y variables de desarrollo (`OTP_SENDER=console`, `EMAIL_SENDER=smtp`).
 
 ## 7. Variables de entorno
 
@@ -283,7 +284,7 @@ Si el worker cae, la API sigue funcionando; solo se retrasan avisos y limpieza.
 
 | Entorno | Dónde | Notas |
 |---------|-------|-------|
-| Local | Compose en cada laptop (`-f` base + `dev`) | Semillas, Mailpit, OTP por consola |
+| Local | Compose en cada laptop (`-f` base + `dev`) | Semillas, OTP por consola, SMTP real (o `console`) |
 | Demo/producción | VPS pequeño con el mismo Compose (sin override `dev`) | Sin semillas; OTP y SMTP reales |
 
 Evitar planes gratuitos con cuotas que puedan apagar la demo.
@@ -339,8 +340,6 @@ docker compose -f infra/docker-compose.yml run --rm migrate validate
 # Reiniciar la base de DESARROLLO desde cero (destruye datos; nunca en producción)
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml down -v
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
-
-# Ver correos de prueba: http://127.0.0.1:8025
 
 # Restaurar un respaldo en una BD vacía (prueba de recuperación)
 gunzip -c backups/<archivo>.sql.gz | psql -h <host> -U paseo_owner -d <bd_vacia>
