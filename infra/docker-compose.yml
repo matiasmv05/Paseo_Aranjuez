@@ -1,0 +1,131 @@
+name: paseo
+
+# Fuente de verdad de topología: INFRASTRUCTURE.md §2-§6.
+# Imágenes fijadas tras verificación real con `docker pull` (03/10/2026).
+
+services:
+  db:
+    image: postgres:18-alpine # PostgreSQL 18.6 (verificado 03/10/2026)
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: postgres_admin
+      POSTGRES_PASSWORD: ${DB_SUPERUSER_PASSWORD}
+      PASEO_OWNER_PASSWORD: ${PASEO_OWNER_PASSWORD}
+      PASEO_APP_PASSWORD: ${PASEO_APP_PASSWORD}
+      PASEO_BACKUP_PASSWORD: ${PASEO_BACKUP_PASSWORD}
+    volumes:
+      # PostgreSQL 18 usa PGDATA=/var/lib/postgresql/18/docker dentro del
+      # montaje (verificado en la imagen 03/10/2026). Montar el padre.
+      - db_data:/var/lib/postgresql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres_admin -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [paseo_net]
+    restart: unless-stopped
+
+  migrate:
+    image: flyway/flyway:13.9.0 # verificado con `docker pull` 03/10/2026
+    command: migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      FLYWAY_USER: paseo_owner
+      FLYWAY_PASSWORD: ${PASEO_OWNER_PASSWORD}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+      FLYWAY_VALIDATE_MIGRATION_NAMING: "true"
+      FLYWAY_CLEAN_DISABLED: "true"
+      FLYWAY_CONNECT_RETRIES: "10"
+    volumes:
+      - ./migrations:/flyway/sql:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [paseo_net]
+    restart: "no"
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/api.Dockerfile
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: paseo_app
+      DB_PASSWORD: ${PASEO_APP_PASSWORD}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - uploads:/data/uploads # fotos de factura (UPLOADS_DIR); nunca servido por Caddy
+    expose: ["8080"]
+    user: "10001:10001"
+    read_only: true
+    tmpfs: [/tmp]
+    networks: [paseo_net]
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ..
+      dockerfile: infra/api.Dockerfile
+    command: ["/app/worker"]
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: paseo_app
+      DB_PASSWORD: ${PASEO_APP_PASSWORD}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    user: "10001:10001"
+    read_only: true
+    tmpfs: [/tmp]
+    networks: [paseo_net]
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2.11.6-alpine # verificado 03/10/2026; nunca `latest`
+    ports: ["80:80", "443:443", "8443:8443"]
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../apps/mobile/build/web-merchant:/srv/web-merchant:ro
+      - ../apps/mobile/build/web-admin:/srv/web-admin:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [api]
+    networks: [paseo_net]
+    restart: unless-stopped
+
+  backup:
+    image: postgres:18-alpine
+    environment:
+      PGHOST: db
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: paseo_backup
+      PGPASSWORD: ${PASEO_BACKUP_PASSWORD}
+    volumes:
+      - ./backup/backup.sh:/backup.sh:ro
+      - backups:/backups
+      - uploads:/uploads:ro # se respalda junto con la base (INFRASTRUCTURE.md §12)
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [paseo_net]
+    restart: unless-stopped
+
+networks:
+  paseo_net: {}
+
+volumes:
+  db_data: {}
+  caddy_data: {}
+  caddy_config: {}
+  backups: {}
+  uploads: {}

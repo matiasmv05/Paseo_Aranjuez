@@ -1,0 +1,51 @@
+# Caddyfile — Paseo Points (fuente: INFRASTRUCTURE.md §9).
+# Dos sitios con TLS automático:
+#   {$PUBLIC_HOST}        → web de comercio (443)
+#   {$PUBLIC_HOST}:8443   → web de administración (8443; restringir por IP si es posible)
+# Las cookies no se aíslan por puerto: cada web tiene su propio nombre de cookie
+# y su propia audiencia JWT (AGENTS.md §6). Validar con `caddy validate`.
+
+(common_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+	encode gzip zstd
+}
+
+{$PUBLIC_HOST} {
+	import common_headers
+
+	# API: solo /api/* llega al backend; la BD y el worker nunca salen por aquí.
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	# SPA web de comercio (build: apps/mobile/build/web-merchant)
+	handle {
+		root * /srv/web-merchant
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+{$PUBLIC_HOST}:8443 {
+	import common_headers
+
+	# Restricción opcional por IP para la administración (ADMIN_ALLOWED_IPS).
+	@blocked_admin not remote_ip {$ADMIN_ALLOWED_IPS:""}
+	respond @blocked_admin 403
+
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		root * /srv/web-admin
+		try_files {path} /index.html
+		file_server
+	}
+}

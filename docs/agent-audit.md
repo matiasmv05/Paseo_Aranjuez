@@ -37,6 +37,9 @@ VERIFIED:
 
 - Inicialización git completada; faltan reglas efectivas de rama/protección verificadas en GitHub.
 - `CLAUDE.md` con contenido `@AGENTS.md` ya existe.
+- Estructura objective completada como stubs; pendiente poblar: esqueleto Dart Frog (`bin/server.dart`, `bin/worker.dart`), entradas web `main_merchant_web.dart`/`main_admin_web.dart` y contenido de `paseo_shared`.
+- Infraestructura base creada el 03/10/2026: `infra/docker-compose.yml` (+`dev`), `db/init/01-roles.sh`, `.env.example`, `Caddyfile`, `api.Dockerfile`, `backup/backup.sh`, `seed/R__seed_dev.sql` y `migrations/V001__baseline_extensions_y_esquema.sql`. Imágenes verificadas con `docker pull`: `postgres:18-alpine` (18.6, PGDATA=/var/lib/postgresql/18/docker), `flyway/flyway:13.9.0`, `caddy:2.11.6-alpine`, `axllent/mailpit:v1.27.9`, `dart:3.13.5`. Verificado en vivo: `migrate info` (V001 Success), roles sin superuser y `paseo_app` NOBYPASSRLS, extensiones citext/pgcrypto, esquema `app` con USAGE y DDL denegado a `paseo_app`, `caddy validate` OK.
+- Migraciones `V002`–`V010` (según 9-stack) y pruebas RLS asociadas: **V002 (identidad) queda BLOCKED hasta la spec de identidad** y la decisión del proveedor/regex de teléfono.
 - Monorepo pub workspaces: creado 03/10/2026 (`.fvmrc`, `pubspec.yaml`, `pubspec.lock`, `analysis_options.yaml`); pendiente poblar los paquetes.
 - Estructura objetivo: directorios creados como stubs; faltan Dart Frog, las tres entradas web y features de Flutter.
 - Esqueleto Dart Frog de API y worker.
@@ -52,8 +55,7 @@ VERIFIED:
 ## CONTRADICTIONS
 
 - `AGENTS.md` y el stack citan `specs/` y `docs/openapi.yaml`; ambos existen ya en su forma base (respectivamente 02/10 y 03/10/2026). La extensión del contrato queda sujeta a specs de feature aprobadas.
-- `INFRASTRUCTURE.md` fija `postgres:18-alpine` y una versión Flyway candidata, pero marca que las etiquetas deben verificarse con `docker pull`; hasta hacerlo, la reproducibilidad queda pendiente.
-- El stack indica una versión concreta de Flyway (`13.8.1`) y a la vez ordena fijar la más reciente confirmada; no debe implementarse una versión sin verificación real.
+- ~~`INFRASTRUCTURE.md` fija `postgres:18-alpine` y Flyway candidato pendiente de `docker pull`~~ **RESUELTA (03/10):** postgres 18.6, flyway 13.9.0 y demás etiquetas confirmadas con pull real.
 - No se detectó contradicción entre decisiones cerradas y reglas actuales, pero faltan artefactos normativos (`specs/`, OpenAPI, CI) para validarlas contra implementación.
 
 ## OPEN_DECISIONS
@@ -118,7 +120,7 @@ No resolver sin decisión humana:
 3. DONE: Crear/instalar SDD local: `.specify/`, constitución referenciando `AGENTS.md`, plantillas de spec/plan/tasks y `specs/README.md`.
 4. DONE (03/10): Contrato inicial `docs/openapi.yaml` (sobre común + health + auth, alcance aprobado por usuario).
 5. DONE (03/10): Monorepo con FVM (3.47.6), `pubspec.yaml` workspace y `analysis_options.yaml` estricto; verificado con pub get/analyze/format.
-6. Crear infraestructura base: Compose base/dev, roles, `.env.example`, Dockerfile API/worker, Caddyfile, backup esqueleto, migraciones `V001`–`V002` mínimas con RLS/grants/pruebas.
+6. DONE (03/10, parcial): Compose base/dev, roles, `.env.example`, Dockerfile API/worker, Caddyfile, backup, `V001` con verificación en vivo. Pendiente: `V002` (identidad, BLOCKED por spec), imagen de la API buildable (requiere esqueleto Dart Frog) y pruebas RLS automatizadas.
 7. CI inicial: formato, análisis, validación OpenAPI, arquitectura, migraciones desde cero, pruebas RLS, builds.
 8. Fundaciones de identidad: Argon2id benchmark, proveedor SMS/correo tras puertos, OTP/recuperación.
 9. Rebanada vertical Must: registro/verificación/login/QR/teléfono/preview/compra/saldo/canje/validación.
@@ -141,7 +143,7 @@ No resolver sin decisión humana:
 - GATE 3 — plan valid: BLOCKED.
 - GATE 4 — API contract valid: DONE para la línea base (health + auth); BLOCKED para endpoints de negocio hasta sus specs.
 - GATE 5 — architecture valid: DOCUMENTED, no VERIFIED.
-- GATE 6 — migrations valid: BLOCKED.
+- GATE 6 — migrations valid: `V001` VERIFIED en vivo (flyway info Success + chequeos de permisos); `V002` BLOCKED por spec de identidad.
 - GATE 7 — RLS tests valid: BLOCKED.
 - GATE 8–12 — tests/security/CI: BLOCKED hasta fundaciones.
 - GATE 13 — human review: REQUIRED antes de fundaciones amplias y antes de resolver decisiones abiertas.

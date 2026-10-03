@@ -2,9 +2,10 @@
 
 Dónde corre cada cosa y cómo se levanta. Es la fuente de verdad de la infraestructura; el capítulo 9 la resume en el Anexo A. Base para la sección 9.12 de Brayan.
 
-> **Versiones a verificar el día que se inicializa el repo** (`docker pull`): las etiquetas de abajo se verificaron como existentes en documentación pública a 02/10/2026, pero no se ha hecho `pull` desde este documento.
-> - PostgreSQL: rama mayor **18** (última menor publicada en agosto de 2026: 18.6). Se fija la mayor: `postgres:18-alpine`.
-> - Flyway: `flyway/flyway:13.8.1` (última del listado de GitHub el 29/09/2026). La documentación de Redgate, actualizada el 01/10/2026, menciona 13.9.0. **Fija la más reciente que `docker pull` confirme y no uses `latest`.**
+> **Versiones verificadas con `docker pull` el 03/10/2026** (pendiente original cumplido):
+> - PostgreSQL: `postgres:18-alpine` = **18.6**; `PGDATA=/var/lib/postgresql/18/docker`, por eso el volumen monta el padre `/var/lib/postgresql`.
+> - Flyway: `flyway/flyway:13.9.0` (existe; reemplaza a la candidata 13.8.1 del borrador).
+> - Caddy: `caddy:2.11.6-alpine`; Mailpit (dev): `axllent/mailpit:v1.27.9`; build API: `dart:3.13.5`.
 
 ---
 
@@ -346,8 +347,8 @@ gunzip -c backups/<archivo>.sql.gz | psql -h <host> -U paseo_owner -d <bd_vacia>
 ```
 
 ## 17. Pendientes de infraestructura
-1. Confirmar etiquetas de imagen (PostgreSQL 18 y Flyway) con `docker pull`.
-2. Confirmar la ruta de montaje de datos de la imagen de PostgreSQL 18.
+1. ~~Confirmar etiquetas de imagen (PostgreSQL 18 y Flyway) con `docker pull`~~ — hecho 03/10/2026.
+2. ~~Confirmar la ruta de montaje de datos de PostgreSQL 18~~ — hecho: `PGDATA=/var/lib/postgresql/18/docker`.
 3. Confirmar los nombres de las variables `FLYWAY_*` en la documentación de la versión fijada.
 4. Elegir proveedor de OTP por teléfono y de correo (no verificados) y su costo.
 5. Dónde se despliega la demo y qué dominio se usa (sin decisión del equipo; recomendación: VPS con Docker Compose).

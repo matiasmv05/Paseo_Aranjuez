@@ -1,0 +1,30 @@
+name: paseo
+
+# Override de desarrollo: `docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d`
+# Añade semillas, Mailpit, puerto de BD solo en loopback y adaptadores de consola.
+
+services:
+  db:
+    ports:
+      - "127.0.0.1:${DB_DEV_PORT:-5432}:5432" # solo loopback; nunca publicar la BD (INFRASTRUCTURE.md §3)
+
+  migrate:
+    environment:
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql,filesystem:/flyway/seed
+    volumes:
+      - ./migrations:/flyway/sql:ro
+      - ./seed:/flyway/seed:ro
+
+  api:
+    environment:
+      OTP_SENDER: console # dev: OTP por log; en prod el adaptador real (por decidir)
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+
+  mailpit:
+    image: axllent/mailpit:v1.27.9 # verificado 03/10/2026
+    ports:
+      - "127.0.0.1:8025:8025" # UI: http://127.0.0.1:8025
+      - "127.0.0.1:1025:1025"
+    networks: [paseo_net]
+    restart: unless-stopped
