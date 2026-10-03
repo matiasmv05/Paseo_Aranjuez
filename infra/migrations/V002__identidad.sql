@@ -31,13 +31,15 @@ CREATE TABLE app.verification_codes (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     phone       text NOT NULL,
     code_hash   text NOT NULL,
-    purpose     text NOT NULL CHECK (purpose IN ('phone_verify', 'phone_change')),
+    purpose     text NOT NULL CHECK (purpose IN ('phone_verify', 'phone_change', 'email_verify')),
     expires_at  timestamptz NOT NULL,
     attempts    int NOT NULL DEFAULT 0 CHECK (attempts >= 0),
     consumed_at timestamptz,
     created_at  timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX verification_codes_phone_idx ON app.verification_codes (phone);
+-- Los tokens de correo/recuperación se buscan por su hash (VerifyEmail/ResetPassword).
+CREATE INDEX verification_codes_code_hash_idx ON app.verification_codes (code_hash);
 
 CREATE TABLE app.password_resets (
     id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -52,7 +54,7 @@ CREATE TABLE app.refresh_tokens (
     id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id            uuid NOT NULL REFERENCES app.users(id),
     aud                text NOT NULL CHECK (aud IN ('paseo-mobile', 'paseo-web-merchant', 'paseo-web-admin')),
-    jti                uuid NOT NULL UNIQUE,
+    jti                uuid NOT NULL UNIQUE DEFAULT gen_random_uuid(),
     token_hash         text NOT NULL UNIQUE,
     family_id          uuid NOT NULL,
     expires_at         timestamptz NOT NULL,

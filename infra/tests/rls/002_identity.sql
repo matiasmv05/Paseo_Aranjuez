@@ -62,7 +62,9 @@ INSERT INTO app.users (id, email, password_hash, role)
 VALUES ('00000000-0000-0000-0000-000000000002', 'rls_test3@example.com', '$argon2id$test', 'customer');
 
 INSERT INTO app.verification_codes (phone, code_hash, purpose, expires_at)
-VALUES ('+59170000001', 'hash', 'phone_verify', now() + interval '5 minutes');
+VALUES ('+59170000001', 'hash', 'phone_verify', now() + interval '5 minutes'),
+       -- cubre el nuevo valor 'email_verify' del CHECK (R1, T030)
+       ('rls_test3@example.com', 'emailhash', 'email_verify', now() + interval '24 hours');
 
 -- Cambiar al rol del propio usuario (misma transacción: contexto local).
 SELECT set_config('app.role', 'customer', true);
