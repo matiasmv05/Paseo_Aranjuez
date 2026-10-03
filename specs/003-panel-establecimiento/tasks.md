@@ -28,7 +28,7 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 
 ### Seed + tooling
 
-- [ ] T014 [S1] [US-Infra] Reemplazar `infra/seed/R__seed_dev.sql`: regla `GLOBAL` BASE activa, comercio demo con sucursal "Principal", owner/cajero/ciente verificados (solo con override `dev`). Idempotente.
+- [x] T014 [S1] [US-Infra] Reemplazar `infra/seed/R__seed_dev.sql`: regla `GLOBAL` BASE activa, comercio demo con sucursal "Principal", owner/cajero/ciente verificados (solo con override `dev`). Idempotente.
 - [ ] T015 [S2] [US-Infra] Crear `apps/api/tool/seed_dev_users.dart`: usa `Argon2idPasswordHasher` para crear/asegurar usuarios de demo e imprimir tokens de ticket y QR de prueba (solo dev). Añadir `dev`-only run guard.
 
 ### Contrato compartido (paseo_shared)
