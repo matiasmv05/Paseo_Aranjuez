@@ -1,4 +1,4 @@
-﻿import 'package:paseo_api/adapters/out/clock/system_clock.dart';
+import 'package:paseo_api/adapters/out/clock/system_clock.dart';
 import 'package:paseo_api/adapters/out/postgres/postgres.dart';
 import 'package:paseo_api/application/identity/use_cases/cleanup_expired_credentials.dart';
 import 'package:postgres/postgres.dart';
@@ -51,9 +51,7 @@ void main() {
 
   tearDownAll(() async => db.close());
 
-  group(
-    'CleanupExpiredCredentials',
-    () {
+  group('CleanupExpiredCredentials', () {
     test('borra verification_codes expirados y no toca los vigentes', () async {
       final past = DateTime.now().toUtc().subtract(const Duration(minutes: 10));
       final future = DateTime.now().toUtc().add(const Duration(minutes: 10));
@@ -173,15 +171,17 @@ void main() {
       expect(remaining.first.toColumnMap()['n'], equals(1));
     });
 
-    test('devuelve mapa con las tres claves aunque no haya más expirados',
-        () async {
-      // Los tests anteriores ya borraron sus filas expiradas.
-      // El conteo puede ser 0, pero las tres claves siempre deben existir.
-      final result = await job();
+    test(
+      'devuelve mapa con las tres claves aunque no haya más expirados',
+      () async {
+        // Los tests anteriores ya borraron sus filas expiradas.
+        // El conteo puede ser 0, pero las tres claves siempre deben existir.
+        final result = await job();
 
-      expect(result, containsPair('verification_codes', isA<int>()));
-      expect(result, containsPair('password_resets', isA<int>()));
-      expect(result, containsPair('refresh_tokens', isA<int>()));
-    });
+        expect(result, containsPair('verification_codes', isA<int>()));
+        expect(result, containsPair('password_resets', isA<int>()));
+        expect(result, containsPair('refresh_tokens', isA<int>()));
+      },
+    );
   }, timeout: const Timeout(Duration(seconds: 60)));
 }
