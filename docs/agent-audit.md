@@ -66,7 +66,7 @@ No resolver sin decisión humana:
 - Recorte de hexagonal en Flutter.
 - `invoice_ref` obligatorio u opcional por comercio.
 - Confirmación de interpretaciones de encuesta: refresh web en cookie `HttpOnly`; SMS mínimo con correo adicional sin exigir correo para acumular.
-- ~~Proveedor de SMS y correo, con costo real~~ — correo **DECIDIDO 03/10/2026**: Gmail/Google Workspace SMTP, `SmtpEmailSender` propio, sin Mailpit; SMS: **sigue ABIERTO**.
+- ~~Proveedor de SMS y correo, con costo real~~ — correo **DECIDIDO 03/10/2026**: Gmail/Google Workspace SMTP, `SmtpEmailSender` propio ; SMS: **sigue ABIERTO**.
 - Librería Argon2id tras benchmark y vectores de prueba.
 - Valores iniciales de `refund_window_days`, vencimiento de solicitudes, tamaño máximo y retención de fotos.
 - Razón social del comprador o del emisor.
