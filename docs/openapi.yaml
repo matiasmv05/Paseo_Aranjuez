@@ -133,14 +133,14 @@ paths:
                 status: 422
                 code: PHONE_NOT_SUPPORTED
 
-  /auth/otp/verify:
+  /auth/phone/verify:
     post:
       tags: [auth]
       summary: Verificar el teléfono con el OTP
       description: |
         OTP de 6 dígitos (AGENTS.md §8): solo se guarda su hash, vence en
         5 minutos y admite 5 intentos. Al verificar, `pv=true`.
-      operationId: verifyOtp
+      operationId: verifyPhone
       security: []
       requestBody:
         required: true
@@ -173,14 +173,14 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
 
-  /auth/otp/resend:
+  /auth/phone/send-otp:
     post:
       tags: [auth]
       summary: Reenviar el OTP
       description: |
         Reenvío con espera mínima de 60 segundos y topes por teléfono e IP
         (AGENTS.md §8). Responde igual exista o no la cuenta.
-      operationId: resendOtp
+      operationId: sendPhoneOtp
       security: []
       requestBody:
         required: true
@@ -197,6 +197,42 @@ paths:
           description: Solicitud aceptada; el SMS se envía si el teléfono es válido.
         '429':
           $ref: '#/components/responses/RateLimited'
+
+  /auth/verify-email:
+    post:
+      tags: [auth]
+      summary: Verificar el correo con el token recibido
+      description: |
+        Confirma la dirección de correo. El correo verificado solo habilita la
+        **recuperación de la cuenta** (`/auth/password/forgot`); no es requisito
+        para acumular puntos (AGENTS.md §8): el requisito mínimo es el teléfono
+        verificado (`pv`).
+      operationId: verifyEmail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  description: Token recibido por correo (un solo uso).
+      responses:
+        '204':
+          description: Correo verificado.
+        '422':
+          description: Token inválido, usado o vencido.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Validación fallida
+                status: 422
+                code: TOKEN_INVALID
 
   /auth/login:
     post:

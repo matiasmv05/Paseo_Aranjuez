@@ -20,7 +20,7 @@
 - **OPEN_DECISIONS** (AGENTS.md §15; esta spec NO las resuelve):
    - ~~Proveedor de correo~~ **DECIDIDO (03/10/2026)**: Gmail/Google Workspace SMTP con remitente del equipo; implementación propia `SmtpEmailSender`.
    - Proveedor de SMS y su costo (sigue abierto; en dev, `OTP_SENDER=console`).
-  - Librería concreta de Argon2id (pendiente benchmark y vectores de prueba).
+   - ~~Librería concreta de Argon2id~~ **DECIDIDA (03/10/2026)**: `cryptography` 2.9.0. Ver `specs/001-identidad/research.md`.
   - Regex endurecida del móvil boliviano (`+591` + 8 dígitos iniciando en 6 o 7; hasta su verificación se valida `^\+591[0-9]{8}$`).
   - Confirmación de las interpretaciones de la encuesta: refresh web en cookie `HttpOnly`; SMS mínimo con correo adicional sin exigir el correo para acumular.
 
@@ -132,10 +132,10 @@ El cliente pide restablecer su contraseña por correo y la define con el token r
 - **SEC-002**: Sin datos personales en el JWT (regla 8); el comercio verá nombre enmascarado (fuera del alcance de esta spec, pero el modelo lo permite).
 - **SEC-003**: Cookies web: `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`, nombre propio por aplicación; nunca compartidas entre webs.
 - **SEC-004**: `POST /auth/refresh` de web exige `X-Paseo-Client` y valida `Origin`.
-- **SEC-005**: RLS desde la primera tabla: cada tabla de V002 nace con `ENABLE ROW LEVEL SECURITY`, políticas y `GRANT` mínimos para `paseo_app`, y prueba de aislamiento en `infra/tests/rls/002_*.sql`.
+- **SEC-005**: ~~RLS desde la primera tabla~~ **SUPERSEDIDA (decisión del equipo 03/10/2026): MVP sin RLS** (AGENTS.md §2 regla 7). Las tablas nacen solo con `GRANT` mínimos para `paseo_app`; `audit_log` mantiene el `REVOKE UPDATE, DELETE, TRUNCATE`. La reintroducción de RLS + pruebas de aislamiento es deuda bloqueante pre-producción.
 - **SEC-006**: Prohibido en logs: contraseñas, OTP, tokens, teléfonos y correos completos (AGENTS.md §8; INFRASTRUCTURE.md §13). Logs JSON con `correlation_id`.
 - **SEC-007**: Límites de peticiones en login, OTP y recuperación (códigos 429).
-- **SEC-008**: El rol `app.role='system'` solo lo fijan los adaptadores de identidad (registro, login, OTP, recuperación) para el contexto RLS (AGENTS.md §5.3).
+- **SEC-008**: El rol `app.role='system'` quedaba reservado a los adaptadores de identidad para el contexto RLS. Sin RLS en el MVP, se mantiene la convención de contexto por transacción (`set_config(..., true)`) como preparación para la reintroducción, pero no es obligatoria.
 
 ### Key Entities *(include if data is involved)*
 
@@ -157,8 +157,8 @@ El cliente pide restablecer su contraseña por correo y la define con el token r
 
 - [ ] No database impact
 - [x] New Flyway migration required: `infra/migrations/V002__identidad.sql`
-- [x] RLS/policies/`GRANT` required in the same change
-- [x] RLS isolation test required: `infra/tests/rls/002_*.sql` ejecutada por CI contra PostgreSQL efímero con `paseo_app`
+- [x] ~~RLS/policies/`GRANT` required~~ `GRANT` mínimos obligatorios (RLS diferido por decisión del equipo 03/10/2026)
+- [x] ~~RLS isolation test required~~ Diferido junto con RLS (deuda bloqueante pre-producción)
 - [ ] Migration immutability check affected
 
 ## Success Criteria *(mandatory)*

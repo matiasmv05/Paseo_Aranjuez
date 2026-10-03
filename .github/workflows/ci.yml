@@ -40,14 +40,17 @@ jobs:
 
       - run: dart analyze --fatal-warnings
 
-      # Pruebas condicionales mientras los paquetes no tengan test/:
-      # AGENTS.md §11 exige pruebas; el harness llega con cada feature.
-      - name: dart test (paquetes con test/)
+      # Solo pruebas unitarias: test/integration/ requiere BD y va en el job integration.
+      - name: dart test unitarios (excluye test/integration/)
         run: |
           set -e
-          for d in apps/api packages/paseo_shared; do
+          for d in packages/paseo_shared; do
             if [ -d "$d/test" ]; then (cd "$d" && dart test); fi
           done
+          if [ -d apps/api/test ]; then
+            (cd apps/api && dart test --exclude-tags integration \
+              $(find test -name '*_test.dart' | grep -v 'test/integration/' | tr '\n' ' '))
+          fi
 
       - name: flutter test apps/mobile (si existe test/)
         run: |
@@ -83,7 +86,7 @@ jobs:
 
       - name: flyway validate
         run: |
-          docker compose -f infra/docker-compose.yml run --rm migrate validate
+          docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml run --rm migrate validate
 
       - name: Chequeos de roles y extensiones (V001)
         run: |
@@ -111,6 +114,49 @@ jobs:
             docker exec -i -e PGPASSWORD="$PASEO_APP_PASSWORD" "$DB" \
               psql -U paseo_app -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 < "$f"
           done
+
+  integration:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Versión de Flutter desde .fvmrc (única fuente de verdad)
+        id: fvmrc
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fvmrc.outputs.version }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get --enforce-lockfile
+
+      - name: .env de CI (ficticio; nunca secretos reales)
+        run: |
+          {
+            echo "POSTGRES_DB=$POSTGRES_DB"
+            echo "DB_SUPERUSER_PASSWORD=$DB_SUPERUSER_PASSWORD"
+            echo "PASEO_OWNER_PASSWORD=$PASEO_OWNER_PASSWORD"
+            echo "PASEO_APP_PASSWORD=$PASEO_APP_PASSWORD"
+            echo "PASEO_BACKUP_PASSWORD=$PASEO_BACKUP_PASSWORD"
+            echo "DB_DEV_PORT=5433"
+          } > infra/.env
+
+      - name: DB desde cero + migraciones
+        run: |
+          docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --wait db
+          docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml run --rm migrate
+
+      - name: dart test integration
+        working-directory: apps/api
+        env:
+          DB_HOST: 127.0.0.1
+          DB_NAME: ${{ env.POSTGRES_DB }}
+          DB_USER: paseo_app
+          PASEO_APP_PASSWORD: ${{ env.PASEO_APP_PASSWORD }}
+          DB_DEV_PORT: "5433"
+        run: dart test test/integration
 
   migration-immutability:
     if: github.event_name == 'pull_request'

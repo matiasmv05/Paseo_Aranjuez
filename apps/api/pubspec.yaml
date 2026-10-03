@@ -5,5 +5,17 @@ resolution: workspace
 environment:
   sdk: ^3.13.0
 
+dependencies:
+  dart_frog: ^1.2.6
+  paseo_shared:
+    path: ../../packages/paseo_shared
+  postgres: ^3.5.18
+  uuid: ^4.5.1
+  cryptography: ^2.9.0
+  mailer: ^7.2.0
+  crypto: ^3.0.7
+
 dev_dependencies:
+  mocktail: ^1.0.4
+  test: ^1.25.8
   very_good_analysis: ^11.0.0
