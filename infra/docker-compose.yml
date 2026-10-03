@@ -1,4 +1,4 @@
-name: paseo
+name: paseo-aranjuez
 
 # Fuente de verdad de topología: INFRASTRUCTURE.md §2-§6.
 # Imágenes fijadas tras verificación real con `docker pull` (03/10/2026).

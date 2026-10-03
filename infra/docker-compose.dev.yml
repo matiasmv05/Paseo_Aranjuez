@@ -1,4 +1,4 @@
-name: paseo
+name: paseo-aranjuez
 
 # Override de desarrollo: `docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d`
 # Añade semillas, Mailpit, puerto de BD solo en loopback y adaptadores de consola.

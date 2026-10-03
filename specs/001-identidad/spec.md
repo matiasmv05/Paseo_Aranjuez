@@ -3,7 +3,7 @@
 **Feature**: `001-identidad`
 **Branch**: `feat/001-identidad`
 **Created**: 2026-10-03
-**Status**: Draft
+**Status**: Approved (2026-10-03)
 **Input**: User description: "Registro de cliente con correo + teléfono + contraseña, verificación de teléfono por SMS (OTP) y de correo, login para todos los roles, refresh rotativo, logout y recuperación de contraseña por correo."
 **Authority**: `AGENTS.md` remains the governing repository policy. Reglas aplicadas: §2 (2, 4, 5, 7, 8, 10), §5.3, §6, §8, §9, §11, §16.
 

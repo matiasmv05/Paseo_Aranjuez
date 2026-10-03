@@ -119,7 +119,7 @@ migrate:
 ## 6. `docker-compose.yml` (esqueleto)
 
 ```yaml
-name: paseo
+name: paseo-aranjuez
 
 services:
   db:
