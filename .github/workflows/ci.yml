@@ -83,7 +83,7 @@ jobs:
 
       - name: flyway validate
         run: |
-          docker compose -f infra/docker-compose.yml run --rm migrate validate
+          docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml run --rm migrate validate
 
       - name: Chequeos de roles y extensiones (V001)
         run: |
