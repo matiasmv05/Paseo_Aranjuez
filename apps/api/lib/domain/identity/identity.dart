@@ -4,6 +4,7 @@ library;
 export 'auth_claims.dart';
 export 'client_app.dart';
 export 'email.dart';
+export 'email_verification.dart';
 export 'errors.dart';
 export 'otp_challenge.dart';
 export 'password_policy.dart';

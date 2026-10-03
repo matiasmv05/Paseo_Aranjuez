@@ -15,6 +15,7 @@ final class RegisterCustomer {
     required IdGenerator ids,
     required Clock clock,
     required AuditLogWriter audit,
+    required TransactionRunner tx,
   }) : _users = users,
        _customers = customers,
        _codes = codes,
@@ -24,7 +25,8 @@ final class RegisterCustomer {
        _tokens = tokens,
        _ids = ids,
        _clock = clock,
-       _audit = audit;
+       _audit = audit,
+       _tx = tx;
 
   static const emailVerificationTokenBytes = 32;
 
@@ -38,6 +40,7 @@ final class RegisterCustomer {
   final IdGenerator _ids;
   final Clock _clock;
   final AuditLogWriter _audit;
+  final TransactionRunner _tx;
 
   /// Devuelve el `customer_id` creado.
   Future<String> call({
@@ -52,24 +55,28 @@ final class RegisterCustomer {
 
     final passwordHash = await _hasher.hash(password);
     final userId = _ids.newId();
-    final user = await _users.insertIfAbsent(
-      id: userId,
-      email: parsedEmail,
-      passwordHash: passwordHash,
-      role: UserRole.customer,
-    );
-    if (user == null) {
-      throw IdentityException.conflict('correo ya registrado');
-    }
-    final profile = CustomerProfile(
-      userId: userId,
-      phone: parsedPhone.value,
-      fullName: fullName,
-    );
-    final inserted = await _customers.insertIfAbsent(profile);
-    if (inserted == null) {
-      throw IdentityException.conflict('telefono ya registrado');
-    }
+    // Una transaccion: si el telefono esta duplicado no queda un `users`
+    // huerfano que bloquee el reintento con el mismo correo (R1).
+    await _tx.run(() async {
+      final user = await _users.insertIfAbsent(
+        id: userId,
+        email: parsedEmail,
+        passwordHash: passwordHash,
+        role: UserRole.customer,
+      );
+      if (user == null) {
+        throw IdentityException.conflict('correo ya registrado');
+      }
+      final profile = CustomerProfile(
+        userId: userId,
+        phone: parsedPhone.value,
+        fullName: fullName,
+      );
+      final inserted = await _customers.insertIfAbsent(profile);
+      if (inserted == null) {
+        throw IdentityException.conflict('telefono ya registrado');
+      }
+    });
 
     final now = _clock.nowUtc();
 
@@ -91,7 +98,7 @@ final class RegisterCustomer {
       target: parsedEmail.value,
       purpose: VerificationPurpose.emailVerification,
       codeHash: _tokens.hashToken(emailToken),
-      challenge: OtpChallenge.issue(now),
+      challenge: EmailVerification.issue(now),
     );
     await _emailSender.sendEmailVerification(
       email: parsedEmail,

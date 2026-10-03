@@ -501,6 +501,7 @@ void main() {
         tokens: tokens,
         clock: FixedClock(now),
         audit: audit,
+        tx: PassThroughTx(),
       );
       when(
         () => users.setPassword(

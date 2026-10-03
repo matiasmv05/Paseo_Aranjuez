@@ -41,7 +41,8 @@ final class ForgotPassword {
     final parsed = Email.parse(email);
     final user = await _users.findByEmail(parsed);
     if (user == null || !user.emailVerified) {
-      // Misma respuesta externa; solo se audita internamente.
+      // Respuesta siempre 202 en la ruta; no se revela existencia y el
+      // acceso sin cuenta no se audita (no contiene actor ni efectos).
       return;
     }
     final now = _clock.nowUtc();

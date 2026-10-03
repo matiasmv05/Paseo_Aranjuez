@@ -30,15 +30,10 @@ final class VerifyEmail {
       now: now,
       tokenHash: _tokens.hashToken(token),
     );
-    if (record == null ||
-        record.challenge.isConsumed ||
-        record.challenge.isExpired(now)) {
-      throw IdentityException.tokenInvalid();
-    }
-    await _codes.updateChallenge(
-      record.id,
-      record.challenge.verify(now, matches: true),
-    );
+    final state = record?.challenge;
+    if (state is! EmailVerification) throw IdentityException.tokenInvalid();
+    // Usado o vencido (24 h) -> TOKEN_INVALID (el dominio lanza).
+    await _codes.updateChallenge(record!.id, state.consume(now));
     final user = await _users.findByEmail(Email.parse(record.target));
     if (user == null) throw IdentityException.tokenInvalid();
     await _users.markEmailVerified(user.id);

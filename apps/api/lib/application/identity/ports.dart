@@ -17,7 +17,7 @@ final class VerificationCodeRecord {
   final String target;
   final VerificationPurpose purpose;
   final String codeHash;
-  final OtpChallenge challenge;
+  final VerificationState challenge;
 }
 
 enum VerificationPurpose { phoneVerification, emailVerification }
@@ -125,10 +125,10 @@ abstract interface class VerificationCodeRepository {
     required String target,
     required VerificationPurpose purpose,
     required String codeHash,
-    required OtpChallenge challenge,
+    required VerificationState challenge,
   });
 
-  Future<void> updateChallenge(String id, OtpChallenge challenge);
+  Future<void> updateChallenge(String id, VerificationState challenge);
 }
 
 abstract interface class PasswordResetRepository {

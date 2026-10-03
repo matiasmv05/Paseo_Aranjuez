@@ -30,6 +30,45 @@ class MockIdGenerator extends Mock implements IdGenerator {}
 
 class MockTokenGenerator extends Mock implements TokenGenerator {}
 
+/// TransactionRunner trivial (sin rollback): ejecuta el cuerpo tal cual.
+final class PassThroughTx implements TransactionRunner {
+  @override
+  Future<T> run<T>(Future<T> Function() body) => body();
+}
+
+/// Almacen en memoria con snapshot/restore para simular rollback.
+abstract interface class RollbackStore<T> {
+  T snapshot();
+  void restore(T state);
+}
+
+/// TransactionRunner con rollback simulado: si el cuerpo lanza, restaura
+/// el snapshot de cada almacen registrado.
+final class FakeTransactionRunner implements TransactionRunner {
+  final _stores = <RollbackStore<Object?>>[];
+
+  void register(RollbackStore<Object?> store) => _stores.add(store);
+
+  var committed = false;
+  var rolledBack = false;
+
+  @override
+  Future<T> run<T>(Future<T> Function() body) async {
+    final snapshots = [for (final s in _stores) (s, s.snapshot())];
+    try {
+      final result = await body();
+      committed = true;
+      return result;
+    } catch (_) {
+      for (final (store, snap) in snapshots) {
+        store.restore(snap);
+      }
+      rolledBack = true;
+      rethrow;
+    }
+  }
+}
+
 /// Reloj fijo para tests.
 final class FixedClock implements Clock {
   FixedClock(this.now);

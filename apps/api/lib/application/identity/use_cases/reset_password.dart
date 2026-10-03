@@ -13,13 +13,15 @@ final class ResetPassword {
     required TokenGenerator tokens,
     required Clock clock,
     required AuditLogWriter audit,
+    required TransactionRunner tx,
   }) : _users = users,
        _resets = resets,
        _refreshTokens = refreshTokens,
        _hasher = hasher,
        _tokens = tokens,
        _clock = clock,
-       _audit = audit;
+       _audit = audit,
+       _tx = tx;
 
   final UserRepository _users;
   final PasswordResetRepository _resets;
@@ -28,6 +30,7 @@ final class ResetPassword {
   final TokenGenerator _tokens;
   final Clock _clock;
   final AuditLogWriter _audit;
+  final TransactionRunner _tx;
 
   Future<void> call({
     required String token,
@@ -39,24 +42,26 @@ final class ResetPassword {
     if (record == null || !record.isUsable(now)) {
       throw IdentityException.tokenInvalid();
     }
-    // Un solo uso, atomico: segunda vez -> false -> TOKEN_INVALID.
-    final claimed = await _resets.tryMarkUsed(id: record.id, at: now);
-    if (!claimed) throw IdentityException.tokenInvalid();
+    await _tx.run(() async {
+      // Un solo uso, atomico: segunda vez -> false -> TOKEN_INVALID.
+      final claimed = await _resets.tryMarkUsed(id: record.id, at: now);
+      if (!claimed) throw IdentityException.tokenInvalid();
 
-    final user = await _users.findById(record.userId);
-    if (user == null) throw IdentityException.tokenInvalid();
+      final user = await _users.findById(record.userId);
+      if (user == null) throw IdentityException.tokenInvalid();
 
-    await _users.setPassword(
-      userId: user.id,
-      passwordHash: await _hasher.hash(newPassword),
-    );
-    await _users.incrementTokenVersion(user.id);
-    await _refreshTokens.revokeAllForUser(userId: user.id, at: now);
-    await _audit.write(
-      action: 'auth.password.reset',
-      entityType: 'user',
-      entityId: user.id,
-      userId: user.id,
-    );
+      await _users.setPassword(
+        userId: user.id,
+        passwordHash: await _hasher.hash(newPassword),
+      );
+      await _users.incrementTokenVersion(user.id);
+      await _refreshTokens.revokeAllForUser(userId: user.id, at: now);
+      await _audit.write(
+        action: 'auth.password.reset',
+        entityType: 'user',
+        entityId: user.id,
+        userId: user.id,
+      );
+    });
   }
 }

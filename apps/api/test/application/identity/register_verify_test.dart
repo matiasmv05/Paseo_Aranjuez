@@ -64,6 +64,7 @@ void main() {
         ids: SequentialIds(),
         clock: FixedClock(now),
         audit: audit,
+        tx: PassThroughTx(),
       );
       when(
         () => codes.insert(
@@ -554,10 +555,9 @@ void main() {
           target: 'ana@example.com',
           purpose: VerificationPurpose.emailVerification,
           codeHash: 'sha:tok-1',
-          challenge: OtpChallenge.restore(
+          challenge: EmailVerification.restore(
             createdAt: now,
-            expiresAt: now.add(const Duration(minutes: 5)),
-            attempts: 0,
+            expiresAt: now.add(const Duration(hours: 24)),
             consumedAt: null,
           ),
         ),
@@ -567,6 +567,77 @@ void main() {
       await useCase.call(token: 'tok-1');
       verify(() => users.markEmailVerified('u-1')).called(1);
     });
+
+    test('token usado -> TOKEN_INVALID y no re-verifica', () async {
+      when(
+        () => codes.findActive(
+          target: any(named: 'target'),
+          purpose: any(named: 'purpose'),
+          now: any(named: 'now'),
+          tokenHash: any(named: 'tokenHash'),
+        ),
+      ).thenAnswer(
+        (_) async => VerificationCodeRecord(
+          id: 'vc-9',
+          target: 'ana@example.com',
+          purpose: VerificationPurpose.emailVerification,
+          codeHash: 'sha:tok-1',
+          challenge: EmailVerification.restore(
+            createdAt: now.subtract(const Duration(hours: 1)),
+            expiresAt: now.add(const Duration(hours: 23)),
+            consumedAt: now.subtract(const Duration(minutes: 30)),
+          ),
+        ),
+      );
+      await expectLater(
+        useCase.call(token: 'tok-1'),
+        throwsA(
+          isA<IdentityException>().having(
+            (e) => e.code,
+            'code',
+            ApiErrorCode.tokenInvalid,
+          ),
+        ),
+      );
+      verifyNever(() => users.markEmailVerified(any()));
+    });
+
+    test(
+      'un OtpChallenge no sirve para verify-email -> TOKEN_INVALID',
+      () async {
+        when(
+          () => codes.findActive(
+            target: any(named: 'target'),
+            purpose: any(named: 'purpose'),
+            now: any(named: 'now'),
+            tokenHash: any(named: 'tokenHash'),
+          ),
+        ).thenAnswer(
+          (_) async => VerificationCodeRecord(
+            id: 'vc-1',
+            target: 'ana@example.com',
+            purpose: VerificationPurpose.emailVerification,
+            codeHash: 'x',
+            challenge: OtpChallenge.restore(
+              createdAt: now,
+              expiresAt: now.add(const Duration(minutes: 5)),
+              attempts: 0,
+              consumedAt: null,
+            ),
+          ),
+        );
+        await expectLater(
+          useCase.call(token: 'tok-1'),
+          throwsA(
+            isA<IdentityException>().having(
+              (e) => e.code,
+              'code',
+              ApiErrorCode.tokenInvalid,
+            ),
+          ),
+        );
+      },
+    );
 
     test('token desconocido/vencido/usado -> TOKEN_INVALID', () async {
       when(

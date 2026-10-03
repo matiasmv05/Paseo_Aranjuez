@@ -34,20 +34,23 @@ final class VerifyPhoneOtp {
       purpose: VerificationPurpose.phoneVerification,
       now: now,
     );
-    if (record == null) throw IdentityException.otpInvalid();
+    final challenge = record?.challenge;
+    if (record == null || challenge is! OtpChallenge) {
+      throw IdentityException.otpInvalid();
+    }
 
     final matches = await _hasher.verify(hash: record.codeHash, plain: code);
     if (!matches) {
       // Incrementa intentos (o lanza OTP_TOO_MANY_ATTEMPTS/OTP_EXPIRED).
       await _codes.updateChallenge(
         record.id,
-        record.challenge.verify(now, matches: false),
+        challenge.verify(now, matches: false),
       );
       throw IdentityException.otpInvalid();
     }
     await _codes.updateChallenge(
       record.id,
-      record.challenge.verify(now, matches: true),
+      challenge.verify(now, matches: true),
     );
 
     final profile = await _customers.findByPhone(parsedPhone);
