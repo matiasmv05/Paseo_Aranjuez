@@ -61,6 +61,12 @@ services:
     volumes:
       - uploads:/data/uploads # fotos de factura (UPLOADS_DIR); nunca servido por Caddy
     expose: ["8080"]
+    healthcheck:
+      # Forma exec (sin shell): la imagen es scratch y no tiene /bin/sh.
+      test: ["CMD", "/app/healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     user: "10001:10001"
     read_only: true
     tmpfs: [/tmp]
