@@ -70,6 +70,7 @@ final class PostgresPasswordResetRepository implements PasswordResetRepository {
   }
 
   /// Borra resets expirados (`expires_at < now`). Devuelve cuántos.
+  @override
   Future<int> deleteExpired(DateTime now) async {
     final result = await _db.session.execute(
       Sql.named('DELETE FROM app.password_resets WHERE expires_at < @now'),

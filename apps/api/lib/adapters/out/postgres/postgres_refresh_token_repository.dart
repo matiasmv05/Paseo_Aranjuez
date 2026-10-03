@@ -115,6 +115,7 @@ final class PostgresRefreshTokenRepository implements RefreshTokenRepository {
   }
 
   /// Borra refresh tokens expirados (`expires_at < now`). Devuelve cuántos.
+  @override
   Future<int> deleteExpired(DateTime now) async {
     final result = await _db.session.execute(
       Sql.named('DELETE FROM app.refresh_tokens WHERE expires_at < @now'),

@@ -49,7 +49,7 @@ void main() {
     );
   });
 
-  tearDownAll(() async => db.close());
+  tearDownAll(() => db.close());
 
   group('CleanupExpiredCredentials', () {
     test('borra verification_codes expirados y no toca los vigentes', () async {
@@ -82,7 +82,7 @@ void main() {
 
       final remaining = await db.session.execute(
         Sql(
-          "SELECT count(*)::int AS n FROM app.verification_codes "
+          'SELECT count(*)::int AS n FROM app.verification_codes '
           "WHERE code_hash = 'hash-ok-vc'",
         ),
       );
@@ -118,7 +118,7 @@ void main() {
 
       final remaining = await db.session.execute(
         Sql(
-          "SELECT count(*)::int AS n FROM app.password_resets "
+          'SELECT count(*)::int AS n FROM app.password_resets '
           "WHERE token_hash = 'hash-ok-pr'",
         ),
       );
@@ -164,7 +164,7 @@ void main() {
 
       final remaining = await db.session.execute(
         Sql(
-          "SELECT count(*)::int AS n FROM app.refresh_tokens "
+          'SELECT count(*)::int AS n FROM app.refresh_tokens '
           "WHERE token_hash = 'hash-ok-rt'",
         ),
       );
