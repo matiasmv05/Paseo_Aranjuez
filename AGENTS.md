@@ -116,7 +116,7 @@ Si la API se conecta como superusuario o dueño, RLS deja de funcionar. No lo ha
 
 ## 8. Identidad: teléfono + correo
 - Registro: correo + teléfono + contraseña. **Mínimo obligatorio: teléfono verificado por SMS** (`pv`); sin él no hay QR ni acumulación. El correo verificado solo habilita **recuperar la cuenta**.
-- **Solo teléfonos bolivianos (`+591`)**, E.164; otro prefijo → `PHONE_NOT_SUPPORTED`. Móvil de 8 dígitos que empieza con 6 o 7 (verificar la regla antes de fijar la expresión regular; decisión abierta §15).
+- **Solo teléfonos bolivianos (`+591`)**, E.164; otro prefijo → `PHONE_NOT_SUPPORTED`. Después de `+591`, **8 dígitos cualesquiera**: no se exige que empiece con 6 o 7 (decisión 03/10/2026). La expresión regular es `^\+591[0-9]{8}$`.
 - **SMS solo al registrarse y al cambiar de teléfono**, nunca en cada login (costo).
 - OTP: 6 dígitos, solo hash en base, 5 min, 5 intentos, reenvío cada 60 s, topes por teléfono e IP.
 - `POST /auth/password/forgot` **siempre responde 202** (cuerpos idénticos). Token ≥ 32 bytes aleatorios, hasheado, 30 min, un solo uso. Al restablecer: `token_version++` y revocar refresh tokens.
@@ -132,7 +132,7 @@ Si la API se conecta como superusuario o dueño, RLS deja de funcionar. No lo ha
 - 422 validación · 401 sin sesión · 403 sin permiso · 404 no existe · 409 conflicto · 429 límite.
 - Compra y canje: `POST` + `Idempotency-Key`. Mismo key → 200 con la respuesta original.
 - Canje: el `CHECK` aborta con `23514` → `INSUFFICIENT_POINTS`. **No uses `SELECT … FOR UPDATE` sobre el saldo** (el rol no tiene `UPDATE` y el trigger ya serializa).
-- `purchases.invoice_ref` es opcional; único por `(establishment_id, invoice_ref)`; **no** identifica al cliente.
+- `purchases.invoice_ref` es **obligatorio** (decisión 03/10/2026); único por `(establishment_id, invoice_ref)`; **no** identifica al cliente.
 
 ## 10. Antifraude (MVP)
 - Cinco reglas fijas en `fraud_rules_config`: velocidad, monto máximo, factura repetida, concentración y tasa anómala de reembolsos.
@@ -224,9 +224,9 @@ Puertos servidos por Caddy: web comercio **443**, web administración **8443**; 
 - Dar al comercio endpoints para editar reglas de conversión.
 
 ## 15. Decisiones
-**Cerradas (no las reabras):** dos builds web en dos puertos · Argon2id con `cryptography` 2.9.0 (PHC verificado contra el binario C oficial) · correo Gmail/Google Workspace SMTP con `SmtpEmailSender` propio (sin Mailpit) · SMS mínimo + correo · solo `+591` · conversión solo del admin · puntos sobre monto neto · cajero puede solicitar reembolso · solo reembolso total · saldo insuficiente = reversión parcial · no se restituye el canje · sucursal fija por cajero · factura = foto + número + razón social · ventana de reembolso configurable · **MVP sin RLS** (regla 2.7).
+**Cerradas (no las reabras):** dos builds web en dos puertos · Argon2id con `cryptography` 2.9.0 (PHC verificado contra el binario C oficial) · correo Gmail/Google Workspace SMTP con `SmtpEmailSender` propio (sin Mailpit) · SMS mínimo + correo · solo `+591`, con 8 dígitos cualesquiera (no se exige inicio 6/7) · conversión solo del admin · puntos sobre monto neto · cajero puede solicitar reembolso · solo reembolso total · saldo insuficiente = reversión parcial · no se restituye el canje · sucursal fija por cajero · factura = foto + número + razón social · ventana de reembolso configurable · `purchases.invoice_ref` **obligatorio** para todos los comercios · sucursal **"Principal" creada automáticamente** al registrar el comercio · **MVP sin RLS** (regla 2.7).
 
-**Abiertas (pregunta, no decidas):** proveedor de SMS · valores iniciales de ventana de reembolso, vencimiento, tamaño máximo y retención de fotos · razón social del comprador o del emisor · `invoice_ref` obligatorio u opcional por comercio · destino del despliegue · recorte de hexagonal en Flutter · motivo opcional del reembolso · sucursal "Principal" automática · confirmación de las dos interpretaciones de la encuesta (refresh web en cookie `HttpOnly`; SMS mínimo con correo, sin exigir el correo para acumular) · verificación del plan de numeración boliviano (8 dígitos, inicia 6 o 7).
+**Abiertas (pregunta, no decidas):** proveedor de SMS · valores iniciales de ventana de reembolso, vencimiento, tamaño máximo y retención de fotos · razón social del comprador o del emisor · destino del despliegue · recorte de hexagonal en Flutter · motivo opcional del reembolso · confirmación de las dos interpretaciones de la encuesta (refresh web en cookie `HttpOnly`; SMS mínimo con correo, sin exigir el correo para acumular).
 
 ## 16. Definición de terminado
 - [ ] Spec actualizado y aprobado.
