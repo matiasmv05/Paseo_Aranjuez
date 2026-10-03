@@ -155,7 +155,6 @@ class InMemoryResets
   }
 
   @override
-
   Future<int> deleteExpired(DateTime now) async {
     final expired = byHash.keys
         .where((k) => byHash[k]!.expiresAt.isBefore(now))
