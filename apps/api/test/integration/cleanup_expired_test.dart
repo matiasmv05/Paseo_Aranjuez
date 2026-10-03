@@ -10,12 +10,6 @@ import 'support.dart';
 // en el job integration de CI y en local con BD levantada:
 //   docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --wait db
 
-/// Ejecuta SQL arbitrario sin parámetros (solo para cleanup de filas
-/// semilla; los tests no limpian la base dev, AGENTS.md §11).
-Future<void> _dbExecute(PgDatabase db, String sql) async {
-  await db.session.execute(Sql(sql));
-}
-
 /// Inserta un usuario mínimo y devuelve su id como texto.
 Future<String> _insertUser(PgDatabase db) async {
   final id = newId();
