@@ -20,7 +20,7 @@
 - **OPEN_DECISIONS** (AGENTS.md §15; esta spec NO las resuelve):
    - ~~Proveedor de correo~~ **DECIDIDO (03/10/2026)**: Gmail/Google Workspace SMTP con remitente del equipo; implementación propia `SmtpEmailSender`.
    - Proveedor de SMS y su costo (sigue abierto; en dev, `OTP_SENDER=console`).
-  - Librería concreta de Argon2id (pendiente benchmark y vectores de prueba).
+   - ~~Librería concreta de Argon2id~~ **DECIDIDA (03/10/2026)**: `cryptography` 2.9.0. Ver `specs/001-identidad/research.md`.
   - Regex endurecida del móvil boliviano (`+591` + 8 dígitos iniciando en 6 o 7; hasta su verificación se valida `^\+591[0-9]{8}$`).
   - Confirmación de las interpretaciones de la encuesta: refresh web en cookie `HttpOnly`; SMS mínimo con correo adicional sin exigir el correo para acumular.
 

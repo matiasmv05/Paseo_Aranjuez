@@ -67,7 +67,7 @@ No resolver sin decisión humana:
 - `invoice_ref` obligatorio u opcional por comercio.
 - Confirmación de interpretaciones de encuesta: refresh web en cookie `HttpOnly`; SMS mínimo con correo adicional sin exigir correo para acumular.
 - ~~Proveedor de SMS y correo, con costo real~~ — correo **DECIDIDO 03/10/2026**: Gmail/Google Workspace SMTP, `SmtpEmailSender` propio ; SMS: **sigue ABIERTO**.
-- Librería Argon2id tras benchmark y vectores de prueba.
+- ~~Librería Argon2id tras benchmark~~ — **DECIDIDA 03/10/2026**: `cryptography` 2.9.0 (PHC verificado contra el binario C oficial; ~190 ms con parámetros OWASP). Detalle: `specs/001-identidad/research.md`.
 - Valores iniciales de `refund_window_days`, vencimiento de solicitudes, tamaño máximo y retención de fotos.
 - Razón social del comprador o del emisor.
 - Verificación del plan de numeración boliviano (`+591`, 8 dígitos, inicia 6 o 7).
