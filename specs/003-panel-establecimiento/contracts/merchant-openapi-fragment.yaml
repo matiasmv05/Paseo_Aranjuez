@@ -1,0 +1,129 @@
+﻿# Fragmento de OpenAPI: endpoints del panel del comercio (Persona 3)
+#
+# Trazabilidad de la feature `003-panel-establecimiento`. El archivo canónico
+# sigue siendo `docs/openapi.yaml` (tag `comercio`), del que este extracto copia
+# los `paths` con sus `$ref` reales. La seguridad es global en el contrato raíz
+# (`security: [{ bearerAuth: [] }]`), no por operación.
+paths:
+  /merchant/customers/identify:
+    post:
+      tags: [comercio]
+      operationId: identifyCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IdentifyRequest' }
+      responses:
+        '200':
+          description: Cliente identificado; ticket emitido.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IdentifyResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403':
+          description: Token no de comercio, o cliente con teléfono sin verificar.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              examples:
+                forbidden: { $ref: '#/components/examples/Forbidden' }
+                phoneNotVerified: { $ref: '#/components/examples/PhoneNotVerified' }
+        '404': { $ref: '#/components/responses/CustomerNotFound' }
+        '422':
+          description: PHONE_NOT_SUPPORTED, INVALID_QR_TOKEN o VALIDATION_FAILED.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              examples:
+                phoneNotSupported: { $ref: '#/components/examples/PhoneNotSupported' }
+                invalidQrToken: { $ref: '#/components/examples/InvalidQrToken' }
+                validationFailed: { $ref: '#/components/examples/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /merchant/purchases/preview:
+    post:
+      tags: [comercio]
+      operationId: previewPurchase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PreviewRequest' }
+      responses:
+        '200':
+          description: Cálculo sin efectos secundarios.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchasePreviewResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/NoApplicableRule' }
+        '422':
+          description: INVALID_IDENTIFICATION_TICKET o VALIDATION_FAILED.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              examples:
+                invalidTicket: { $ref: '#/components/examples/InvalidIdentificationTicket' }
+                validationFailed: { $ref: '#/components/examples/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /merchant/purchases:
+    post:
+      tags: [comercio]
+      operationId: registerPurchase
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PurchaseRequest' }
+      responses:
+        '200':
+          description: Reintento idempotente; misma respuesta que 201.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchaseResponse' }
+        '201':
+          description: Compra registrada; points_credited acreditados.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchaseResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: DUPLICATE_INVOICE o NO_APPLICABLE_RULE.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              examples:
+                duplicateInvoice: { $ref: '#/components/examples/DuplicateInvoice' }
+                noApplicableRule: { $ref: '#/components/examples/NoApplicableRule' }
+        '422':
+          description: INVALID_IDENTIFICATION_TICKET o VALIDATION_FAILED.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              examples:
+                invalidTicket: { $ref: '#/components/examples/InvalidIdentificationTicket' }
+                validationFailed: { $ref: '#/components/examples/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /merchant/movements:
+    get:
+      tags: [comercio]
+      operationId: listMovements
+      parameters:
+        - $ref: '#/components/parameters/MovementLimit'
+        - $ref: '#/components/parameters/MovementCursor'
+      responses:
+        '200':
+          description: Página de movimientos; next_cursor null en la última.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MovementPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
