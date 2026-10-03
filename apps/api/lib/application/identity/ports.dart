@@ -227,8 +227,7 @@ abstract interface class TokenGenerator {
   String hashToken(String token);
 }
 
-/// Ejecuta un bloque en una transaccion; el adapter fija el contexto RLS
-/// (`set_config(..., true)`, rol `system` para identidad).
+/// Ejecuta un bloque en una transaccion (BEGIN/COMMIT/ROLLBACK).
 abstract interface class TransactionRunner {
   Future<T> run<T>(Future<T> Function() body);
 }

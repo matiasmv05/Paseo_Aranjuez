@@ -12,7 +12,8 @@ Fuentes complementarias: `9-stack-tecnologico-paseo-points.md` (por qué; incluy
 Plataforma de puntos de fidelización para comercios. Tres actores: **cliente** (acumula y canjea), **comercio** (dueño y cajeros, repartidos en **sucursales**: registran compras, validan canjes, solicitan reembolsos), **administrador** (configura, aprueba, resuelve reembolsos, revisa fraude). Una app Flutter (móvil + web) y una API Dart Frog sobre PostgreSQL.
 
 ### 1.1 Estado del repositorio (a 03/10/2026)
-- **Fase de fundación SDD:** existe el repo git activo (`main`), `.gitignore`, `CLAUDE.md` (`@AGENTS.md`), `.specify/` (constitución y plantillas), `specs/README.md`, `docs/agent-audit.md`, `docs/openapi.yaml` (línea base: health + auth), monorepo pub workspace con FVM (Flutter 3.47.6) e `infra/` base verificada en vivo (Compose, roles, `V001`). No hay aún `apps/` implementadas, `specs/<feature>/` aprobadas ni CI. Las rutas y comandos de este archivo describen el monorepo **objetivo**: verifica qué existe antes de usarlos y no asumas que algo ya está implementado. Estado detallado en `docs/agent-audit.md`.
+- **Implementando `001-identidad`** (rama `feat/001-identidad`, con cambios sin commitear): `apps/api` tiene esqueleto Dart Frog (`routes/health.dart`, `routes/ready.dart`, middleware de errores RFC 9457), dominio y casos de uso de identidad (HU-01–HU-05), adaptadores `adapters/out/postgres/` (repositorios, `TransactionRunner`, audit) y pruebas unitarias + de integración; `packages/paseo_shared` tiene DTOs de auth y `ApiErrorCode` con pruebas. Aprobado: `specs/001-identidad/` (spec, plan, tasks, research de Argon2id). Existen `V001` y `V002` (identidad), CI (`.github/workflows/ci.yml`: formato, análisis, pruebas, lint OpenAPI, migraciones desde cero, inmutabilidad de `V###`) e `infra/` verificada en vivo.
+- **Falta aún:** rutas `routes/auth/*` y `adapters/in` (solo existe `adapters/out`), `Argon2idPasswordHasher`/`SmtpEmailSender`/OTP senders (T031), apps de Flutter (solo `apps/mobile/lib/main.dart` stub; sin entradas web) y specs de features posteriores. Las rutas y comandos de este archivo describen el monorepo **objetivo**: verifica qué existe antes de usarlos. Estado detallado en `docs/agent-audit.md`.
 - Monorepo gestionado con **pub workspaces** (raíz `pubspec.yaml`); Melos opcional. Flutter y Dart se fijan con **FVM** (`.fvmrc`), un solo SDK para apps y API: usa `fvm flutter` / `fvm dart`, nunca el Flutter global.
 - SDD con GitHub Spec Kit: constitución (este archivo) → `specs/<feature>/` (spec, plan, tareas) → implementación. Plantillas en `.specify/`.
 
@@ -79,6 +80,7 @@ lib/adapters/out  → Postgres*, Jwt*, SmtpEmailSender, OtpSender, Fcm*.
 Si la API se conecta como superusuario o dueño, **RLS deja de funcionar** (lo saltan). No lo hagas.
 
 ### 5.3 RLS
+- **SUPERSEDIDO para el MVP** (regla 2.7): hoy se trabaja sin RLS; lo que sigue aplica cuando se reintroduzca.
 - Cada transacción empieza fijando contexto con `set_config(..., true)`: `app.user_id`, `app.role`, `app.customer_id`, `app.establishment_id`, `app.branch_id`. El `true` es obligatorio (el pool reutiliza conexiones).
 - Los valores vienen **de los claims verificados del JWT**, nunca del cuerpo ni de parámetros de la petición.
 - `app.role = 'system'` solo lo fijan los adaptadores de Identity (login, registro, OTP, recuperación).
@@ -151,6 +153,7 @@ Si la API se conecta como superusuario o dueño, **RLS deja de funcionar** (lo s
 ## 11. Pruebas
 - `domain`: pruebas unitarias sin base de datos, por tabla de casos.
 - Repositorios y RLS: pruebas de integración contra PostgreSQL real (contenedor), con el rol `paseo_app`.
+- **Pruebas de integración (`apps/api/test/integration/`)** requieren la base dev levantada: `docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --wait db`. Conexión por loopback puerto **5433**, rol `paseo_app` (`PASEO_APP_PASSWORD` en entorno, fallback dev). **Los tests no limpian la base**: usa los helpers de `test/integration/support.dart` (`uniqueEmail()`, `uniquePhone()`, `newId()`), nunca valores fijos.
 - Criterios de aceptación de cada HU → una prueba. Las escribe o revisa alguien distinto de quien implementó.
 - CI aplica **todas las migraciones desde cero** antes de probar.
 
@@ -160,7 +163,7 @@ Si la API se conecta como superusuario o dueño, **RLS deja de funcionar** (lo s
 - Un `analysis_options.yaml` único para todo el monorepo, con análisis estricto (`very_good_analysis` o equivalente). `pubspec.lock` versionado; `dart pub outdated` en revisiones.
 - Un agente por feature y rama; no dos agentes sobre los mismos archivos.
 - El humano aprueba el **spec y el plan** antes de implementar.
-- Antes de dar algo por hecho: `dart format`, `dart analyze`, pruebas, y si tocaste esquema, migraciones desde cero + pruebas RLS.
+- Antes de dar algo por hecho: `dart format`, `dart analyze`, pruebas, y si tocaste esquema, migraciones desde cero (+ pruebas RLS cuando se reintroduzcan, regla 2.7).
 
 ## 13. Comandos
 ```bash
@@ -173,9 +176,16 @@ docker compose -f infra/docker-compose.yml run --rm migrate info                
 docker compose -f infra/docker-compose.yml run --rm migrate validate
 
 fvm dart format --set-exit-if-changed .
-fvm dart analyze
+fvm dart analyze --fatal-warnings              # igual que CI
 fvm dart test                               # en apps/api y packages/*
 fvm flutter test                            # en apps/mobile
+
+# Pruebas de integración de la API (requieren la base dev levantada, §11)
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --wait db
+cd apps/api && fvm dart test test/integration
+
+# Lint del contrato (igual que CI)
+npx --yes @redocly/cli@2 lint docs/openapi.yaml
 
 # Desarrollo de las webs (un código, tres entradas; en apps/mobile)
 fvm flutter run -d chrome --web-port 8081 -t lib/main_merchant_web.dart   # web comercio
@@ -190,7 +200,7 @@ Detalle de servicios, puertos y variables: `INFRASTRUCTURE.md`.
 
 ## 14. Prohibido
 - Editar o borrar una migración ya aplicada; usar `flyway clean`; ejecutar DDL desde la API.
-- Conectar la API como `postgres_admin` o `paseo_owner`; crear tablas sin RLS.
+- Conectar la API como `postgres_admin` o `paseo_owner`; crear tablas sin `GRANT` mínimos (RLS suspendida solo en el MVP, regla 2.7).
 - Leer, imprimir, modificar o commitear `.env` o secretos.
 - Comandos destructivos (`rm -rf`, `DROP`, `TRUNCATE`, `git push --force`) sin aprobación explícita.
 - Apuntar un MCP de base de datos a datos reales; usar solo la base local con rol de solo lectura.
@@ -202,15 +212,15 @@ Detalle de servicios, puertos y variables: `INFRASTRUCTURE.md`.
 - Dar al comercio endpoints para editar reglas de conversión.
 
 ## 15. Decisiones abiertas (no las resuelvas tú; pregunta)
-Decididas por el equipo (**no las reabras**): dos builds web en dos puertos · Argon2id · SMS mínimo + correo · solo `+591` · conversión solo del admin · puntos sobre monto neto · cajero puede solicitar reembolso · solo reembolso total · saldo insuficiente = reversión parcial · no se restituye el canje · sucursal fija por cajero · factura = foto + número + razón social · ventana de reembolso configurable.
+Decididas por el equipo (**no las reabras**): dos builds web en dos puertos · Argon2id con `cryptography` 2.9.0 (PHC verificado contra el binario C oficial) · correo Gmail/Google Workspace SMTP con `SmtpEmailSender` propio (sin Mailpit) · SMS mínimo + correo · solo `+591` · conversión solo del admin · puntos sobre monto neto · cajero puede solicitar reembolso · solo reembolso total · saldo insuficiente = reversión parcial · no se restituye el canje · sucursal fija por cajero · factura = foto + número + razón social · ventana de reembolso configurable.
 
-Abiertas (**pregunta, no decidas**): proveedor de SMS y de correo · librería concreta de Argon2id (benchmark) · valores iniciales de ventana de reembolso, vencimiento, tamaño máximo y retención de fotos · razón social del comprador o del emisor · `invoice_ref` obligatorio u opcional por comercio · destino del despliegue · recorte de hexagonal en Flutter · motivo opcional del reembolso · sucursal "Principal" automática · confirmación de las dos interpretaciones de la encuesta (refresh web en cookie `HttpOnly`; SMS mínimo con correo adicional, sin exigir el correo para acumular).
+Abiertas (**pregunta, no decidas**): proveedor de SMS · valores iniciales de ventana de reembolso, vencimiento, tamaño máximo y retención de fotos · razón social del comprador o del emisor · `invoice_ref` obligatorio u opcional por comercio · destino del despliegue · recorte de hexagonal en Flutter · motivo opcional del reembolso · sucursal "Principal" automática · confirmación de las dos interpretaciones de la encuesta (refresh web en cookie `HttpOnly`; SMS mínimo con correo adicional, sin exigir el correo para acumular) · verificación del plan de numeración boliviano (8 dígitos, inicia 6 o 7).
 
 ## 16. Definición de terminado
 - [ ] Spec actualizado y aprobado.
 - [ ] Endpoint en `openapi.yaml` (si aplica).
 - [ ] Regla de dependencia hexagonal respetada.
-- [ ] Migración nueva (si hay cambio de esquema) con RLS, `GRANT` y prueba.
+- [ ] Migración nueva (si hay cambio de esquema) con `GRANT` mínimos; RLS + prueba de aislamiento al reintroducirla (deuda bloqueante, regla 2.7).
 - [ ] Idempotencia y auditoría en escrituras críticas.
 - [ ] Sin datos personales en claims ni en logs.
 - [ ] Si toca reembolsos: sucursal y hora vienen del servidor; un solo `REVERSAL` por crédito; prueba de saldo insuficiente.

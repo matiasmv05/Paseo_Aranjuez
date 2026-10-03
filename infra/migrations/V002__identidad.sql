@@ -1,6 +1,9 @@
 -- V002__identidad.sql
 -- Identidad: users, customers, verification_codes, password_resets, refresh_tokens, audit_log.
--- Se ejecuta como paseo_owner vía Flyway. Toda tabla nace con RLS, políticas y GRANTs (AGENTS.md §5.3).
+-- Se ejecuta como paseo_owner vía Flyway.
+-- DECISIÓN DE EQUIPO (03/10/2026): MVP SIN RLS (supersede AGENTS.md regla 7).
+-- Solo GRANTs mínimos a paseo_app y REVOKE de UPDATE/DELETE/TRUNCATE en
+-- audit_log. RLS + políticas son deuda bloqueante antes de producción.
 -- PII fuera de users: teléfono vive solo en customers. Sin códigos en claro (solo hashes).
 
 -- ============================================================================
@@ -87,47 +90,3 @@ GRANT SELECT, INSERT, UPDATE ON app.password_resets    TO paseo_app;  -- used_at
 GRANT SELECT, INSERT, UPDATE ON app.refresh_tokens     TO paseo_app;  -- revoked_at
 GRANT INSERT ON app.audit_log                          TO paseo_app;  -- solo inserción
 REVOKE UPDATE, DELETE, TRUNCATE ON app.audit_log FROM paseo_app;
-
--- ============================================================================
--- RLS: sin contexto válido, ninguna fila. 'system' solo para identidad.
--- ============================================================================
-
-ALTER TABLE app.users              ENABLE ROW LEVEL SECURITY;
-ALTER TABLE app.customers          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE app.verification_codes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE app.password_resets    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE app.refresh_tokens     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE app.audit_log          ENABLE ROW LEVEL SECURITY;
-
--- users: acceso de identidad (system) + lectura de la propia fila (prepara /me).
-CREATE POLICY users_system_all ON app.users
-    FOR ALL USING (current_setting('app.role', true) = 'system')
-    WITH CHECK (current_setting('app.role', true) = 'system');
-CREATE POLICY users_self_read ON app.users
-    FOR SELECT USING (nullif(current_setting('app.user_id', true), '')::uuid = id);
-
--- customers: acceso de identidad (system); el propio cliente lee su fila (user_id es PK).
-CREATE POLICY customers_system_all ON app.customers
-    FOR ALL USING (current_setting('app.role', true) = 'system')
-    WITH CHECK (current_setting('app.role', true) = 'system');
-CREATE POLICY customers_self_read ON app.customers
-    FOR SELECT USING (nullif(current_setting('app.user_id', true), '')::uuid = user_id);
-
--- verification_codes: solo identidad (system). Nadie más ve códigos de otros teléfonos.
-CREATE POLICY verification_codes_system_all ON app.verification_codes
-    FOR ALL USING (current_setting('app.role', true) = 'system')
-    WITH CHECK (current_setting('app.role', true) = 'system');
-
--- password_resets: solo identidad (system).
-CREATE POLICY password_resets_system_all ON app.password_resets
-    FOR ALL USING (current_setting('app.role', true) = 'system')
-    WITH CHECK (current_setting('app.role', true) = 'system');
-
--- refresh_tokens: solo identidad (system).
-CREATE POLICY refresh_tokens_system_all ON app.refresh_tokens
-    FOR ALL USING (current_setting('app.role', true) = 'system')
-    WITH CHECK (current_setting('app.role', true) = 'system');
-
--- audit_log: system inserta y audita; sin SELECT para paseo_app en este MVP.
-CREATE POLICY audit_log_system_insert ON app.audit_log
-    FOR INSERT WITH CHECK (current_setting('app.role', true) = 'system');

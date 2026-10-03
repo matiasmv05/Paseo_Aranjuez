@@ -9,6 +9,7 @@ dependencies:
   dart_frog: ^1.2.6
   paseo_shared:
     path: ../../packages/paseo_shared
+  postgres: ^3.5.18
   uuid: ^4.5.1
 
 dev_dependencies:
