@@ -19,6 +19,7 @@ IMPLEMENTED:
 - Base SDD inicial creada: `.specify/memory/constitution.md`, `.specify/templates/*.md` y `specs/README.md`.
 - No hay specs de features aprobadas (`specs/<feature>/` aún no existe).
 - Plan de esta fase documentado en `docs/superpowers/plans/sdd-foundation.md`.
+- Contrato base `docs/openapi.yaml` creado el 03/10/2026 (OpenAPI 3.1): sobre común (servidor `/api/v1`, `Problem` RFC 9457, `bearerAuth` con audiencias, `Idempotency-Key`, `MoneyCents`, `CursorPage`), `GET /health`, `GET /ready` y los 8 endpoints de auth ya decididos en `AGENTS.md` §6/§8. Validado con `redocly lint` (0 errores, 7 warnings intencionales).
 - No hay workspace Dart (`pubspec.yaml` no existe).
 - No hay configuración Flutter/Dart/FVM (`.fvmrc` no existe).
 - No hay configuración CI (`.github/` no existe).
@@ -43,7 +44,7 @@ VERIFIED:
 - Esqueleto Dart Frog de API y worker.
 - Esqueleto Flutter con tres entradas: `main.dart`, `main_merchant_web.dart`, `main_admin_web.dart`.
 - `packages/paseo_shared` con DTOs/enums/errores de contrato.
-- `docs/openapi.yaml` inicial.
+- `docs/openapi.yaml` línea base creada (03/10/2026); pendiente extenderla con cada spec de feature.
 - Specs de features aprobadas en `specs/<feature>/`.
 - `infra/docker-compose.yml`, `infra/docker-compose.dev.yml`, `infra/api.Dockerfile`, `infra/Caddyfile`, `infra/.env.example`, `infra/db/init/`, `infra/migrations/`, `infra/seed/`, `infra/backup/`.
 - Migraciones Flyway iniciales previstas (`V001`–`V010`) y pruebas RLS asociadas.
@@ -52,7 +53,7 @@ VERIFIED:
 
 ## CONTRADICTIONS
 
-- `AGENTS.md` y el stack citan como fuentes complementarias `specs/` y `docs/openapi.yaml`; `specs/` ya tiene entrada base, pero `docs/openapi.yaml` aún no existe. No es una contradicción semántica si se interpreta como monorepo objetivo, pero bloquea cualquier trabajo de API.
+- `AGENTS.md` y el stack citan `specs/` y `docs/openapi.yaml`; ambos existen ya en su forma base (respectivamente 02/10 y 03/10/2026). La extensión del contrato queda sujeta a specs de feature aprobadas.
 - `INFRASTRUCTURE.md` fija `postgres:18-alpine` y una versión Flyway candidata, pero marca que las etiquetas deben verificarse con `docker pull`; hasta hacerlo, la reproducibilidad queda pendiente.
 - El stack indica una versión concreta de Flyway (`13.8.1`) y a la vez ordena fijar la más reciente confirmada; no debe implementarse una versión sin verificación real.
 - No se detectó contradicción entre decisiones cerradas y reglas actuales, pero faltan artefactos normativos (`specs/`, OpenAPI, CI) para validarlas contra implementación.
@@ -117,7 +118,7 @@ No resolver sin decisión humana:
 1. GATE 0: Mantener este audit como línea base y no iniciar features sobre supuestos.
 2. DONE: Inicializar git y archivos base mínimos no conductuales: `.gitignore`, `CLAUDE.md` (`@AGENTS.md`).
 3. DONE: Crear/instalar SDD local: `.specify/`, constitución referenciando `AGENTS.md`, plantillas de spec/plan/tasks y `specs/README.md`.
-4. Crear contrato inicial `docs/openapi.yaml` para el primer alcance aprobado (sin feature implementation).
+4. DONE (03/10): Contrato inicial `docs/openapi.yaml` (sobre común + health + auth, alcance aprobado por usuario).
 5. Crear monorepo con FVM, `pubspec.yaml` workspace y `analysis_options.yaml` estricto.
 6. Crear infraestructura base: Compose base/dev, roles, `.env.example`, Dockerfile API/worker, Caddyfile, backup esqueleto, migraciones `V001`–`V002` mínimas con RLS/grants/pruebas.
 7. CI inicial: formato, análisis, validación OpenAPI, arquitectura, migraciones desde cero, pruebas RLS, builds.
@@ -140,7 +141,7 @@ No resolver sin decisión humana:
 - GATE 1 — contradictions resolved: NEEDS_REVIEW por `docs/openapi.yaml`/CI ausentes y versiones Docker pendientes.
 - GATE 2 — spec valid/approved: BLOCKED hasta crear/aprobar la primera spec de feature.
 - GATE 3 — plan valid: BLOCKED.
-- GATE 4 — API contract valid: BLOCKED hasta `docs/openapi.yaml`.
+- GATE 4 — API contract valid: DONE para la línea base (health + auth); BLOCKED para endpoints de negocio hasta sus specs.
 - GATE 5 — architecture valid: DOCUMENTED, no VERIFIED.
 - GATE 6 — migrations valid: BLOCKED.
 - GATE 7 — RLS tests valid: BLOCKED.

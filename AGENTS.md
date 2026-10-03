@@ -11,8 +11,8 @@ Fuentes complementarias: `9-stack-tecnologico-paseo-points.md` (por qué; incluy
 ## 1. Qué es el proyecto
 Plataforma de puntos de fidelización para comercios. Tres actores: **cliente** (acumula y canjea), **comercio** (dueño y cajeros, repartidos en **sucursales**: registran compras, validan canjes, solicitan reembolsos), **administrador** (configura, aprueba, resuelve reembolsos, revisa fraude). Una app Flutter (móvil + web) y una API Dart Frog sobre PostgreSQL.
 
-### 1.1 Estado del repositorio (a 02/10/2026)
-- **Fase de documentación:** solo existen este archivo, `INFRASTRUCTURE.md` y `9-stack-tecnologico-paseo-points.md`. No hay aún `apps/`, `packages/`, `infra/`, `specs/`, `docs/openapi.yaml` ni `pubspec.yaml`, y el directorio aún no es un repo git. Las rutas y comandos de este archivo describen el monorepo **objetivo**: verifica qué existe antes de usarlos y no asumas que algo ya está implementado.
+### 1.1 Estado del repositorio (a 03/10/2026)
+- **Fase de fundación SDD:** existe el repo git activo (`main`), `.gitignore`, `CLAUDE.md` (`@AGENTS.md`), `.specify/` (constitución y plantillas), `specs/README.md`, `docs/agent-audit.md` y `docs/superpowers/plans/sdd-foundation.md`. No hay aún `apps/`, `packages/`, `infra/`, `specs/<feature>/`, `docs/openapi.yaml` ni `pubspec.yaml`, y ninguna spec de feature está aprobada. Las rutas y comandos de este archivo describen el monorepo **objetivo**: verifica qué existe antes de usarlos y no asumas que algo ya está implementado. Estado detallado en `docs/agent-audit.md`.
 - Monorepo gestionado con **pub workspaces** (raíz `pubspec.yaml`); Melos opcional. Flutter y Dart se fijan con **FVM** (`.fvmrc`), un solo SDK para apps y API: usa `fvm flutter` / `fvm dart`, nunca el Flutter global.
 - SDD con GitHub Spec Kit: constitución (este archivo) → `specs/<feature>/` (spec, plan, tareas) → implementación. Plantillas en `.specify/`.
 

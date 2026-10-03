@@ -1,0 +1,559 @@
+openapi: 3.1.0
+info:
+  title: Paseo Points API
+  version: 0.1.0
+  description: |
+    API de la plataforma de puntos de fidelización Paseo Points.
+
+    Convenciones globales (fuente: `AGENTS.md` §6, §8, §9):
+
+    - Prefijo `/api/v1`; JSON UTF-8; fechas en ISO 8601 UTC; montos en
+      **centavos enteros** (`int64`); paginación por cursor.
+    - Errores en `application/problem+json` (RFC 9457) con un `code` estable:
+      el cliente programa contra `code`, nunca contra el texto.
+    - Escrituras críticas con `Idempotency-Key`: la repetición con la misma
+      clave devuelve `200` con la respuesta original.
+    - Tres audiencias JWT (`aud`): `paseo-mobile`, `paseo-web-merchant`,
+      `paseo-web-admin`. Los tokens de una web no se aceptan en los endpoints
+      de la otra, y `paseo-web-admin` solo existe junto a `role=admin`.
+    - Alcance de esta línea base: salud e identidad (registro, OTP, sesión,
+      recuperación de contraseña). Los endpoints de puntos, compras, canje y
+      administración se añaden cuando exista su spec aprobada.
+
+    Decisión abierta (AGENTS.md §15): la expresión regular del teléfono usa el
+    formato laxo `+591` + 8 dígitos hasta verificar la regla de numeración del
+    móvil boliviano (inicio en 6 o 7). No endurecer el patrón sin esa verificación.
+  contact:
+    name: Equipo Paseo Points
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: system
+    description: Salud del servicio (AGENTS.md §16 / INFRASTRUCTURE.md §13)
+  - name: auth
+    description: Identidad y sesión (AGENTS.md §6 y §8)
+
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: El proceso está vivo
+      operationId: getHealth
+      security: []
+      responses:
+        '200':
+          description: El servicio está vivo.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+
+  /ready:
+    get:
+      tags: [system]
+      summary: El servicio puede atender tráfico (incluye chequeo de base de datos)
+      operationId: getReady
+      security: []
+      responses:
+        '200':
+          description: El servicio y la base de datos responden.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ready]
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Registrar un nuevo cliente
+      description: |
+        Registro con correo + teléfono + contraseña (AGENTS.md §8). Solo teléfonos
+        bolivianos `+591`; otro prefijo devuelve `PHONE_NOT_SUPPORTED`.
+        Tras el registro se envía el OTP por **SMS** (nunca en cada login) y el
+        correo de verificación por separado; el teléfono verificado (`pv`) es el
+        requisito mínimo para generar QR y acumular puntos. La contraseña se
+        guarda con Argon2id (formato PHC); nunca se registra en logs.
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Cliente registrado; OTP enviado por SMS.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [customer_id, phone_verified, email_verification_sent]
+                properties:
+                  customer_id:
+                    type: string
+                    format: uuid
+                  phone_verified:
+                    type: boolean
+                    example: false
+                  email_verification_sent:
+                    type: boolean
+        '409':
+          description: El correo o el teléfono ya está registrado.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Conflicto
+                status: 409
+                code: CONFLICT
+        '422':
+          description: Validación fallida (incluye `PHONE_NOT_SUPPORTED` para prefijos distintos de `+591`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Validación fallida
+                status: 422
+                code: PHONE_NOT_SUPPORTED
+
+  /auth/otp/verify:
+    post:
+      tags: [auth]
+      summary: Verificar el teléfono con el OTP
+      description: |
+        OTP de 6 dígitos (AGENTS.md §8): solo se guarda su hash, vence en
+        5 minutos y admite 5 intentos. Al verificar, `pv=true`.
+      operationId: verifyOtp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpVerifyRequest'
+      responses:
+        '200':
+          description: Teléfono verificado.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [phone_verified]
+                properties:
+                  phone_verified:
+                    type: boolean
+                    example: true
+        '422':
+          description: OTP inválido, vencido o sin intentos restantes.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Validación fallida
+                status: 422
+                code: OTP_INVALID
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /auth/otp/resend:
+    post:
+      tags: [auth]
+      summary: Reenviar el OTP
+      description: |
+        Reenvío con espera mínima de 60 segundos y topes por teléfono e IP
+        (AGENTS.md §8). Responde igual exista o no la cuenta.
+      operationId: resendOtp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  $ref: '#/components/schemas/PhoneBO'
+      responses:
+        '202':
+          description: Solicitud aceptada; el SMS se envía si el teléfono es válido.
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Iniciar sesión
+      description: |
+        Devuelve un access token corto (≤ 15 min) con los claims de AGENTS.md §6
+        (`iss, aud, sub, iat, exp, jti, role, cid, est, br, pv, ev, tv`), sin
+        datos personales.
+
+        La forma del refresh token depende de `X-Paseo-Client`:
+
+        - `paseo-mobile`: refresh token en el cuerpo de la respuesta.
+        - `paseo-web-merchant`: cookie `__Secure-rt_merchant`.
+        - `paseo-web-admin`: cookie `__Secure-rt_admin`.
+
+        Cookies web: `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`.
+        Las cookies no se aíslan por puerto: cada audiencia tiene su propio
+        nombre de cookie y no se reutilizan (AGENTS.md §6).
+        `paseo-web-admin` solo se emite con `role=admin`.
+      operationId: login
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/XPaseoClient'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Sesión iniciada.
+          headers:
+            Set-Cookie:
+              description: |
+                Solo clientes web: cookie de refresh `__Secure-rt_merchant` o
+                `__Secure-rt_admin` (`HttpOnly; Secure; SameSite=Strict`).
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Credenciales inválidas (misma respuesta para correo inexistente).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Credenciales inválidas
+                status: 401
+                code: CREDENTIALS_INVALID
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /auth/refresh:
+    post:
+      tags: [auth]
+      summary: Renovar la sesión (refresh rotativo)
+      description: |
+        Refresh rotativo guardado como hash, con detección de reutilización
+        (AGENTS.md §6): un token reutilizado revoca la cadena.
+
+        Exige `X-Paseo-Client`. Los clientes web envían el refresh en su cookie
+        propia y el servidor valida `Origin`. El cliente móvil lo envía en el
+        cuerpo.
+      operationId: refresh
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/XPaseoClient'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+                  description: Solo para `paseo-mobile`; las webs usan la cookie.
+      responses:
+        '200':
+          description: Sesión renovada; el refresh anterior queda revocado.
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Token inválido, vencido o reutilizado.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Token inválido
+                status: 401
+                code: TOKEN_REUSE_DETECTED
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Cerrar sesión (revoca el refresh actual)
+      operationId: logout
+      parameters:
+        - $ref: '#/components/parameters/XPaseoClient'
+      responses:
+        '204':
+          description: Sesión cerrada; las cookies web se borran (`Set-Cookie` vencida).
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/password/forgot:
+    post:
+      tags: [auth]
+      summary: Solicitar restablecimiento de contraseña
+      description: |
+        **Siempre responde 202**, exista o no el correo (AGENTS.md §8). El token
+        es de ≥ 32 bytes aleatorios, se guarda hasheado, dura 30 minutos y es de
+        un solo uso. Solo habilitado con el correo verificado; el teléfono no
+        participa en la recuperación.
+      operationId: forgotPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '202':
+          description: Solicitud aceptada (respuesta uniforme).
+
+  /auth/password/reset:
+    post:
+      tags: [auth]
+      summary: Restablecer la contraseña
+      description: |
+        Al restablecer: `token_version++` y revocación de todos los refresh
+        tokens de la cuenta (AGENTS.md §8). Tras el éxito hay que iniciar sesión
+        de nuevo.
+      operationId: resetPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, new_password]
+              properties:
+                token:
+                  type: string
+                  description: Token recibido por correo (un solo uso, 30 min).
+                new_password:
+                  $ref: '#/components/schemas/Password'
+      responses:
+        '204':
+          description: Contraseña restablecida; sesiones anteriores revocadas.
+        '422':
+          description: Token inválido, usado o vencido.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Validación fallida
+                status: 422
+                code: TOKEN_INVALID
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Access token de ≤ 15 min. Claims: `iss, aud, sub, iat, exp, jti, role,
+        cid, est, br, pv, ev, tv`; `br` solo para `merchant_cashier`. Sin datos
+        personales en el JWT (AGENTS.md §6, regla 8). Audiencias:
+        `paseo-mobile`, `paseo-web-merchant`, `paseo-web-admin`.
+
+  parameters:
+    XPaseoClient:
+      name: X-Paseo-Client
+      in: header
+      required: true
+      description: |
+        Identifica la aplicación cliente; define la audiencia del token y la
+        forma del refresh token. En `refresh` se exige y se valida `Origin`.
+      schema:
+        type: string
+        enum: [paseo-mobile, paseo-web-merchant, paseo-web-admin]
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        Clave única por operación crítica de escritura (AGENTS.md §9).
+        Reenviar la misma clave devuelve `200` con la respuesta original en
+        lugar de duplicar el efecto. Reservado para compra y canje cuando su
+        spec exista.
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+
+  schemas:
+    Problem:
+      type: object
+      description: |
+        `application/problem+json` (RFC 9457) con `code` estable. El cliente
+        programa contra `code`; `title`/`detail` son para humanos.
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, format: uri, example: about:blank }
+        title: { type: string }
+        status: { type: integer }
+        code:
+          type: string
+          description: |
+            Código estable. Códigos ya definidos por AGENTS.md:
+            `VALIDATION_FAILED`, `PHONE_NOT_SUPPORTED`, `OTP_INVALID`,
+            `OTP_EXPIRED`, `OTP_TOO_MANY_ATTEMPTS`, `CREDENTIALS_INVALID`,
+            `UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`,
+            `RATE_LIMITED`, `TOKEN_INVALID`, `TOKEN_REUSE_DETECTED`,
+            `NO_APPLICABLE_RULE`, `INSUFFICIENT_POINTS`,
+            `INSUFFICIENT_POINTS_FOR_REVERSAL`, `REFUND_WINDOW_EXPIRED`,
+            `REFUND_ALREADY_RESOLVED`.
+        detail: { type: string }
+        instance: { type: string, format: uri }
+
+    PhoneBO:
+      type: string
+      example: "+59171234567"
+      pattern: '^\+591[0-9]{8}$'
+      description: |
+        Teléfono boliviano en E.164 (AGENTS.md §8). Patrón laxo pendiente de
+        endurecer a inicio 6/7 cuando se verifique la regla de numeración.
+
+    Email:
+      type: string
+      format: email
+      example: cliente@ejemplo.bo
+
+    Password:
+      type: string
+      minLength: 8
+      maxLength: 128
+      description: Se guarda con Argon2id (formato PHC); nunca en logs ni claims.
+
+    RegisterRequest:
+      type: object
+      required: [email, phone, password]
+      properties:
+        email: { $ref: '#/components/schemas/Email' }
+        phone: { $ref: '#/components/schemas/PhoneBO' }
+        password: { $ref: '#/components/schemas/Password' }
+        full_name:
+          type: string
+          maxLength: 120
+          description: Nombre visible; el comercio lo recibe enmascarado (AGENTS.md §8).
+
+    OtpVerifyRequest:
+      type: object
+      required: [phone, code]
+      properties:
+        phone: { $ref: '#/components/schemas/PhoneBO' }
+        code:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: OTP de 6 dígitos; solo su hash se guarda (5 min, 5 intentos).
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { $ref: '#/components/schemas/Email' }
+        password: { type: string }
+
+    TokenResponse:
+      type: object
+      required: [access_token, token_type, expires_in]
+      properties:
+        access_token: { type: string }
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          description: Segundos de vida del access token (≤ 900).
+          maximum: 900
+          example: 900
+        refresh_token:
+          type: string
+          description: Solo para `paseo-mobile`; las webs reciben su cookie.
+
+    MoneyCents:
+      type: integer
+      format: int64
+      description: Montos en centavos enteros; nunca `double`/`float` (regla 9).
+
+    CursorPage:
+      type: object
+      description: Envoltura de paginación por cursor (AGENTS.md §9).
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {}
+        next_cursor:
+          type: [string, 'null']
+          description: Cursor de la página siguiente; `null` cuando no hay más.
+
+  responses:
+    Unauthorized:
+      description: Sin sesión válida.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: about:blank
+            title: Sin sesión
+            status: 401
+            code: UNAUTHENTICATED
+    RateLimited:
+      description: Límite de peticiones excedido.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: about:blank
+            title: Límite excedido
+            status: 429
+            code: RATE_LIMITED
+    ServiceUnavailable:
+      description: Dependencias no disponibles.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: about:blank
+            title: No disponible
+            status: 503
+            code: SERVICE_UNAVAILABLE
+
+security:
+  - bearerAuth: []
