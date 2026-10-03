@@ -65,6 +65,15 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 
 ## Phase N: Cross-Cutting Verification
 
+## Flutter Integration Phase
+
+- [ ] T099: Crear la carpeta `apps/mobile/lib/features/identity` y sub‑módulos.
+- [ ] T100: Implementar pantallas de Registro, OTP, Login, Perfil y visualizador de QR.
+- [ ] T101: Lógica de navegación y gestión de estados (Bloc/Provider).
+- [ ] T102: Diseño responsive con `LayoutBuilder`/`MediaQuery` (mobile, tablet, desktop).
+- [ ] T103: Tests unitarios y de widget, integración con rutas Flutter.
+- [ ] T104: Interacción con backend (`GET /customers/me/qr`).
+
 - [ ] T090 `fvm dart format --set-exit-if-changed . && fvm dart analyze --fatal-warnings && fvm dart test` (apps/api, packages/paseo_shared) en verde.
 - [ ] T091 Migraciones desde cero + `migrate validate` + `infra/tests/rls/` en verde (local y CI).
 - [ ] T092 Revisión de seguridad (skill `security`): cookies, claims, logs sin PII, 202 uniforme, rate limits; escaneo de secretos del diff (`github_run_secret_scanning`).
