@@ -129,6 +129,10 @@ abstract interface class VerificationCodeRepository {
   });
 
   Future<void> updateChallenge(String id, VerificationState challenge);
+
+  /// Worker de limpieza: borra codigos con `expires_at < now`.
+  /// Devuelve cuantas filas elimino.
+  Future<int> deleteExpired(DateTime now);
 }
 
 abstract interface class PasswordResetRepository {
@@ -142,6 +146,10 @@ abstract interface class PasswordResetRepository {
 
   /// Marca como usado de forma atomica; `false` si ya estaba usado.
   Future<bool> tryMarkUsed({required String id, required DateTime at});
+
+  /// Worker de limpieza: borra resets con `expires_at < now`.
+  /// Devuelve cuantas filas elimino.
+  Future<int> deleteExpired(DateTime now);
 }
 
 abstract interface class RefreshTokenRepository {
@@ -165,6 +173,10 @@ abstract interface class RefreshTokenRepository {
 
   /// Revoca todos los refresh del usuario (reset de contrasena).
   Future<void> revokeAllForUser({required String userId, required DateTime at});
+
+  /// Worker de limpieza: borra tokens con `expires_at < now`.
+  /// Devuelve cuantas filas elimino.
+  Future<int> deleteExpired(DateTime now);
 }
 
 // -------------------------------------------------------------------

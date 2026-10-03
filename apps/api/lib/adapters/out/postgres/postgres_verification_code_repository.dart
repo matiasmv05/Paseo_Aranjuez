@@ -1,4 +1,4 @@
-import 'package:paseo_api/adapters/out/postgres/pg.dart';
+﻿import 'package:paseo_api/adapters/out/postgres/pg.dart';
 import 'package:paseo_api/adapters/out/postgres/pg_errors.dart';
 import 'package:paseo_api/application/identity/ports.dart';
 import 'package:paseo_api/domain/identity/identity.dart';
@@ -175,4 +175,13 @@ final class PostgresVerificationCodeRepository
         EmailVerification(:final consumedAt) => consumedAt,
         _ => throw ArgumentError('VerificationState desconocido'),
       };
+
+  /// Borra códigos expirados (`expires_at < now`). Devuelve cuántos.
+  Future<int> deleteExpired(DateTime now) async {
+    final result = await _db.session.execute(
+      Sql.named('DELETE FROM app.verification_codes WHERE expires_at < @now'),
+      parameters: <String, Object?>{'now': now.toUtc()},
+    );
+    return result.affectedRows;
+  }
 }

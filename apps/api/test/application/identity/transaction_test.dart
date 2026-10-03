@@ -153,6 +153,15 @@ class InMemoryResets
     );
     return true;
   }
+
+  @override
+  Future<int> deleteExpired(DateTime now) async {
+    final expired = byHash.keys
+        .where((k) => byHash[k]!.expiresAt.isBefore(now))
+        .toList();
+    for (final k in expired) byHash.remove(k);
+    return expired.length;
+  }
 }
 
 class InMemoryRefreshTokens
@@ -210,6 +219,15 @@ class InMemoryRefreshTokens
     required DateTime at,
   }) async =>
       byHash.updateAll((_, v) => v.userId == userId ? v.revoked(at) : v);
+
+  @override
+  Future<int> deleteExpired(DateTime now) async {
+    final expired = byHash.keys
+        .where((k) => byHash[k]!.expiresAt.isBefore(now))
+        .toList();
+    for (final k in expired) byHash.remove(k);
+    return expired.length;
+  }
 }
 
 void main() {

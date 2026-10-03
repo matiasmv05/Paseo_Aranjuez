@@ -17,7 +17,10 @@ final class JwtTokenSigner implements TokenSigner {
     final header = <String, Object?>{'alg': 'HS256', 'typ': 'JWT', 'kid': kid};
     final signingInput =
         '${_b64(jsonEncode(header))}.${_b64(jsonEncode(claims.toJson()))}';
-    final mac = Hmac(sha256, utf8.encode(secret)).convert(utf8.encode(signingInput));
+    final mac = Hmac(
+      sha256,
+      utf8.encode(secret),
+    ).convert(utf8.encode(signingInput));
     return '$signingInput.${base64Url.encode(mac.bytes).replaceAll('=', '')}';
   }
 

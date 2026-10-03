@@ -57,7 +57,9 @@ final class Argon2idPasswordHasher implements PasswordHasher {
   /// Generate cryptographically secure random salt.
   Uint8List _generateSalt() {
     final random = Random.secure();
-    return Uint8List.fromList(List<int>.generate(_saltLength, (_) => random.nextInt(256)));
+    return Uint8List.fromList(
+      List<int>.generate(_saltLength, (_) => random.nextInt(256)),
+    );
   }
 
   /// Encode salt and hash into PHC string format.
@@ -71,7 +73,9 @@ final class Argon2idPasswordHasher implements PasswordHasher {
   /// Expected format: $argon2id$v=19$m=19456,t=2,p=1$salt_b64$hash_b64
   (Uint8List, Uint8List) _decodePHC(String phc) {
     if (!phc.startsWith('\$argon2id\$v=19\$m=19456,t=2,p=1\$')) {
-      throw const FormatException('Invalid PHC format: wrong algorithm or parameters');
+      throw const FormatException(
+        'Invalid PHC format: wrong algorithm or parameters',
+      );
     }
     final parts = phc.split('\$');
     if (parts.length != 6) {

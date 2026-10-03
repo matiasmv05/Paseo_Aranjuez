@@ -15,7 +15,10 @@ void main() {
       audience: 'paseo-mobile',
       subject: 'user-1',
       issuedAt: DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true),
-      expiresAt: DateTime.fromMillisecondsSinceEpoch(1700000900000, isUtc: true),
+      expiresAt: DateTime.fromMillisecondsSinceEpoch(
+        1700000900000,
+        isUtc: true,
+      ),
       jwtId: 'jti-1',
       role: UserRole.customer,
       customerId: 'user-1',
@@ -32,20 +35,30 @@ void main() {
       final token = signer.sign(claims(tokenVersion: 3));
       final parts = token.split('.');
       expect(parts.length, 3, reason: 'header.payload.signature');
-      final headerJson = utf8.decode(base64Url.decode(base64Url.normalize(parts[0])));
+      final headerJson = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[0])),
+      );
       expect(headerJson, contains('"alg":"HS256"'));
       expect(headerJson, contains('"kid":"dev-key-1"'));
 
-      final payloadJson = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+      final payloadJson = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
       expect(payloadJson, contains('"sub":"user-1"'));
       expect(payloadJson, contains('"aud":"paseo-mobile"'));
       expect(payloadJson, contains('"tv":3'));
     });
 
-    test('two signs of identical payload produce identical tokens (deterministic)', () {
-      const signer = JwtTokenSigner(secret: 'super-secret', kid: 'dev-key-1');
-      expect(signer.sign(claims(tokenVersion: 1)), equals(signer.sign(claims(tokenVersion: 1))));
-    });
+    test(
+      'two signs of identical payload produce identical tokens (deterministic)',
+      () {
+        const signer = JwtTokenSigner(secret: 'super-secret', kid: 'dev-key-1');
+        expect(
+          signer.sign(claims(tokenVersion: 1)),
+          equals(signer.sign(claims(tokenVersion: 1))),
+        );
+      },
+    );
   });
 
   group('CryptoTokenGenerator', () {
@@ -83,4 +96,3 @@ void main() {
     });
   });
 }
-

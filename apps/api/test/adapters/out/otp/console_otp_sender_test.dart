@@ -15,7 +15,10 @@ void main() {
     test('sendOtp prints to stdout (side effect: prints OTP line)', () async {
       final sender = ConsoleOtpSender();
       // Console print is a side effect; we verify no exception.
-      await sender.sendOtp(phone: PhoneBO.parse('+59160123456'), code: '654321');
+      await sender.sendOtp(
+        phone: PhoneBO.parse('+59160123456'),
+        code: '654321',
+      );
     });
   });
 }

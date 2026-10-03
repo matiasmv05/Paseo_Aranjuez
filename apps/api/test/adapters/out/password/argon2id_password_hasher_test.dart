@@ -55,7 +55,10 @@ void main() {
         () => hasher.verify(hash: 'not-a-valid-phc', plain: 'anything'),
         returnsNormally, // should return false, not throw
       );
-      final ok = await hasher.verify(hash: 'not-a-valid-phc', plain: 'anything');
+      final ok = await hasher.verify(
+        hash: 'not-a-valid-phc',
+        plain: 'anything',
+      );
       expect(ok, isFalse);
     });
 

@@ -50,7 +50,8 @@ final class SmtpConfig {
     );
   }
 
-  bool get isConfigured => host.isNotEmpty && username.isNotEmpty && password.isNotEmpty;
+  bool get isConfigured =>
+      host.isNotEmpty && username.isNotEmpty && password.isNotEmpty;
 }
 
 /// SMTP email sender using `mailer` 7.2.0.
@@ -62,27 +63,41 @@ final class SmtpEmailSender implements EmailSender {
   final SmtpConfig _config;
 
   @override
-  Future<void> sendEmailVerification({required Email email, required String token}) async {
+  Future<void> sendEmailVerification({
+    required Email email,
+    required String token,
+  }) async {
     await _send(
       to: email.value,
       subject: 'Verifica tu correo — Paseo Points',
-      body: 'Tu token de verificación es: $token\n\nEste enlace expira en 24 horas.',
+      body:
+          'Tu token de verificación es: $token\n\nEste enlace expira en 24 horas.',
     );
   }
 
   @override
-  Future<void> sendPasswordReset({required Email email, required String token}) async {
+  Future<void> sendPasswordReset({
+    required Email email,
+    required String token,
+  }) async {
     await _send(
       to: email.value,
       subject: 'Recupera tu contraseña — Paseo Points',
-      body: 'Tu token de recuperación es: $token\n\nEste enlace expira en 30 minutos y solo se puede usar una vez.',
+      body:
+          'Tu token de recuperación es: $token\n\nEste enlace expira en 30 minutos y solo se puede usar una vez.',
     );
   }
 
   /// Send email via SMTP.
-  Future<void> _send({required String to, required String subject, required String body}) async {
+  Future<void> _send({
+    required String to,
+    required String subject,
+    required String body,
+  }) async {
     if (!_config.isConfigured) {
-      throw EmailNotConfiguredException('SMTP not configured: set SMTP_HOST, SMTP_USER, SMTP_PASSWORD, SMTP_FROM');
+      throw EmailNotConfiguredException(
+        'SMTP not configured: set SMTP_HOST, SMTP_USER, SMTP_PASSWORD, SMTP_FROM',
+      );
     }
     final smtpServer = SmtpServer(
       _config.host,

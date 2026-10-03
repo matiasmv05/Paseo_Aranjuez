@@ -113,4 +113,13 @@ final class PostgresRefreshTokenRepository implements RefreshTokenRepository {
       parameters: <String, Object?>{'userId': userId, 'at': at.toUtc()},
     );
   }
+
+  /// Borra refresh tokens expirados (`expires_at < now`). Devuelve cuántos.
+  Future<int> deleteExpired(DateTime now) async {
+    final result = await _db.session.execute(
+      Sql.named('DELETE FROM app.refresh_tokens WHERE expires_at < @now'),
+      parameters: <String, Object?>{'now': now.toUtc()},
+    );
+    return result.affectedRows;
+  }
 }

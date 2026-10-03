@@ -6,6 +6,8 @@ import 'package:paseo_api/domain/identity/phone_bo.dart';
 final class ConsoleOtpSender implements OtpSender {
   @override
   Future<void> sendOtp({required PhoneBO phone, required String code}) async {
-    print('[OTP] To: ${phone.value} | Code: $code | Purpose: phone verification');
+    print(
+      '[OTP] To: ${phone.value} | Code: $code | Purpose: phone verification',
+    );
   }
 }
