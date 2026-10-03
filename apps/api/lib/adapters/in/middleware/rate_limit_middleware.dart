@@ -12,7 +12,12 @@ class _Bucket {
 /// Returns 429 `RATE_LIMITED` when the limit is exceeded within the window.
 /// In-memory for MVP; move to Redis/DB via `system_settings` later.
 Middleware rateLimiter({
-  Map<String, int> limits = const {'login': 5, 'otp': 5, 'forgot': 3, 'reset': 3},
+  Map<String, int> limits = const {
+    'login': 5,
+    'otp': 5,
+    'forgot': 3,
+    'reset': 3,
+  },
   Duration window = const Duration(minutes: 1),
 }) {
   final buckets = HashMap<String, _Bucket>();
