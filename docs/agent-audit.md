@@ -20,8 +20,7 @@ IMPLEMENTED:
 - No hay specs de features aprobadas (`specs/<feature>/` aún no existe).
 - Plan de esta fase documentado en `docs/superpowers/plans/sdd-foundation.md`.
 - Contrato base `docs/openapi.yaml` creado el 03/10/2026 (OpenAPI 3.1): sobre común (servidor `/api/v1`, `Problem` RFC 9457, `bearerAuth` con audiencias, `Idempotency-Key`, `MoneyCents`, `CursorPage`), `GET /health`, `GET /ready` y los 8 endpoints de auth ya decididos en `AGENTS.md` §6/§8. Validado con `redocly lint` (0 errores, 7 warnings intencionales).
-- No hay workspace Dart (`pubspec.yaml` no existe).
-- No hay configuración Flutter/Dart/FVM (`.fvmrc` no existe).
+- Monorepo pub workspaces creado el 03/10/2026: `.fvmrc` (Flutter 3.47.6 / Dart 3.13.5, estable oficial 01/10/2026), `pubspec.yaml` con miembros `apps/api`, `apps/mobile`, `packages/paseo_shared` (stubs sin lógica), `pubspec.lock` versionado y `analysis_options.yaml` único con `very_good_analysis` 11.0.0. FVM 4.3.1 instalado (scoop). `fvm flutter pub get`, `fvm dart analyze` y `fvm dart format` en verde.
 - No hay configuración CI (`.github/` no existe).
 - Existe `CLAUDE.md` con la línea requerida `@AGENTS.md`.
 
@@ -38,9 +37,8 @@ VERIFIED:
 
 - Inicialización git completada; faltan reglas efectivas de rama/protección verificadas en GitHub.
 - `CLAUDE.md` con contenido `@AGENTS.md` ya existe.
-- Monorepo pub workspaces: `pubspec.yaml`, `pubspec.lock`, `analysis_options.yaml`.
-- FVM: `.fvmrc` y versión fijada de Flutter/Dart.
-- Estructura objetivo: `apps/mobile`, `apps/api`, `packages/paseo_shared`.
+- Monorepo pub workspaces: creado 03/10/2026 (`.fvmrc`, `pubspec.yaml`, `pubspec.lock`, `analysis_options.yaml`); pendiente poblar los paquetes.
+- Estructura objetivo: directorios creados como stubs; faltan Dart Frog, las tres entradas web y features de Flutter.
 - Esqueleto Dart Frog de API y worker.
 - Esqueleto Flutter con tres entradas: `main.dart`, `main_merchant_web.dart`, `main_admin_web.dart`.
 - `packages/paseo_shared` con DTOs/enums/errores de contrato.
@@ -119,7 +117,7 @@ No resolver sin decisión humana:
 2. DONE: Inicializar git y archivos base mínimos no conductuales: `.gitignore`, `CLAUDE.md` (`@AGENTS.md`).
 3. DONE: Crear/instalar SDD local: `.specify/`, constitución referenciando `AGENTS.md`, plantillas de spec/plan/tasks y `specs/README.md`.
 4. DONE (03/10): Contrato inicial `docs/openapi.yaml` (sobre común + health + auth, alcance aprobado por usuario).
-5. Crear monorepo con FVM, `pubspec.yaml` workspace y `analysis_options.yaml` estricto.
+5. DONE (03/10): Monorepo con FVM (3.47.6), `pubspec.yaml` workspace y `analysis_options.yaml` estricto; verificado con pub get/analyze/format.
 6. Crear infraestructura base: Compose base/dev, roles, `.env.example`, Dockerfile API/worker, Caddyfile, backup esqueleto, migraciones `V001`–`V002` mínimas con RLS/grants/pruebas.
 7. CI inicial: formato, análisis, validación OpenAPI, arquitectura, migraciones desde cero, pruebas RLS, builds.
 8. Fundaciones de identidad: Argon2id benchmark, proveedor SMS/correo tras puertos, OTP/recuperación.

@@ -1,0 +1,13 @@
+name: paseo_points
+description: Monorepo Paseo Points (pub workspace). Ver AGENTS.md.
+publish_to: none
+environment:
+  sdk: ^3.13.0
+
+workspace:
+  - apps/api
+  - apps/mobile
+  - packages/paseo_shared
+
+dev_dependencies:
+  very_good_analysis: ^11.0.0

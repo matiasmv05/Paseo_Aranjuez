@@ -1,0 +1,9 @@
+name: paseo_api
+description: API REST y worker de Paseo Points (Dart Frog, arquitectura hexagonal).
+publish_to: none
+resolution: workspace
+environment:
+  sdk: ^3.13.0
+
+dev_dependencies:
+  very_good_analysis: ^11.0.0

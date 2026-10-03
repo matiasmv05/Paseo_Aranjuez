@@ -1,0 +1,9 @@
+name: paseo_shared
+description: DTOs, enums y errores de contrato compartidos entre la app y la API. Sin logica de dominio (AGENTS.md §4).
+publish_to: none
+resolution: workspace
+environment:
+  sdk: ^3.13.0
+
+dev_dependencies:
+  very_good_analysis: ^11.0.0
