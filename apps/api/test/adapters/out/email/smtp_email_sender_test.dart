@@ -1,7 +1,3 @@
-import 'dart:io';
-
-import 'package:mailer/mailer.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:paseo_api/adapters/out/email/smtp_email_sender.dart';
 import 'package:paseo_api/domain/identity/email.dart';
 import 'package:test/test.dart';
@@ -9,18 +5,6 @@ import 'package:test/test.dart';
 // We need to inject the send function to avoid real SMTP connections in tests.
 // We'll test the SmtpEmailSender logic with a mock send function.
 void main() {
-  late SmtpConfig config;
-
-  setUp(() {
-    config = const SmtpConfig(
-      host: 'smtp.gmail.com',
-      port: 587,
-      username: 'test@example.com',
-      password: 'app-password',
-      from: 'test@example.com',
-    );
-  });
-
   group('SmtpConfig', () {
     test('fromEnv reads SMTP_* variables', () {
       // This test just verifies the factory is available and reads env

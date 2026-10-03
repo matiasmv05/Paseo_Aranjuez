@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:isolate';
 
 import 'package:paseo_api/adapters/out/password/argon2id_password_hasher.dart';
 import 'package:test/test.dart';

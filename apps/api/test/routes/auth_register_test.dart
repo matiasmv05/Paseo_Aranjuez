@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:paseo_api/adapters/in/auth_use_cases.dart';
-import 'package:paseo_api/application/identity/ports.dart';
 import 'package:paseo_api/domain/identity/identity.dart';
 import 'package:test/test.dart';
 

@@ -4,7 +4,6 @@ import 'package:paseo_api/adapters/out/auth/jwt_token_signer.dart';
 import 'package:paseo_api/adapters/out/clock/system_clock.dart';
 import 'package:paseo_api/adapters/out/tokens/crypto_token_generator.dart';
 import 'package:paseo_api/adapters/out/tokens/uuid_id_generator.dart';
-import 'package:paseo_api/application/identity/ports.dart';
 import 'package:paseo_api/domain/identity/identity.dart';
 import 'package:test/test.dart';
 

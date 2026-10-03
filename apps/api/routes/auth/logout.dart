@@ -4,7 +4,6 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:paseo_api/adapters/in/auth_use_cases.dart';
 import 'package:paseo_api/adapters/in/errors.dart';
 import 'package:paseo_api/problem.dart';
-import 'package:paseo_shared/paseo_shared.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.post) {
