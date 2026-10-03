@@ -27,10 +27,13 @@ const expectedCodes = {
   'INSUFFICIENT_POINTS_FOR_REVERSAL',
   'REFUND_WINDOW_EXPIRED',
   'REFUND_ALREADY_RESOLVED',
+  // openapi.yaml — tag `comercio` (Persona 3)
+  'CUSTOMER_NOT_FOUND',
+  'INVALID_QR_TOKEN',
+  'INVALID_IDENTIFICATION_TICKET',
+  'DUPLICATE_INVOICE',
   // Reservados (9-stack; aún no en openapi.yaml)
   'OTP_RATE_LIMITED',
-  'DUPLICATE_INVOICE',
-  'CUSTOMER_NOT_FOUND',
   'INVALID_ATTACHMENT',
   'ATTACHMENT_TOO_LARGE',
   'REFUND_ALREADY_REQUESTED',
@@ -54,8 +57,6 @@ void main() {
   test('los reservados están marcados y los del contrato no', () {
     const reserved = {
       'OTP_RATE_LIMITED',
-      'DUPLICATE_INVOICE',
-      'CUSTOMER_NOT_FOUND',
       'INVALID_ATTACHMENT',
       'ATTACHMENT_TOO_LARGE',
       'REFUND_ALREADY_REQUESTED',
