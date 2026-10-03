@@ -219,7 +219,7 @@ BEGIN
     INSERT INTO app.customer_balances (customer_id, balance, updated_at)
     VALUES (NEW.customer_id, NEW.delta, now())
     ON CONFLICT (customer_id) DO UPDATE
-        SET balance  = app.customer_balances.balance + EXCLUDED.delta,
+        SET balance  = app.customer_balances.balance + EXCLUDED.balance,
             updated_at = now();
     RETURN NULL;
 END;

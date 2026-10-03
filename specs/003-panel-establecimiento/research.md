@@ -226,6 +226,8 @@ El motivo es el `GRANT` minimo. Sin `SECURITY DEFINER`, el trigger de la sucursa
 
 **Riesgo residual, asumido a conciencia.** Como `paseo_app` conserva `INSERT` sobre `points_ledger`, en teoria podria mover un saldo con un `delta` negativo. Lo detiene el `CHECK (balance >= 0)`, que aborta la sentencia entera; y el codigo de esta feature solo escribe `CREDIT` con `delta` positivo calculado en el servidor. Aun asi, cuando se reintroduzca RLS hay que revisar que las politicas cubran tambien el `INSERT` en el ledger, no solo el `SELECT`.
 
+**Correccion durante la verificacion desde cero (T013).** El `ON CONFLICT` del trigger de saldo usaba `EXCLUDED.delta`, una columna que no existe en `customer_balances` (`delta` pertenece a `points_ledger`): la migracion fallaba en el primer `INSERT` del ledger. Se corrigio a `EXCLUDED.balance`, que en un upsert es el valor propuesto para la columna `balance` (equivale a `NEW.delta`). El arreglo toca `V006` y el ejemplo SQL de `data-model.md`. Lo detecto recien la aplicacion real desde cero contra PostgreSQL 18; no lo habria visto un test unitario.
+
 ## 13. Deuda que queda registrada
 
 | Deuda | Impacto | Quando se paga |
