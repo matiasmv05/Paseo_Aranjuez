@@ -18,7 +18,8 @@
 - **Actor(s)**: `customer` (registro/verificación), todos los roles (login/sesión), `system` (envío de OTP/correos).
 - **Applications affected**: `api`, `worker` (limpieza de códigos/tokens vencidos), `mobile`, `web-merchant`, `web-admin` (solo flujos de sesión de su rol).
 - **OPEN_DECISIONS** (AGENTS.md §15; esta spec NO las resuelve):
-  - Proveedor de SMS y de correo, y su costo.
+   - ~~Proveedor de correo~~ **DECIDIDO (03/10/2026)**: Gmail/Google Workspace SMTP con remitente del equipo; implementación propia `SmtpEmailSender`.
+   - Proveedor de SMS y su costo (sigue abierto; en dev, `OTP_SENDER=console`).
   - Librería concreta de Argon2id (pendiente benchmark y vectores de prueba).
   - Regex endurecida del móvil boliviano (`+591` + 8 dígitos iniciando en 6 o 7; hasta su verificación se valida `^\+591[0-9]{8}$`).
   - Confirmación de las interpretaciones de la encuesta: refresh web en cookie `HttpOnly`; SMS mínimo con correo adicional sin exigir el correo para acumular.

@@ -5,7 +5,7 @@ Dónde corre cada cosa y cómo se levanta. Es la fuente de verdad de la infraest
 > **Versiones verificadas con `docker pull` el 03/10/2026** (pendiente original cumplido):
 > - PostgreSQL: `postgres:18-alpine` = **18.6**; `PGDATA=/var/lib/postgresql/18/docker`, por eso el volumen monta el padre `/var/lib/postgresql`.
 > - Flyway: `flyway/flyway:13.9.0` (existe; reemplaza a la candidata 13.8.1 del borrador).
-> - Caddy: `caddy:2.11.6-alpine`; Mailpit (dev): `axllent/mailpit:v1.27.9`; build API: `dart:3.13.5`.
+> - Caddy: `caddy:2.11.6-alpine`; build API: `dart:3.13.5`. **Sin Mailpit**: el correo sale por SMTP real (Gmail/Google Workspace, decisión del equipo 03/10/2026).
 
 ---
 
@@ -349,7 +349,7 @@ gunzip -c backups/<archivo>.sql.gz | psql -h <host> -U paseo_owner -d <bd_vacia>
 1. ~~Confirmar etiquetas de imagen (PostgreSQL 18 y Flyway) con `docker pull`~~ — hecho 03/10/2026.
 2. ~~Confirmar la ruta de montaje de datos de PostgreSQL 18~~ — hecho: `PGDATA=/var/lib/postgresql/18/docker`.
 3. Confirmar los nombres de las variables `FLYWAY_*` en la documentación de la versión fijada.
-4. Elegir proveedor de OTP por teléfono y de correo (no verificados) y su costo.
+4. ~~Elegir proveedor de OTP por teléfono y de correo~~ — correo: **Gmail/Google Workspace SMTP** (03/10/2026, adaptador propio `SmtpEmailSender`); SMS sigue **abierto**.
 5. Dónde se despliega la demo y qué dominio se usa (sin decisión del equipo; recomendación: VPS con Docker Compose).
    Probar el HTTPS automático de Caddy en el puerto 8443.
 6. Política de retención de respaldos y a dónde se copian.
