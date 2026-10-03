@@ -59,6 +59,14 @@ VERIFIED:
 - ~~`INFRASTRUCTURE.md` fija `postgres:18-alpine` y Flyway candidato pendiente de `docker pull`~~ **RESUELTA (03/10):** postgres 18.6, flyway 13.9.0 y demás etiquetas confirmadas con pull real.
 - No se detectó contradicción entre decisiones cerradas y reglas actuales, pero faltan artefactos normativos (`specs/`, OpenAPI, CI) para validarlas contra implementación.
 
+## DECISIONES DE EQUIPO (03/10/2026)
+
+- **MVP sin RLS** (supersede AGENTS.md §2 regla 7 y §5.3 para el MVP): decisión explícita del dueño. Las tablas nacen solo con `GRANT` mínimos; el aislamiento multi-comercio se aplica en middleware de aplicación. Ver §BLOCKERS.
+
+## BLOCKERS
+
+- **RLS + pruebas de aislamiento**: deuda **bloqueante** que debe reintroducirse antes de cualquier despliegue con datos reales (decisión 03/10/2026: se quitó RLS del MVP a pedido del dueño). Mientras tanto el aislamiento descansa en el middleware de la API, y `paseo_app` conserva `NOBYPASSRLS` y `GRANT` mínimos como mitigación parcial.
+
 ## OPEN_DECISIONS
 
 No resolver sin decisión humana:

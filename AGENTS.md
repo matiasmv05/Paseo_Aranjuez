@@ -23,7 +23,7 @@ Plataforma de puntos de fidelización para comercios. Tres actores: **cliente** 
 4. **Toda escritura crítica es idempotente** (`Idempotency-Key`) **y auditada** (`audit_log`).
 5. **Todo endpoint existe primero en `docs/openapi.yaml`**, luego la ruta, luego la prueba.
 6. **Migraciones aplicadas = inmutables.** Nunca edites un `V###` existente en `main`; crea uno nuevo.
-7. **Toda tabla nace con RLS, políticas, `GRANT` y prueba** en la misma migración/PR.
+7. ~~Toda tabla nace con RLS, políticas, `GRANT` y prueba~~ **SUPERSEDIDA por decisión del equipo (03/10/2026): se trabaja SIN RLS durante el MVP.** Las tablas nacen solo con `GRANT` mínimos; el aislamiento multi-comercio se aplica en middleware de aplicación. RLS + pruebas de aislamiento son **deuda bloqueante** que debe reintroducirse antes de cualquier despliegue con datos reales (ver `docs/agent-audit.md` §BLOCKERS).
 8. **Sin datos personales en el JWT.**
 9. **Dinero en centavos enteros.** Nunca `double`/`float` para dinero ni puntos.
 10. **Ningún cambio de comportamiento sin spec y sin prueba.**
