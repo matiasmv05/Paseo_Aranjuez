@@ -1,0 +1,133 @@
+name: CI
+
+# Fuente de verdad: INFRASTRUCTURE.md §11 y AGENTS.md §11-§14.
+# PR: formato, análisis, pruebas, openapi.yaml, migraciones desde cero,
+# chequeo RLS/roles y rechazo de PR que mute una migración ya presente en main.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+env:
+  POSTGRES_DB: paseo_ci
+  DB_SUPERUSER_PASSWORD: ci-super
+  PASEO_OWNER_PASSWORD: ci-owner
+  PASEO_APP_PASSWORD: ci-app
+  PASEO_BACKUP_PASSWORD: ci-backup
+
+jobs:
+  dart:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Versión de Flutter desde .fvmrc (única fuente de verdad)
+        id: fvmrc
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fvmrc.outputs.version }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get --enforce-lockfile
+
+      - run: dart format --set-exit-if-changed .
+
+      - run: dart analyze --fatal-warnings
+
+      # Pruebas condicionales mientras los paquetes no tengan test/:
+      # AGENTS.md §11 exige pruebas; el harness llega con cada feature.
+      - name: dart test (paquetes con test/)
+        run: |
+          set -e
+          for d in apps/api packages/paseo_shared; do
+            if [ -d "$d/test" ]; then (cd "$d" && dart test); fi
+          done
+
+      - name: flutter test apps/mobile (si existe test/)
+        run: |
+          if [ -d apps/mobile/test ]; then
+            cd apps/mobile && flutter test
+          fi
+
+  openapi:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx --yes @redocly/cli@2 lint docs/openapi.yaml
+
+  migrations:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: .env de CI (ficticio; nunca secretos reales)
+        run: |
+          {
+            echo "POSTGRES_DB=$POSTGRES_DB"
+            echo "DB_SUPERUSER_PASSWORD=$DB_SUPERUSER_PASSWORD"
+            echo "PASEO_OWNER_PASSWORD=$PASEO_OWNER_PASSWORD"
+            echo "PASEO_APP_PASSWORD=$PASEO_APP_PASSWORD"
+            echo "PASEO_BACKUP_PASSWORD=$PASEO_BACKUP_PASSWORD"
+          } > infra/.env
+
+      - name: DB desde cero + Flyway
+        run: |
+          docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d --wait db
+          docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml run --rm migrate
+
+      - name: flyway validate
+        run: |
+          docker compose -f infra/docker-compose.yml run --rm migrate validate
+
+      - name: Chequeos de roles y extensiones (V001)
+        run: |
+          DB=$(docker ps --filter name=-db- --format '{{.Names}}' | head -n1)
+          test -n "$DB"
+          docker exec "$DB" psql -U postgres_admin -d "$POSTGRES_DB" -tAc \
+            "SELECT count(*) FROM pg_roles WHERE rolname IN ('paseo_owner','paseo_app','paseo_backup');" | grep -qx 3
+          docker exec "$DB" psql -U postgres_admin -d "$POSTGRES_DB" -tAc \
+            "SELECT rolbypassrls FROM pg_roles WHERE rolname='paseo_app';" | grep -qx f
+          docker exec "$DB" psql -U postgres_admin -d "$POSTGRES_DB" -tAc \
+            "SELECT count(*) FROM pg_extension WHERE extname IN ('citext','pgcrypto');" | grep -qx 2
+          if docker exec -e PGPASSWORD="$PASEO_APP_PASSWORD" "$DB" \
+              psql -U paseo_app -d "$POSTGRES_DB" -c "CREATE TABLE app.no_debe(id int);" 2>/dev/null; then
+            echo "FALLO: paseo_app pudo hacer DDL" && exit 1
+          fi
+
+      # Cuando existan tablas con RLS (V002+), cada migración trae su prueba de
+      # aislamiento en infra/tests/rls/<Vxxx>_*.sql; se ejecutan con paseo_app.
+      - name: Pruebas RLS (si existen)
+        run: |
+          DB=$(docker ps --filter name=-db- --format '{{.Names}}' | head -n1)
+          for f in infra/tests/rls/*.sql; do
+            [ -e "$f" ] || { echo "sin pruebas RLS aún"; break; }
+            echo "== $f"
+            docker exec -i -e PGPASSWORD="$PASEO_APP_PASSWORD" "$DB" \
+              psql -U paseo_app -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 < "$f"
+          done
+
+  migration-immutability:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # AGENTS.md regla 6: un V### presente en main nunca se modifica ni borra.
+      - name: Rechazar mutación de migraciones existentes
+        run: |
+          git fetch origin main --depth=1
+          mutated=$(git diff --name-status "origin/main...HEAD" -- infra/migrations/ \
+            | grep -E '^(M|D)' || true)
+          if [ -n "$mutated" ]; then
+            echo "Las migraciones aplicadas son inmutables:"
+            echo "$mutated"
+            exit 1
+          fi

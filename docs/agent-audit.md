@@ -40,6 +40,7 @@ VERIFIED:
 - Estructura objective completada como stubs; pendiente poblar: esqueleto Dart Frog (`bin/server.dart`, `bin/worker.dart`), entradas web `main_merchant_web.dart`/`main_admin_web.dart` y contenido de `paseo_shared`.
 - Infraestructura base creada el 03/10/2026: `infra/docker-compose.yml` (+`dev`), `db/init/01-roles.sh`, `.env.example`, `Caddyfile`, `api.Dockerfile`, `backup/backup.sh`, `seed/R__seed_dev.sql` y `migrations/V001__baseline_extensions_y_esquema.sql`. Imágenes verificadas con `docker pull`: `postgres:18-alpine` (18.6, PGDATA=/var/lib/postgresql/18/docker), `flyway/flyway:13.9.0`, `caddy:2.11.6-alpine`, `axllent/mailpit:v1.27.9`, `dart:3.13.5`. Verificado en vivo: `migrate info` (V001 Success), roles sin superuser y `paseo_app` NOBYPASSRLS, extensiones citext/pgcrypto, esquema `app` con USAGE y DDL denegado a `paseo_app`, `caddy validate` OK.
 - Migraciones `V002`–`V010` (según 9-stack) y pruebas RLS asociadas: **V002 (identidad) queda BLOCKED hasta la spec de identidad** y la decisión del proveedor/regex de teléfono.
+- CI inicial creado el 03/10/2026: `.github/workflows/ci.yml` con jobs `dart` (format/analyze/test condicionales), `openapi` (redocly), `migrations` (DB desde cero + Flyway + chequeos de roles/extensiones/DDL denegado + hook de pruebas RLS `infra/tests/rls/`) y `migration-immutability` (rechaza mutar `V###` existentes en `main`). YAML validado localmente y comandos de los jobs verificados contra el stack local; la ejecución real en GitHub Actions queda pendiente del primer PR/push.
 - Monorepo pub workspaces: creado 03/10/2026 (`.fvmrc`, `pubspec.yaml`, `pubspec.lock`, `analysis_options.yaml`); pendiente poblar los paquetes.
 - Estructura objetivo: directorios creados como stubs; faltan Dart Frog, las tres entradas web y features de Flutter.
 - Esqueleto Dart Frog de API y worker.
@@ -121,7 +122,7 @@ No resolver sin decisión humana:
 4. DONE (03/10): Contrato inicial `docs/openapi.yaml` (sobre común + health + auth, alcance aprobado por usuario).
 5. DONE (03/10): Monorepo con FVM (3.47.6), `pubspec.yaml` workspace y `analysis_options.yaml` estricto; verificado con pub get/analyze/format.
 6. DONE (03/10, parcial): Compose base/dev, roles, `.env.example`, Dockerfile API/worker, Caddyfile, backup, `V001` con verificación en vivo. Pendiente: `V002` (identidad, BLOCKED por spec), imagen de la API buildable (requiere esqueleto Dart Frog) y pruebas RLS automatizadas.
-7. CI inicial: formato, análisis, validación OpenAPI, arquitectura, migraciones desde cero, pruebas RLS, builds.
+7. DONE (03/10, parcial): CI inicial con formato, análisis, OpenAPI, migraciones desde cero, chequeos RLS/roles y protección de inmutabilidad. Pendiente: job de arquitectura hexagonal y de builds cuando exista código; verificación real en GitHub Actions con el primer PR.
 8. Fundaciones de identidad: Argon2id benchmark, proveedor SMS/correo tras puertos, OTP/recuperación.
 9. Rebanada vertical Must: registro/verificación/login/QR/teléfono/preview/compra/saldo/canje/validación.
 10. Resto de Must: dos webs, reglas admin, reembolsos, sucursales, `system_settings`, auditoría.
@@ -145,5 +146,5 @@ No resolver sin decisión humana:
 - GATE 5 — architecture valid: DOCUMENTED, no VERIFIED.
 - GATE 6 — migrations valid: `V001` VERIFIED en vivo (flyway info Success + chequeos de permisos); `V002` BLOCKED por spec de identidad.
 - GATE 7 — RLS tests valid: BLOCKED.
-- GATE 8–12 — tests/security/CI: BLOCKED hasta fundaciones.
+- GATE 12 — CI valid: DOCUMENTED + comandos verificados localmente; PENDING ejecución real en GitHub.
 - GATE 13 — human review: REQUIRED antes de fundaciones amplias y antes de resolver decisiones abiertas.
