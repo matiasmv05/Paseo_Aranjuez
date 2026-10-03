@@ -1,0 +1,40 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+!infra/.env.example
+
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+coverage/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+.pub-cache/
+.fvm/flutter_sdk
+
+# Pub /-generated
+**/doc/api/
+.pub/
+pubspec.lock~
+
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Local artifacts
+uploads/
+backups/
