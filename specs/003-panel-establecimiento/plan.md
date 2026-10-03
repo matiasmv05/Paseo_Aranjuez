@@ -1,6 +1,6 @@
 # Implementation Plan: Panel del Establecimiento (Acreditación y Canje)
 
-**Branch**: `feature/Persona3` | **Date**: 2026-10-03 | **Spec**: `specs/003-panel-establecimiento/spec.md`
+**Branch**: `feat/003-panel-establecimiento` | **Date**: 2026-10-03 | **Spec**: `specs/003-panel-establecimiento/spec.md`
 
 **Input**: Feature specification from `specs/003-panel-establecimiento/spec.md`
 

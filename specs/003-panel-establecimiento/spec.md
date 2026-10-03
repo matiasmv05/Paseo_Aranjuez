@@ -1,13 +1,13 @@
 # Feature Specification: Panel del Establecimiento (Acreditación y Canje)
 
 **Feature**: `003-panel-establecimiento`
-**Branch**: `feature/Persona3`
+**Branch**: `feat/003-panel-establecimiento`
 **Created**: 2026-10-03
 **Status**: Approved
 **Input**: User description: "Implementar todas las historias de Persona 3 (Panel del Establecimiento — Acreditación y Canje) en backend y frontend: HU-10 identificar cliente por QR/celular, HU-11 registrar compra con cálculo automático de puntos, HU-13 consultar movimientos del local y HUT-02 registro en menos de 3 segundos. Usar las especificaciones del repositorio y Spec Kit; preguntar ante decisiones abiertas."
 **Authority**: `AGENTS.md` remains the governing repository policy.
 
-> **Desvío de convención declarado:** `AGENTS.md` §12 pide ramas `feat/<id-historia>-descripcion`. El humano ordenó explícitamente la rama `feature/Persona3`. Prevalece la instrucción humana; el resto de §12 (Conventional Commits con HU, PR con revisión) se mantiene.
+> **Rama:** `AGENTS.md` §12 pide `feat/<id-historia>-descripcion`. La rama arrancó como `feature/Persona3` por orden explícita del humano; el 2026-10-03 se renombró a `feat/003-panel-establecimiento` para alinearla con §12. El resto de §12 (Conventional Commits con HU, PR con revisión) se mantiene.
 
 ## Scope
 
