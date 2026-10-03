@@ -13,7 +13,7 @@ coverage/
 .flutter-plugins-dependencies
 .metadata
 .pub-cache/
-.fvm/flutter_sdk
+.fvm/
 
 # Pub /-generated
 **/doc/api/
