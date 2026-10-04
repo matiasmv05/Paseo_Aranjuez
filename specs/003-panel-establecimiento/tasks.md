@@ -152,24 +152,24 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 
 ### Dependencias + cliente API
 
-- [ ] T100 [M1] `apps/mobile/pubspec.yaml`: añadir `http: ^1.2.2` y `flutter_riverpod: ^2.6.1`. `fvm flutter pub get`. Commitear `pubspec.lock`.
-- [ ] T101 [M2] `apps/mobile/lib/features/merchant/data/merchant_api_client.dart`: cliente REST con `http`, parseo `problem+json` (RFC 9457), manejo de `Idempotency-Key`, envío de ticket, cursor. Usa URLs relativas a API o configurable (coherente con Caddy).
-- [ ] T102 [M3] `apps/mobile/lib/features/merchant/application/merchant_session.dart`: estado de sesión comercio (est/branch/role/seller_user_id), providers Riverpod.
+- [x] T100 [M1] `apps/mobile/pubspec.yaml`: añadir `http: ^1.2.2` y `flutter_riverpod: ^2.6.1`. `fvm flutter pub get`. Commitear `pubspec.lock`.
+- [x] T101 [M2] `apps/mobile/lib/features/merchant/data/merchant_api_client.dart`: cliente REST con `http`, parseo `problem+json` (RFC 9457), manejo de `Idempotency-Key`, envío de ticket, cursor. Usa URLs relativas a API o configurable (coherente con Caddy).
+- [x] T102 [M3] `apps/mobile/lib/features/merchant/application/merchant_session.dart`: estado de sesión comercio (est/branch/role/seller_user_id), providers Riverpod.
 
 ### Pantallas + navegación
 
-- [ ] T103 [M4] `apps/mobile/lib/features/merchant/presentation/login_screen.dart`: login con credenciales comercio (usa auth existente) guardando contexto merchant.
-- [ ] T104 [M5] `apps/mobile/lib/features/merchant/presentation/identify_screen.dart`: identificar por PHONE (+591 validación) o QR; muestra nombre enmascarado; obtiene ticket.
-- [ ] T105 [M6] `apps/mobile/lib/features/merchant/presentation/purchase_screen.dart`: ingresa `gross_cents/discount_cents/net_cents`, `invoice_ref`; llama `preview` → muestra puntos devueltos (mismo valor que registro); llama `register` con `Idempotency-Key` único; muestra resultado. No calcula puntos localmente.
-- [ ] T106 [M7] `apps/mobile/lib/features/merchant/presentation/movements_screen.dart`: lista con cursor, infinite scroll al llegar al final; solo datos expuestos (nombre enmascarado, montos, puntos, fecha, sucursal).
-- [ ] T107 [M8] `apps/mobile/lib/main_merchant_web.dart`: reemplazar stub por `runApp` real con providers + router para flujo login→identify→purchase→movements.
+- [x] T103 [M4] `apps/mobile/lib/features/merchant/presentation/login_screen.dart`: login con credenciales comercio (usa auth existente) guardando contexto merchant.
+- [x] T104 [M5] `apps/mobile/lib/features/merchant/presentation/identify_screen.dart`: identificar por PHONE (+591 validación) o QR; muestra nombre enmascarado; obtiene ticket.
+- [x] T105 [M6] `apps/mobile/lib/features/merchant/presentation/purchase_screen.dart`: ingresa `gross_cents/discount_cents/net_cents`, `invoice_ref`; llama `preview` → muestra puntos devueltos (mismo valor que registro); llama `register` con `Idempotency-Key` único; muestra resultado. No calcula puntos localmente.
+- [x] T106 [M7] `apps/mobile/lib/features/merchant/presentation/movements_screen.dart`: lista con cursor, infinite scroll al llegar al final; solo datos expuestos (nombre enmascarado, montos, puntos, fecha, sucursal).
+- [x] T107 [M8] `apps/mobile/lib/main_merchant_web.dart`: reemplazar stub por `runApp` real con providers + router para flujo login→identify→purchase→movements.
 
 ### Tests Flutter
 
-- [ ] T108 [P] [M9] `apps/mobile/test/features/merchant/merchant_api_mapping_test.dart`: mapeo problem+json a mensajes visibles.
-- [ ] T109 [P] [M10] `apps/mobile/test/features/merchant/movements_pagination_test.dart`: pide siguiente página al llegar al final.
-- [ ] T110 [P] [M11] `apps/mobile/test/features/merchant/identify_purchase_flow_test.dart`: widget test del flujo muestra nombre enmascarado y puntos devueltos por servidor.
-- [ ] T111 `cd apps/mobile && fvm flutter analyze && fvm flutter test` verde.
+- [x] T108 [P] [M9] `apps/mobile/test/features/merchant/merchant_api_mapping_test.dart`: mapeo problem+json a mensajes visibles.
+- [x] T109 [P] [M10] `apps/mobile/test/features/merchant/movements_pagination_test.dart`: pide siguiente página al llegar al final.
+- [x] T110 [P] [M11] `apps/mobile/test/features/merchant/identify_purchase_flow_test.dart`: widget test del flujo muestra nombre enmascarado y puntos devueltos por servidor.
+- [x] T111 `cd apps/mobile && fvm flutter analyze && fvm flutter test` verde.
 
 **Checkpoint M1:** panel web-merchant funcional y testeado.
 
