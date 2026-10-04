@@ -112,26 +112,26 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 
 ### Middleware y wiring
 
-- [ ] T070 [US-I1] `apps/api/lib/adapters/in/middleware/merchant_auth_middleware.dart`: exige `aud = paseo-web-merchant`; roles `{merchant_owner,merchant_cashier}`; consulta BD `users.status` y `users.phone_verified` (claims pueden tener 15m desfase). Extrae `establishment_id`, `branch_id` desde claims verificados. Rechaza `customer`/`admin` con 403.
-- [ ] T071 [US-I2] `apps/api/lib/adapters/in/merchant_use_cases.dart`: factory/wiring que construye los 4 use cases con adapters out + signer + rate limiter + repos.
-- [ ] T072 [US-I3] `apps/api/lib/adapters/in/errors.dart`: extender mapeo para `LoyaltyException` → RFC 9457 con códigos correctos (`NO_APPLICABLE_RULE`, `INVALID_QR_TOKEN`, `INVALID_IDENTIFICATION_TICKET`, `DUPLICATE_INVOICE`, `CUSTOMER_NOT_FOUND`, `PHONE_NOT_VERIFIED`, `PHONE_NOT_SUPPORTED`, `RATE_LIMITED`).
+- [x] T070 [US-I1] `apps/api/lib/adapters/in/middleware/merchant_auth_middleware.dart`: exige `aud = paseo-web-merchant`; roles `{merchant_owner,merchant_cashier}`; consulta BD `users.status` y `users.phone_verified` (claims pueden tener 15m desfase). Extrae `establishment_id`, `branch_id` desde claims verificados. Rechaza `customer`/`admin` con 403.
+- [x] T071 [US-I2] `apps/api/lib/adapters/in/merchant_use_cases.dart`: factory/wiring que construye los 4 use cases con adapters out + signer + rate limiter + repos.
+- [x] T072 [US-I3] `apps/api/lib/adapters/in/errors.dart`: extender mapeo para `LoyaltyException` → RFC 9457 con códigos correctos (`NO_APPLICABLE_RULE`, `INVALID_QR_TOKEN`, `INVALID_IDENTIFICATION_TICKET`, `DUPLICATE_INVOICE`, `CUSTOMER_NOT_FOUND`, `PHONE_NOT_VERIFIED`, `PHONE_NOT_SUPPORTED`, `RATE_LIMITED`).
 
 ### Rutas Dart Frog
 
-- [ ] T073 [US-R1] `apps/api/routes/merchant/_middleware.dart`: aplica `merchant_auth_middleware` (y logging sin PII). No incluye PII en logs.
-- [ ] T074 [US-R2] `apps/api/routes/merchant/customers/identify.dart`: `POST`; valida body contra contrato; llama `identifyCustomer`; retorna `IdentifyResult` (200). Mapea errores.
-- [ ] T075 [US-R3] `apps/api/routes/merchant/purchases/preview.dart`: `POST`; valida body; aplica rate limit por establishment; llama `previewPurchase`. Retorna 200/409 según caso.
-- [ ] T076 [US-R4] `apps/api/routes/merchant/purchases/index.dart`: `POST`; requiere header `Idempotency-Key`; aplica rate limit; llama `registerPurchase`. Retorna 201 (creación) o 200 (reintento con mismo key). Mapea `DUPLICATE_INVOICE` → 409, `INVALID_IDENTIFICATION_TICKET` → 422.
-- [ ] T077 [US-R5] `apps/api/routes/merchant/movements/index.dart`: `GET`; parsea `cursor`, `limit`; llama `listMovements`; retorna `CursorPage<Movement>`. Validación 422 si limit inválido.
-- [ ] T078 [US-R6] Actualizar DI/registro si aplica (`AppDependencies`/bootstrap) sin romper identity. Mantener rutas finas (solo validación+mapa).
+- [x] T073 [US-R1] `apps/api/routes/merchant/_middleware.dart`: aplica `merchant_auth_middleware` (y logging sin PII). No incluye PII en logs.
+- [x] T074 [US-R2] `apps/api/routes/merchant/customers/identify.dart`: `POST`; valida body contra contrato; llama `identifyCustomer`; retorna `IdentifyResult` (200). Mapea errores.
+- [x] T075 [US-R3] `apps/api/routes/merchant/purchases/preview.dart`: `POST`; valida body; aplica rate limit por establishment; llama `previewPurchase`. Retorna 200/409 según caso.
+- [x] T076 [US-R4] `apps/api/routes/merchant/purchases/index.dart`: `POST`; requiere header `Idempotency-Key`; aplica rate limit; llama `registerPurchase`. Retorna 201 (creación) o 200 (reintento con mismo key). Mapea `DUPLICATE_INVOICE` → 409, `INVALID_IDENTIFICATION_TICKET` → 422.
+- [x] T077 [US-R5] `apps/api/routes/merchant/movements/index.dart`: `GET`; parsea `cursor`, `limit`; llama `listMovements`; retorna `CursorPage<Movement>`. Validación 422 si limit inválido.
+- [x] T078 [US-R6] Actualizar DI/registro si aplica (`AppDependencies`/bootstrap) sin romper identity. Mantener rutas finas (solo validación+mapa).
 
 ### Tests API/routes
 
-- [ ] T079 [P] [US-TR1] `test/routes/merchant/identify_test.dart`: auth matriz (customer/admin rechazados 403, aud incorrecta 403), PHONE/QR válidos/inválidos, `PHONE_NOT_VERIFIED`, `CUSTOMER_NOT_FOUND`, `INVALID_QR_TOKEN`.
-- [ ] T080 [P] [US-TR2] `test/routes/merchant/preview_test.dart`: coherente con registro, sin escritura, rate limit, `NO_APPLICABLE_RULE`.
-- [ ] T081 [P] [US-TR3] `test/routes/merchant/purchase_test.dart`: idempotencia header obligatorio, 201 vs 200, `DUPLICATE_INVOICE`, `INVALID_IDENTIFICATION_TICKET`, invariantes 422.
-- [ ] T082 [P] [US-TR4] `test/routes/merchant/movements_test.dart`: cursor/limit, filtro seller, comercio ajeno vacío, PII nunca expuesto.
-- [ ] T083 Ejecutar `cd apps/api && fvm dart test test/routes` verde.
+- [x] T079 [P] [US-TR1] `test/routes/merchant/identify_test.dart`: auth matriz (customer/admin rechazados 403, aud incorrecta 403), PHONE/QR válidos/inválidos, `PHONE_NOT_VERIFIED`, `CUSTOMER_NOT_FOUND`, `INVALID_QR_TOKEN`.
+- [x] T080 [P] [US-TR2] `test/routes/merchant/preview_test.dart`: coherente con registro, sin escritura, rate limit, `NO_APPLICABLE_RULE`.
+- [x] T081 [P] [US-TR3] `test/routes/merchant/purchase_test.dart`: idempotencia header obligatorio, 201 vs 200, `DUPLICATE_INVOICE`, `INVALID_IDENTIFICATION_TICKET`, invariantes 422.
+- [x] T082 [P] [US-TR4] `test/routes/merchant/movements_test.dart`: cursor/limit, filtro seller, comercio ajeno vacío, PII nunca expuesto.
+- [x] T083 Ejecutar `cd apps/api && fvm dart test test/routes` verde.
 
 **Checkpoint R1:** 4 rutas funcionando con middleware; tests routes verdes.
 
