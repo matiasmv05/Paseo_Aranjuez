@@ -1,40 +1,59 @@
 import 'package:flutter/foundation.dart';
 
-enum IdentityStatus { initial, loading, success, error }
+import 'domain/auth_repository.dart';
 
-class IdentityState extends ChangeNotifier {
-  IdentityStatus _status = IdentityStatus.initial;
-  String? _error;
+/// Estados del flujo de identidad (registro + verificación OTP).
+sealed class IdentityState {
+  const IdentityState();
+}
 
-  IdentityStatus get status => _status;
-  String? get error => _error;
+final class IdentityInitial extends IdentityState {
+  const IdentityInitial();
+}
 
-  Future<void> register({
-    required String phone,
-    required String email,
-    required String password,
-    bool fail = false,
-  }) async {
-    _status = IdentityStatus.loading;
-    notifyListeners();
+final class IdentityLoading extends IdentityState {
+  const IdentityLoading();
+}
+
+final class OtpSentSuccess extends IdentityState {
+  const OtpSentSuccess();
+}
+
+final class OtpVerified extends IdentityState {
+  const OtpVerified();
+}
+
+final class IdentityFailure extends IdentityState {
+  const IdentityFailure(this.message);
+
+  final String message;
+}
+
+/// Controlador de estado del flujo de identidad.
+class IdentityNotifier extends ValueNotifier<IdentityState> {
+  IdentityNotifier(this._repository) : super(const IdentityInitial());
+
+  final AuthRepository _repository;
+
+  Future<void> sendOtp(String phone) async {
+    value = const IdentityLoading();
     try {
-      // Simulated network call
-      await Future.delayed(const Duration(milliseconds: 100));
-      if (fail) {
-        throw Exception('Registration failed');
-      }
-      _status = IdentityStatus.success;
-      notifyListeners();
+      await _repository.sendOtp(phone);
+      value = const OtpSentSuccess();
     } catch (e) {
-      _status = IdentityStatus.error;
-      _error = e.toString();
-      notifyListeners();
+      value = IdentityFailure(e.toString());
     }
   }
 
-  void reset() {
-    _status = IdentityStatus.initial;
-    _error = null;
-    notifyListeners();
+  Future<void> verifyOtp(String phone, String code) async {
+    value = const IdentityLoading();
+    try {
+      final isValid = await _repository.verifyOtp(phone, code);
+      value = isValid
+          ? const OtpVerified()
+          : const IdentityFailure('Código OTP inválido');
+    } catch (e) {
+      value = IdentityFailure(e.toString());
+    }
   }
 }
