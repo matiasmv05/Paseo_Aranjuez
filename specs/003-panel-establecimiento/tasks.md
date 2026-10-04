@@ -33,12 +33,12 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 
 ### Contrato compartido (paseo_shared)
 
-- [ ] T016 [SH1] [US-Shared] Confirmar `packages/paseo_shared/lib/src/errors/api_error_code.dart` ya contiene: `CUSTOMER_NOT_FOUND`, `DUPLICATE_INVOICE`, `INVALID_QR_TOKEN`, `INVALID_IDENTIFICATION_TICKET` (commits Gate 3). Añadir DTOs de merchant: `packages/paseo_shared/lib/src/merchant/dto.dart` con `IdentifyRequest`, `IdentifyResult`, `PreviewPurchaseRequest`, `PreviewPurchaseResult`, `RegisterPurchaseRequest`, `Purchase`, `Movement`, `MovementPage` usando `MoneyCents`, `CursorPage`. Exportar desde barrel si aplica.
-- [ ] T017 [SH2] [US-Shared] Actualizar `packages/paseo_shared/lib/paseo_shared.dart` para exportar merchant DTOs. Verificar snapshot de `api_error_code_test.dart` sigue coherente. `fvm dart test packages/paseo_shared` → 14/14.
+- [x] T016 [SH1] [US-Shared] Confirmar `packages/paseo_shared/lib/src/errors/api_error_code.dart` ya contiene: `CUSTOMER_NOT_FOUND`, `DUPLICATE_INVOICE`, `INVALID_QR_TOKEN`, `INVALID_IDENTIFICATION_TICKET` (commits Gate 3). Añadir DTOs de merchant: `packages/paseo_shared/lib/src/merchant/dto.dart` con `IdentifyRequest`, `IdentifyResult`, `PreviewPurchaseRequest`, `PreviewPurchaseResult`, `RegisterPurchaseRequest`, `Purchase`, `Movement`, `MovementPage` usando `MoneyCents`, `CursorPage`. Exportar desde barrel si aplica.
+- [x] T017 [SH2] [US-Shared] Actualizar `packages/paseo_shared/lib/paseo_shared.dart` para exportar merchant DTOs. Verificar snapshot de `api_error_code_test.dart` sigue coherente. `fvm dart test packages/paseo_shared` → 14/14.
 
 ### Variables de entorno + docs
 
-- [ ] T018 [DOC1] [US-Infra] Añadir `IDENTIFICATION_SECRET` a `infra/.env.example` (descripción, longitud recomendada, no commitear valor). Documentar en `INFRASTRUCTURE.md` §7 (separado de `JWT_SECRET`). Actualizar `AGENTS.md` solo si necesario para reflejar alcance documentado (verificar coherencia con decisiones ya tomadas).
+- [x] T018 [DOC1] [US-Infra] Añadir `IDENTIFICATION_SECRET` a `infra/.env.example` (descripción, longitud recomendada, no commitear valor). Documentar en `INFRASTRUCTURE.md` §7 (separado de `JWT_SECRET`). Actualizar `AGENTS.md` solo si necesario para reflejar alcance documentado (verificar coherencia con decisiones ya tomadas).
 
 **Checkpoint F1:** Migraciones aplican desde cero; contrato compartido verde; Redocly lint verde.
 
