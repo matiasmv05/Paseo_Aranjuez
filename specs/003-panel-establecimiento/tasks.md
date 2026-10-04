@@ -139,12 +139,12 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 
 ### Tests integración (Postgres real, rol paseo_app)
 
-- [ ] T090 [US-TI1] `test/integration/merchant_flow_test.dart`: identify PHONE/QR → purchase → saldo acreditado → movements. End-to-end.
-- [ ] T091 [US-TI2] `test/integration/purchase_idempotency_test.dart`: misma Idempotency-Key → 1 compra, 1 ledger, saldo cambia una vez; segundo 200 con cuerpo original.
-- [ ] T092 [US-TI3] `test/integration/merchant_isolation_test.dart`: cashier ve solo suyas; owner ve todas; otro comercio vacío. Usa rol real.
-- [ ] T093 [US-TI4] `test/integration/purchase_rules_test.dart`: `DUPLICATE_INVOICE` mismo comercio / acepta otro; `NO_APPLICABLE_RULE`; compra bajo mínima sin ledger.
-- [ ] T094 [US-TI5] `test/integration/hut02_latency_test.dart`: identify+purchase < 3s total, p95 < 500ms (20 iteraciones). Falla si supera umbrales.
-- [ ] T095 [US-TI6] `test/integration/migration_grants_test.dart`: `paseo_app` sin UPDATE/DELETE en `points_ledger`, sin UPDATE en `customer_balances`. Verifica `GRANT` mínimos.
+- [x] T090 [US-TI1] `test/integration/merchant_flow_test.dart`: identify PHONE/QR → purchase → saldo acreditado → movements. End-to-end.
+- [x] T091 [US-TI2] `test/integration/purchase_idempotency_test.dart`: misma Idempotency-Key → 1 compra, 1 ledger, saldo cambia una vez; segundo 200 con cuerpo original.
+- [x] T092 [US-TI3] `test/integration/merchant_isolation_test.dart`: cashier ve solo suyas; owner ve todas; otro comercio vacío. Usa rol real.
+- [x] T093 [US-TI4] `test/integration/purchase_rules_test.dart`: `DUPLICATE_INVOICE` mismo comercio / acepta otro; `NO_APPLICABLE_RULE`; compra bajo mínima sin ledger.
+- [x] T094 [US-TI5] `test/integration/hut02_latency_test.dart`: identify+purchase < 3s total, p95 < 500ms (20 iteraciones). Falla si supera umbrales.
+- [x] T095 [US-TI6] `test/integration/migration_grants_test.dart`: `paseo_app` sin UPDATE/DELETE en `points_ledger`, sin UPDATE en `customer_balances`. Verifica `GRANT` mínimos.
 
 **Checkpoint I1:** integración verde con BD 5433.
 
