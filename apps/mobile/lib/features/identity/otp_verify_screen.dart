@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/di/injection.dart';
@@ -7,7 +9,11 @@ import 'login_screen.dart';
 class OtpVerifyScreen extends StatefulWidget {
   OtpVerifyScreen({Key? key, this.phone = '', IdentityNotifier? notifier})
     : notifier =
-          notifier ?? IdentityNotifier(InjectionContainer.authRepository),
+          notifier ??
+          IdentityNotifier(
+            InjectionContainer.authRepository,
+            tokenStorage: InjectionContainer.tokenStorage,
+          ),
       super(key: key);
 
   final String phone;
@@ -18,13 +24,40 @@ class OtpVerifyScreen extends StatefulWidget {
 }
 
 class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
+  static const _resendCooldownSeconds = 60;
+
   final TextEditingController _otpController = TextEditingController();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  Timer? _resendTimer;
+  int _secondsRemaining = _resendCooldownSeconds;
 
   @override
   void initState() {
     super.initState();
     widget.notifier.addListener(_onStateChanged);
+    _startResendTimer();
+  }
+
+  void _startResendTimer() {
+    _resendTimer?.cancel();
+    setState(() {
+      _secondsRemaining = _resendCooldownSeconds;
+    });
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_secondsRemaining > 0) {
+          _secondsRemaining--;
+        }
+        if (_secondsRemaining == 0) {
+          timer.cancel();
+        }
+      });
+    });
   }
 
   void _onStateChanged() {
@@ -44,8 +77,20 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
     }
   }
 
+  Future<void> _resendCode(BuildContext context) async {
+    await widget.notifier.sendOtp(widget.phone);
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Código reenviado con éxito')));
+    _startResendTimer();
+  }
+
   @override
   void dispose() {
+    _resendTimer?.cancel();
     widget.notifier.removeListener(_onStateChanged);
     _otpController.dispose();
     super.dispose();
@@ -100,6 +145,20 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                       ],
                     );
                   },
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _secondsRemaining > 0
+                      ? 'Reenviar código en ${_secondsRemaining}s'
+                      : '¿No recibiste el código?',
+                  key: const Key('resendCountdownText'),
+                ),
+                TextButton(
+                  key: const Key('resendOtpButton'),
+                  onPressed: _secondsRemaining > 0
+                      ? null
+                      : () => _resendCode(context),
+                  child: const Text('Reenviar código'),
                 ),
               ],
             ),
