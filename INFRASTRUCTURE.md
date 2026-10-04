@@ -244,6 +244,7 @@ La plantilla `infra/.env.example` va en el repositorio con valores ficticios; `.
 | `REFRESH_TTL_DAYS` | api | 7 a 30 |
 | `QR_TOKEN_TTL_SECONDS` | api | ~60 |
 | `IDENTIFICATION_SECRET` | api | Secreto de firma de los tickets de identificación/QR del comercio (~300 s / ~60 s); **separado de `JWT_SECRET`**, largo y aleatorio |
+| `IDENTIFICATION_TICKET_TTL_SECONDS` | api | 300 (vida del ticket de identificación de HU-10) |
 | `OTP_SENDER` | api, worker | `console` (dev) o el adaptador real elegido |
 | `OTP_PROVIDER_*` | api | Credenciales del proveedor (**por decidir**) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | api, worker | Correo saliente |
