@@ -9,19 +9,21 @@ void main() {
       expect(notifier.value, isA<IdentityInitial>());
     });
 
-    test('sendOtp pasa por IdentityLoading y termina en OtpSentSuccess',
-        () async {
-      final notifier = IdentityNotifier(MockAuthRepository());
-      final states = <IdentityState>[notifier.value];
-      notifier.addListener(() => states.add(notifier.value));
+    test(
+      'sendOtp pasa por IdentityLoading y termina en OtpSentSuccess',
+      () async {
+        final notifier = IdentityNotifier(MockAuthRepository());
+        final states = <IdentityState>[notifier.value];
+        notifier.addListener(() => states.add(notifier.value));
 
-      await notifier.sendOtp('+59170123456');
+        await notifier.sendOtp('+59170123456');
 
-      expect(states, hasLength(3));
-      expect(states[0], isA<IdentityInitial>());
-      expect(states[1], isA<IdentityLoading>());
-      expect(states[2], isA<OtpSentSuccess>());
-    });
+        expect(states, hasLength(3));
+        expect(states[0], isA<IdentityInitial>());
+        expect(states[1], isA<IdentityLoading>());
+        expect(states[2], isA<OtpSentSuccess>());
+      },
+    );
 
     test('verifyOtp con código correcto termina en OtpVerified', () async {
       final notifier = IdentityNotifier(MockAuthRepository());
@@ -37,10 +39,7 @@ void main() {
       await notifier.verifyOtp('+59170123456', '000000');
 
       expect(notifier.value, isA<IdentityFailure>());
-      expect(
-        (notifier.value as IdentityFailure).message,
-        contains('OTP'),
-      );
+      expect((notifier.value as IdentityFailure).message, contains('OTP'));
     });
   });
 }
