@@ -1,0 +1,3 @@
+# Los scripts .sh se montan en contenedores Linux: deben conservar LF
+# (con core.autocrlf=true Windows los convierte a CRLF y rompe el init de Postgres).
+*.sh text eol=lf
