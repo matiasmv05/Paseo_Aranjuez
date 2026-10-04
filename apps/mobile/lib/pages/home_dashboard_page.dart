@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:paseo_mobile/data/mock/mock_data.dart';
 import 'package:paseo_mobile/design_system/molecules/benefit_list_card.dart';
 import 'package:paseo_mobile/design_system/molecules/paseo_points_card.dart';
+import 'package:paseo_mobile/design_system/organisms/notifications_sheet.dart';
 import 'package:paseo_mobile/design_system/tokens/paseo_colors.dart';
 import 'package:paseo_mobile/pages/benefit_detail_page.dart';
 import 'package:paseo_mobile/pages/establishments_page.dart';
@@ -61,10 +64,12 @@ class HomeDashboardPage extends StatelessWidget {
                       size: 24,
                     ),
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('No tienes notificaciones pendientes.'),
-                          duration: Duration(seconds: 1),
+                      unawaited(
+                        showModalBottomSheet<void>(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => const NotificationsSheet(),
                         ),
                       );
                     },

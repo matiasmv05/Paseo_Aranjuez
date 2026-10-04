@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:paseo_mobile/data/mock/mock_data.dart';
+import 'package:paseo_mobile/design_system/molecules/customer_tier_card.dart';
+import 'package:paseo_mobile/design_system/molecules/referral_card.dart';
 import 'package:paseo_mobile/design_system/tokens/paseo_colors.dart';
 import 'package:paseo_mobile/pages/qr_page.dart';
 import 'package:paseo_mobile/pages/welcome_page.dart';
@@ -188,6 +190,14 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 18),
+
+          // 4b. Gamificación: Nivel de Cliente (HU-22 - Feature WOW)
+          CustomerTierCard(tierInfo: MockData.getTierInfo()),
+          const SizedBox(height: 16),
+
+          // 4c. Programa de Referidos y Bonos (HU-25)
+          const ReferralCard(),
           const SizedBox(height: 24),
 
           // 5. Sección: Mi cuenta

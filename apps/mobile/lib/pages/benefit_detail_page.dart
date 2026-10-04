@@ -26,10 +26,20 @@ class BenefitDetailPage extends StatelessWidget {
             points: benefit.pointsRequired,
             onConfirm: () {
               Navigator.of(dialogContext).pop();
+              final coupon = MockData.issueCoupon(benefit);
+              if (coupon == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Puntos insuficientes para este canje.'),
+                    backgroundColor: Color(0xFFC0392B),
+                  ),
+                );
+                return;
+              }
               Navigator.of(context).pushReplacement<void, void>(
                 MaterialPageRoute(
                   builder: (successContext) => RedemptionSuccessView(
-                    code: 'PA-483921',
+                    code: coupon.code,
                     onBackToBenefits: () => Navigator.of(successContext).pop(),
                   ),
                 ),

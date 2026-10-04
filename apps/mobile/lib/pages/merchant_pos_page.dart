@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:paseo_mobile/design_system/atoms/pos_status_pill.dart';
 import 'package:paseo_mobile/design_system/molecules/pos_header_bar.dart';
+import 'package:paseo_mobile/design_system/organisms/merchant_promo_proposal_sheet.dart';
+import 'package:paseo_mobile/design_system/organisms/merchant_redemption_validator.dart';
 import 'package:paseo_mobile/design_system/organisms/pos_activity_feed.dart';
 import 'package:paseo_mobile/design_system/organisms/pos_member_lookup.dart';
 import 'package:paseo_mobile/design_system/organisms/pos_purchase_form.dart';
@@ -171,6 +173,47 @@ class _MerchantPosPageState extends State<MerchantPosPage> {
     );
   }
 
+  void _showValidateRedemptionModal() {
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return MerchantRedemptionValidator(
+            establishmentName: 'Boutique Valldemossa',
+            onRedeemed: (coupon) {
+              setState(() {
+                _feedTransactions.insert(
+                  0,
+                  PosTransactionEntry(
+                    time: 'Ahora',
+                    clientName: coupon.customerName,
+                    memberCode: coupon.code,
+                    ticketNumber: 'CANJE-OK',
+                    amountEuro: '€0.00',
+                    pointsText: 'Canje Recompensa',
+                  ),
+                );
+              });
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  void _showProposePromotionModal() {
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => const MerchantPromoProposalSheet(
+          establishmentName: 'Boutique Valldemossa',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MerchantPosTemplate(
@@ -258,6 +301,99 @@ class _MerchantPosPageState extends State<MerchantPosPage> {
             PosMemberLookup(
               onScanQrTap: _showScanQrModal,
               onIdentifyNfcTap: _showIdentifyNfcModal,
+            ),
+            const SizedBox(height: 18),
+
+            // 2b. Acciones de Operación en Caja (HU-12, HU-14)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF141620),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF2A2D3E)),
+              ),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 10,
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.verified_rounded,
+                        color: Color(0xFFE5C07B),
+                        size: 18,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'CANJES Y PROMOCIONES',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.1,
+                          color: Color(0xFFE5C07B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFE5C07B),
+                          side: const BorderSide(color: Color(0xFFE5C07B)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: _showValidateRedemptionModal,
+                        icon: const Icon(
+                          Icons.qr_code_scanner_rounded,
+                          size: 16,
+                        ),
+                        label: const Text(
+                          'Validar Cupón de Canje (HU-12)',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFD4AF37),
+                          backgroundColor: const Color(0xFF1F2232),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: const BorderSide(color: Color(0xFF33374D)),
+                          ),
+                        ),
+                        onPressed: _showProposePromotionModal,
+                        icon: const Icon(Icons.campaign_outlined, size: 16),
+                        label: const Text(
+                          'Proponer Promoción (HU-14)',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
 

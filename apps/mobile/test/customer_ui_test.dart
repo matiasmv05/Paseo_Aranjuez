@@ -151,11 +151,24 @@ void main() {
       expect(find.text('Valentina Rodríguez'), findsOneWidget);
       expect(find.text('valentina@email.com'), findsOneWidget);
       expect(find.text('+591 720 12345'), findsOneWidget);
-      expect(find.text('Cerrar sesión'), findsOneWidget);
+      expect(find.text('Nivel de Lealtad'), findsOneWidget);
 
       // 8. Cierra sesión y retorna a WelcomePage
-      await tester.drag(find.byType(ListView).first, const Offset(0, -220));
+      await tester.scrollUntilVisible(
+        find.text('Invita amigos y gana puntos'),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pumpAndSettle();
+      expect(find.text('Invita amigos y gana puntos'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Cerrar sesión'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Cerrar sesión'), findsOneWidget);
       await tester.tap(find.text('Cerrar sesión'));
       await tester.pumpAndSettle();
 

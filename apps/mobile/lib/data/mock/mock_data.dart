@@ -179,8 +179,176 @@ class MockPromotion {
   final String validUntil;
 }
 
+/// Estado de un cupón de canje de recompensa (HU-07, HU-12).
+enum RedemptionStatus {
+  /// Emitido y pendiente de canje en el establecimiento.
+  issued,
+
+  /// Consumido y entregado por el comercio.
+  used,
+
+  /// Expirado por tiempo transcurrido.
+  expired,
+}
+
+/// Representa un cupón de canje de un solo uso generado por el cliente.
+class MockRedemptionCoupon {
+  /// Crea una instancia de cupón de canje.
+  const new({
+    required this.id,
+    required this.code,
+    required this.rewardId,
+    required this.rewardTitle,
+    required this.establishmentName,
+    required this.customerName,
+    required this.customerPhone,
+    required this.pointsSpent,
+    required this.status,
+    required this.issuedAt,
+    this.usedAt,
+  });
+
+  /// Identificador único del canje.
+  final String id;
+
+  /// Código único generado (ej. "PA-483921").
+  final String code;
+
+  /// ID del beneficio canjeado.
+  final String rewardId;
+
+  /// Título del beneficio canjeado.
+  final String rewardTitle;
+
+  /// Nombre del establecimiento oferente.
+  final String establishmentName;
+
+  /// Nombre del cliente titular.
+  final String customerName;
+
+  /// Teléfono del cliente.
+  final String customerPhone;
+
+  /// Cantidad de puntos deducidos.
+  final int pointsSpent;
+
+  /// Estado actual del cupón.
+  final RedemptionStatus status;
+
+  /// Fecha y hora de emisión.
+  final String issuedAt;
+
+  /// Fecha y hora en la que fue consumido en caja.
+  final String? usedAt;
+
+  /// Retorna una copia con el nuevo estado.
+  MockRedemptionCoupon copyWith({RedemptionStatus? status, String? usedAt}) {
+    return MockRedemptionCoupon(
+      id: id,
+      code: code,
+      rewardId: rewardId,
+      rewardTitle: rewardTitle,
+      establishmentName: establishmentName,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      pointsSpent: pointsSpent,
+      status: status ?? this.status,
+      issuedAt: issuedAt,
+      usedAt: usedAt ?? this.usedAt,
+    );
+  }
+}
+
+/// Nivel de lealtad dentro de la experiencia de gamificación (HU-22).
+enum LoyaltyTier {
+  /// Nivel inicial (0 a 499 puntos).
+  bronce,
+
+  /// Nivel Plata (500 a 1.499 puntos).
+  plata,
+
+  /// Nivel Oro (1.500 a 2.999 puntos).
+  oro,
+
+  /// Nivel Platinum (3.000+ puntos).
+  platinum,
+}
+
+/// Información completa de nivel y gamificación del cliente.
+class MockTierInfo {
+  /// Crea la información de nivel.
+  const new({
+    required this.tier,
+    required this.displayName,
+    required this.currentPoints,
+    required this.nextTierName,
+    required this.pointsToNextTier,
+    required this.progressPercentage,
+    required this.multiplier,
+    required this.benefits,
+  });
+
+  /// Nivel actual.
+  final LoyaltyTier tier;
+
+  /// Nombre legible del nivel (ej. "Oro").
+  final String displayName;
+
+  /// Puntos acumulados actualmente.
+  final int currentPoints;
+
+  /// Nombre del próximo nivel alcanzable.
+  final String? nextTierName;
+
+  /// Puntos requeridos para subir al siguiente nivel.
+  final int? pointsToNextTier;
+
+  /// Porcentaje de progreso de 0.0 a 100.0 hacia el siguiente escalón.
+  final double progressPercentage;
+
+  /// Multiplicador de puntos otorgado por el nivel.
+  final double multiplier;
+
+  /// Lista de beneficios y ventajas exclusivas del nivel.
+  final List<String> benefits;
+}
+
+/// Notificación dentro de la aplicación para el cliente (HU-23).
+class MockNotification {
+  /// Crea una notificación mock.
+  const new({
+    required this.id,
+    required this.title,
+    required this.message,
+    required this.time,
+    required this.isRead,
+    required this.icon,
+  });
+
+  /// Identificador único.
+  final String id;
+
+  /// Título de la notificación.
+  final String title;
+
+  /// Mensaje o contenido detallado.
+  final String message;
+
+  /// Tiempo transcurrido legible (ej. "Hace 10 min").
+  final String time;
+
+  /// Si fue leída por el usuario.
+  final bool isRead;
+
+  /// Icono representativo.
+  final String icon;
+}
+
 /// Repositorio de datos locales estáticos para la interfaz de Paseo Points.
 abstract final class MockData {
+  /// Saldo dinámico del usuario cliente.
+  static int userBalance = 2450;
+
   /// Usuario actual de demostración.
   static const MockUser currentUser = MockUser(
     name: 'Valentina Rodríguez',
@@ -298,8 +466,8 @@ abstract final class MockData {
   ];
 
   /// Lista de transacciones del historial de puntos.
-  static const List<MockTransaction> transactions = [
-    MockTransaction(
+  static final List<MockTransaction> transactions = [
+    const MockTransaction(
       id: 'tx-01',
       date: '03 Oct 2025',
       establishment: 'Compra en Café Aranjuez',
@@ -307,7 +475,7 @@ abstract final class MockData {
       type: TransactionType.earned,
       status: 'Ganados',
     ),
-    MockTransaction(
+    const MockTransaction(
       id: 'tx-02',
       date: '01 Oct 2025',
       establishment: 'Compra en ZARA',
@@ -315,7 +483,7 @@ abstract final class MockData {
       type: TransactionType.earned,
       status: 'Ganados',
     ),
-    MockTransaction(
+    const MockTransaction(
       id: 'tx-03',
       date: '28 Sep 2025',
       establishment: 'Canje de recompensa',
@@ -323,13 +491,58 @@ abstract final class MockData {
       type: TransactionType.spent,
       status: 'Canjeados',
     ),
-    MockTransaction(
+    const MockTransaction(
       id: 'tx-04',
       date: '25 Sep 2025',
       establishment: 'Compra en Sky Games',
       points: 100,
       type: TransactionType.earned,
       status: 'Ganados',
+    ),
+  ];
+
+  /// Lista de cupones de canje de recompensas (HU-07, HU-12).
+  static final List<MockRedemptionCoupon> coupons = [
+    const MockRedemptionCoupon(
+      id: 'red-001',
+      code: 'PA-483921',
+      rewardId: 'ben-01',
+      rewardTitle: '20% de descuento en Café Aranjuez',
+      establishmentName: 'Café Aranjuez',
+      customerName: 'Valentina Rodríguez',
+      customerPhone: '+591 720 12345',
+      pointsSpent: 500,
+      status: RedemptionStatus.issued,
+      issuedAt: 'Hoy, 10:45',
+    ),
+  ];
+
+  /// Lista de notificaciones del usuario (HU-23).
+  static final List<MockNotification> notifications = [
+    const MockNotification(
+      id: 'notif-01',
+      title: '¡Ganaste 120 puntos!',
+      message: 'Por tu compra en Café Aranjuez.',
+      time: 'Hace 2 horas',
+      isRead: false,
+      icon: 'star',
+    ),
+    const MockNotification(
+      id: 'notif-02',
+      title: '¡Alcanzaste el Nivel Oro! 🏆',
+      message:
+          'Ahora acumulas un 20% adicional de puntos en todas tus compras.',
+      time: 'Ayer',
+      isRead: true,
+      icon: 'trophy',
+    ),
+    const MockNotification(
+      id: 'notif-03',
+      title: 'Puntos dobles este fin de semana',
+      message: 'Aprovecha sábado y domingo en locales gastronómicos.',
+      time: 'Hace 2 días',
+      isRead: true,
+      icon: 'tag',
     ),
   ];
 
@@ -346,4 +559,143 @@ abstract final class MockData {
       validUntil: 'Válido sábado y domingo',
     ),
   ];
+
+  /// Emite un nuevo cupón de canje si el saldo es suficiente (HU-07).
+  static MockRedemptionCoupon? issueCoupon(MockBenefit benefit) {
+    if (userBalance < benefit.pointsRequired) {
+      return null;
+    }
+    userBalance -= benefit.pointsRequired;
+
+    // Asigna el código canónico para la recompensa principal
+    final code = benefit.id == 'ben-01'
+        ? 'PA-483921'
+        : 'PA-${100000 + coupons.length * 137 % 900000}';
+    coupons.removeWhere((c) => c.code == code);
+    final coupon = MockRedemptionCoupon(
+      id: 'red-${coupons.length + 1}',
+      code: code,
+      rewardId: benefit.id,
+      rewardTitle: benefit.title,
+      establishmentName: benefit.establishment,
+      customerName: currentUser.name,
+      customerPhone: currentUser.phone,
+      pointsSpent: benefit.pointsRequired,
+      status: RedemptionStatus.issued,
+      issuedAt: 'Ahora mismo',
+    );
+    coupons.insert(0, coupon);
+
+    // Registra la transacción en el ledger
+    transactions.insert(
+      0,
+      MockTransaction(
+        id: 'tx-red-${coupons.length}',
+        date: 'Hoy',
+        establishment: 'Canje: ${benefit.title}',
+        points: -benefit.pointsRequired,
+        type: TransactionType.spent,
+        status: 'Canjeados',
+      ),
+    );
+
+    return coupon;
+  }
+
+  /// Busca un cupón por su código alfanumérico.
+  static MockRedemptionCoupon? findCoupon(String code) {
+    final normalized = code.trim().toUpperCase();
+    for (final c in coupons) {
+      if (c.code.toUpperCase() == normalized) return c;
+    }
+    return null;
+  }
+
+  /// Marca un cupón como consumido por el comercio (HU-12).
+  static bool completeRedemption(String code) {
+    final coupon = findCoupon(code);
+    if (coupon == null || coupon.status != RedemptionStatus.issued) {
+      return false;
+    }
+    final index = coupons.indexOf(coupon);
+    coupons[index] = coupon.copyWith(
+      status: RedemptionStatus.used,
+      usedAt: 'Hoy',
+    );
+    return true;
+  }
+
+  /// Alias de conveniencia para consumar cupón de canje en caja (HU-12).
+  static bool completeCoupon(String code) => completeRedemption(code);
+
+  /// Calcula la información de nivel y gamificación según puntos (HU-22).
+  static MockTierInfo getTierInfo([int? points]) {
+    final pts = points ?? userBalance;
+    if (pts >= 3000) {
+      return const MockTierInfo(
+        tier: LoyaltyTier.platinum,
+        displayName: 'Platinum',
+        currentPoints: 3000,
+        nextTierName: null,
+        pointsToNextTier: null,
+        progressPercentage: 100,
+        multiplier: 1.5,
+        benefits: [
+          'Multiplicador 1.5x en acumulación de puntos',
+          'Acceso preferencial a eventos culturales',
+          'Estacionamiento de cortesía en Paseo Aranjuez',
+          'Invitaciones VIP a degustaciones gastronómicas',
+        ],
+      );
+    }
+    if (pts >= 1500) {
+      final progress = ((pts - 1500) / (3000 - 1500)) * 100;
+      return MockTierInfo(
+        tier: LoyaltyTier.oro,
+        displayName: 'Oro',
+        currentPoints: pts,
+        nextTierName: 'Platinum',
+        pointsToNextTier: 3000 - pts,
+        progressPercentage: progress.clamp(0.0, 100.0),
+        multiplier: 1.2,
+        benefits: const [
+          'Multiplicador 1.2x en acumulación de puntos',
+          'Acceso prioritario a canje de recompensas',
+          'Regalo de cumpleaños exclusivo',
+          'Descuentos especiales de fin de mes',
+        ],
+      );
+    }
+    if (pts >= 500) {
+      final progress = ((pts - 500) / (1500 - 500)) * 100;
+      return MockTierInfo(
+        tier: LoyaltyTier.plata,
+        displayName: 'Plata',
+        currentPoints: pts,
+        nextTierName: 'Oro',
+        pointsToNextTier: 1500 - pts,
+        progressPercentage: progress.clamp(0.0, 100.0),
+        multiplier: 1.1,
+        benefits: const [
+          'Multiplicador 1.1x en compras seleccionadas',
+          'Acceso al catálogo de promociones vigentes',
+          'Bono por fechas festivas',
+        ],
+      );
+    }
+    final progress = (pts / 500) * 100;
+    return MockTierInfo(
+      tier: LoyaltyTier.bronce,
+      displayName: 'Bronce',
+      currentPoints: pts,
+      nextTierName: 'Plata',
+      pointsToNextTier: 500 - pts,
+      progressPercentage: progress.clamp(0.0, 100.0),
+      multiplier: 1,
+      benefits: const [
+        'Acumulación base de 1 punto por compra',
+        'Canjes disponibles según catálogo',
+      ],
+    );
+  }
 }

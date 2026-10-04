@@ -5,3 +5,4 @@ library;
 
 export 'src/auth/dto.dart';
 export 'src/errors/api_error_code.dart';
+export 'src/redemptions/dto.dart';

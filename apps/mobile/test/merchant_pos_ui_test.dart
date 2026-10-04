@@ -13,8 +13,8 @@ void main() {
   testWidgets(
     'MerchantWebApp renders Store Front & Quick Entry POS and computes points',
     (tester) async {
-      // Configuramos tamaño de pantalla desktop amplio (1600 x 1000)
-      tester.view.physicalSize = const Size(1600, 1000);
+      // Configuramos tamaño de pantalla desktop amplio (1600 x 1200)
+      tester.view.physicalSize = const Size(1600, 1200);
       tester.view.devicePixelRatio = 1.0;
 
       await tester.pumpWidget(const MerchantWebApp());
@@ -73,6 +73,11 @@ void main() {
       expect(find.text('(+50 VIP\nBonus)'), findsOneWidget);
       expect(find.text('550'), findsOneWidget);
 
+      // 6. Verifica acciones de operaciones de fidelización (HU-12, HU-14)
+      expect(find.text('CANJES Y PROMOCIONES'), findsOneWidget);
+      expect(find.text('Validar Cupón de Canje (HU-12)'), findsOneWidget);
+      expect(find.text('Proponer Promoción (HU-14)'), findsOneWidget);
+
       // 7. Verifica feed contable y registro de compra
       expect(find.byType(PosActivityFeed), findsOneWidget);
       expect(find.text('Store Activity Feed'), findsOneWidget);
@@ -82,7 +87,9 @@ void main() {
       expect(find.text('4,065 PTS'), findsOneWidget);
 
       // 8. Registra la compra y verifica actualización del feed
-      await tester.tap(find.text('REGISTER PURCHASE & AWARD POINTS  →'));
+      final submitButton = find.text('REGISTER PURCHASE & AWARD POINTS  →');
+      await tester.ensureVisible(submitButton);
+      await tester.tap(submitButton);
       await tester.pumpAndSettle();
 
       // Verifica que se agregó la transacción al tope del feed
