@@ -16,13 +16,32 @@
 	encode gzip zstd
 }
 
+(api) {
+	# El contrato declara `servers: [{url: /api/v1}]` (docs/openapi.yaml) y las
+	# cookies de sesión usan `Path=/api/v1/...` (AGENTS.md §6), pero Dart Frog
+	# monta las rutas SIN ese prefijo: `routes/auth/login.dart` -> `/auth/login`.
+	# `handle_path` quita `/api/v1` antes de reenviar. Con `reverse_proxy` a secas
+	# el backend recibiría `/api/v1/auth/login` y respondería 404.
+	handle_path /api/v1/* {
+		reverse_proxy api:8080
+	}
+
+	# Cualquier otra ruta bajo /api/ no existe en el contrato. Sin estos bloques
+	# caería en el `handle` de la SPA y devolvería index.html con 200 en vez de 404.
+	# Ojo: `/api/*` NO matchea el `/api` exacto, por eso va su propia regla.
+	handle /api {
+		respond "Not Found" 404
+	}
+	handle /api/* {
+		respond "Not Found" 404
+	}
+}
+
 {$PUBLIC_HOST} {
 	import common_headers
 
 	# API: solo /api/* llega al backend; la BD y el worker nunca salen por aquí.
-	handle /api/* {
-		reverse_proxy api:8080
-	}
+	import api
 
 	# SPA web de comercio (build: apps/mobile/build/web-merchant)
 	handle {
@@ -36,12 +55,25 @@
 	import common_headers
 
 	# Restricción opcional por IP para la administración (ADMIN_ALLOWED_IPS).
-	@blocked_admin not remote_ip {$ADMIN_ALLOWED_IPS:""}
-	respond @blocked_admin 403
-
-	handle /api/* {
-		reverse_proxy api:8080
+	# Sin valor = permitir todos. El default NO puede ser "" porque `remote_ip`
+	# no parsea una cadena vacía y Caddy no booteaba con el .env de ejemplo.
+	# Separado por espacio, no por coma: el placeholder se inserta como un solo
+	# token y la coma no se reinterpreta como lista. 0.0.0.0/0 y ::/0 matchean
+	# cualquier IPv4 e IPv6, así que `not remote_ip` no bloquea a nadie.
+	#
+	# Va como `handle @matcher` y NO como `respond @matcher`: la directiva
+	# `respond` se ordena DESPUÉS de `handle`/`handle_path` en Caddy, así que
+	# `respond @blocked_admin 403` nunca se evaluaba y el filtro por IP era
+	# código muerto.
+	#
+	# Los dos defectos eran preexistentes a esta feature; detalle y evidencia
+	# en specs/003-panel-establecimiento/research.md §1.1 y §1.2.
+	@blocked_admin not remote_ip {$ADMIN_ALLOWED_IPS:0.0.0.0/0 ::/0}
+	handle @blocked_admin {
+		respond "Forbidden" 403
 	}
+
+	import api
 
 	handle {
 		root * /srv/web-admin

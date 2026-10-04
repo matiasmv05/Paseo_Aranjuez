@@ -36,11 +36,23 @@ enum ApiErrorCode {
   refundWindowExpired('REFUND_WINDOW_EXPIRED'),
   refundAlreadyResolved('REFUND_ALREADY_RESOLVED'),
 
+  // --- Del panel del comercio (Persona 3); ver tag `comercio` en openapi ---
+  /// No hay cliente con ese teléfono (o el comercio es otro).
+  customerNotFound('CUSTOMER_NOT_FOUND'),
+
+  /// El token de QR no tiene firma válida o venció (~60 s).
+  invalidQrToken('INVALID_QR_TOKEN'),
+
+  /// El ticket de identificación venció (~5 min), es de otro comercio o fue
+  /// manipulado.
+  invalidIdentificationTicket('INVALID_IDENTIFICATION_TICKET'),
+
+  /// `invoice_ref` ya usado dentro del mismo comercio.
+  duplicateInvoice('DUPLICATE_INVOICE'),
+
   // --- Reservados: del documento 9-stack, aún no en openapi.yaml ---
   /// Reservado (9-stack, límite de OTP por teléfono/IP).
   otpRateLimited('OTP_RATE_LIMITED', reserved: true),
-  duplicateInvoice('DUPLICATE_INVOICE', reserved: true),
-  customerNotFound('CUSTOMER_NOT_FOUND', reserved: true),
   invalidAttachment('INVALID_ATTACHMENT', reserved: true),
   attachmentTooLarge('ATTACHMENT_TOO_LARGE', reserved: true),
   refundAlreadyRequested('REFUND_ALREADY_REQUESTED', reserved: true),

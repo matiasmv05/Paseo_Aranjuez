@@ -1,13 +1,17 @@
 import 'dart:io';
 
 import 'package:paseo_api/adapters/in/auth_use_cases.dart';
+import 'package:paseo_api/adapters/in/merchant_use_cases.dart';
+import 'package:paseo_api/adapters/out/auth/identification_signer.dart';
 import 'package:paseo_api/adapters/out/auth/jwt_token_signer.dart';
+import 'package:paseo_api/adapters/out/auth/jwt_token_verifier.dart';
 import 'package:paseo_api/adapters/out/clock/system_clock.dart';
 import 'package:paseo_api/adapters/out/email/console_email_sender.dart';
 import 'package:paseo_api/adapters/out/email/smtp_email_sender.dart';
 import 'package:paseo_api/adapters/out/otp/console_otp_sender.dart';
 import 'package:paseo_api/adapters/out/password/argon2id_password_hasher.dart';
 import 'package:paseo_api/adapters/out/postgres/postgres.dart';
+import 'package:paseo_api/adapters/out/rate_limit/establishment_rate_limiter.dart';
 import 'package:paseo_api/adapters/out/tokens/crypto_token_generator.dart';
 import 'package:paseo_api/adapters/out/tokens/uuid_id_generator.dart';
 import 'package:paseo_api/application/identity/ports.dart';
@@ -20,10 +24,16 @@ import 'package:paseo_api/application/identity/use_cases/resend_phone_otp.dart';
 import 'package:paseo_api/application/identity/use_cases/reset_password.dart';
 import 'package:paseo_api/application/identity/use_cases/verify_email.dart';
 import 'package:paseo_api/application/identity/use_cases/verify_phone_otp.dart';
+import 'package:paseo_api/application/merchant/use_cases/identify_customer.dart';
+import 'package:paseo_api/application/merchant/use_cases/list_movements.dart';
+import 'package:paseo_api/application/merchant/use_cases/preview_purchase.dart';
+import 'package:paseo_api/application/merchant/use_cases/register_purchase.dart';
+import 'package:paseo_api/domain/loyalty/points_calculator.dart';
+import 'package:paseo_api/domain/loyalty/rule_resolver.dart';
 
 /// Grafo de dependencias de la API construido a partir del entorno.
 /// Un singleton por proceso (single isolate de dart_frog).
-final class AppDependencies implements AuthUseCases {
+final class AppDependencies implements AuthUseCases, MerchantUseCases {
   AppDependencies._({
     required this.db,
     required this.users,
@@ -32,6 +42,14 @@ final class AppDependencies implements AuthUseCases {
     required this.resets,
     required this.refreshTokens,
     required this.audit,
+    required this.establishments,
+    required this.pointsRules,
+    required this.purchases,
+    required this.movements,
+    required this.ticketSigner,
+    required this.verifier,
+    required this.rateLimiter,
+    required this.merchant,
     required this.tx,
     required this.hasher,
     required this.signer,
@@ -171,6 +189,51 @@ final class AppDependencies implements AuthUseCases {
       tx: tx,
     );
 
+    // Panel del comercio (HU-10/11/13, feature 003).
+    final establishments = PostgresEstablishmentRepository(db);
+    final pointsRules = PostgresPointsRuleRepository(db);
+    final purchases = PostgresPurchaseRepository(db);
+    final movements = PostgresMovementRepository(db);
+    final ticketSigner = IdentificationSigner(
+      secret: env['IDENTIFICATION_SECRET'] ?? '',
+    );
+    final verifier = JwtTokenVerifier(secret: env['JWT_SECRET'] ?? '');
+    final rateLimiter = EstablishmentRateLimiter(clock: clock);
+    const resolver = RuleResolver();
+    const calculator = PointsCalculator();
+    final identifyCustomer = IdentifyCustomer(
+      establishments: establishments,
+      signer: ticketSigner,
+      clock: clock,
+    );
+    final previewPurchase = PreviewPurchase(
+      signer: ticketSigner,
+      rules: pointsRules,
+      resolver: resolver,
+      calculator: calculator,
+      clock: clock,
+    );
+    final registerPurchase = RegisterPurchase(
+      signer: ticketSigner,
+      rules: pointsRules,
+      resolver: resolver,
+      calculator: calculator,
+      purchases: purchases,
+      clock: clock,
+    );
+    final listMovements = ListMovements(movements: movements);
+    final merchant = MerchantDependencies(
+      identifyCustomer: identifyCustomer.call,
+      previewPurchase: previewPurchase.call,
+      registerPurchase: registerPurchase.call,
+      listMovements: listMovements.call,
+      verifier: verifier,
+      users: users,
+      establishments: establishments,
+      rateLimiter: rateLimiter,
+      clock: clock,
+    );
+
     return _instance = AppDependencies._(
       db: db,
       users: users,
@@ -179,6 +242,14 @@ final class AppDependencies implements AuthUseCases {
       resets: resets,
       refreshTokens: refreshTokens,
       audit: audit,
+      establishments: establishments,
+      pointsRules: pointsRules,
+      purchases: purchases,
+      movements: movements,
+      ticketSigner: ticketSigner,
+      verifier: verifier,
+      rateLimiter: rateLimiter,
+      merchant: merchant,
       tx: tx,
       hasher: hasher,
       signer: signer,
@@ -206,6 +277,14 @@ final class AppDependencies implements AuthUseCases {
   final PostgresPasswordResetRepository resets;
   final PostgresRefreshTokenRepository refreshTokens;
   final PostgresAuditLogWriter audit;
+  final PostgresEstablishmentRepository establishments;
+  final PostgresPointsRuleRepository pointsRules;
+  final PostgresPurchaseRepository purchases;
+  final PostgresMovementRepository movements;
+  final IdentificationSigner ticketSigner;
+  final TokenVerifier verifier;
+  final EstablishmentRateLimiter rateLimiter;
+  final MerchantDependencies merchant;
   final PostgresTransactionRunner tx;
   final PasswordHasher hasher;
   final TokenSigner signer;
@@ -233,4 +312,16 @@ final class AppDependencies implements AuthUseCases {
   final ForgotFn forgotPassword;
   @override
   final ResetFn resetPassword;
+
+  @override
+  IdentifyFn get identifyCustomer => merchant.identifyCustomer;
+
+  @override
+  PreviewFn get previewPurchase => merchant.previewPurchase;
+
+  @override
+  RegisterPurchaseFn get registerPurchase => merchant.registerPurchase;
+
+  @override
+  ListMovementsFn get listMovements => merchant.listMovements;
 }
