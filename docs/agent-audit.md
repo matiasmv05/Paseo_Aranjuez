@@ -182,3 +182,43 @@ VERIFIED:
 5. Worker CleanupExpiredCredentials + tests
 6. Flutter main_merchant_web.dart + main_admin_web.dart
 7. Full verification pipeline (format, analyze, unit, openapi, migrations from zero, integration, flutter builds)
+
+---
+
+## FEATURE 003 — PANEL DEL ESTABLECIMIENTO (04/10/2026)
+
+Estado: **IMPLEMENTED + VERIFIED** en rama `feat/003-panel-establecimiento`
+(PR #3 → `main`; sin merge). HU-10 / HU-11 / HU-13 / HUT-02.
+
+IMPLEMENTED:
+- **BD**: `V004` (comercios/sucursales/personal), `V005` (reglas de conversion
+  versionadas), `V006` (`purchases`, `points_ledger`, `customer_balances` +
+  trigger de saldo); `GRANT` minimos y `REVOKE UPDATE,DELETE,TRUNCATE` en
+  `points_ledger`, `customer_balances`, `purchases`, `audit_log`. Seed `R__seed_dev`
+  extendido con comercio/sucursal/staff/cliente/regla GLOBAL fijos.
+- **API**: dominio loyalty (`PointsCalculator`, `RuleResolver`, ticket HMAC
+  SHA-256); casos de uso merchant (`IdentifyCustomer`, `PreviewPurchase`,
+  `RegisterPurchase`, `ListMovements`); adapters Postgres; 4 rutas `/merchant/*`
+  (identify, preview, purchases, movements) con RFC 9457.
+- **Contrato**: 4 endpoints en `docs/openapi.yaml` **antes** de las rutas.
+- **`packages/paseo_shared`**: DTOs `src/merchant/dto.dart`.
+- **Flutter**: `lib/features/merchant/{data,application,presentation}` +
+  `main_merchant_web.dart` (web comercio) + scaffolding `apps/mobile/web/`
+  (index.html, manifest, iconos) para los builds merchant/admin. Resuelve el
+  item de MISSING "Flutter web entry points" para comercio (linea 68); el
+  admin sigue stub.
+
+VERIFIED (04/10/2026):
+- `fvm dart format --set-exit-if-changed .` → 0 cambios.
+- `fvm dart analyze --fatal-warnings` → EXIT 0 (606 infos no fatales).
+- `fvm flutter analyze` → 0 issues; `fvm flutter test` → 6 verdes.
+- API unit (`test/domain test/application test/routes`) → 223 verdes.
+- API integration con rol real `paseo_app` (127.0.0.1:55432) → 22 verdes
+  (incluye HUT-02 p95<500ms, idempotencia, aislamiento, grants).
+- Migraciones desde cero: `V001`–`V006` + `R__seed_dev`; `migrate info` en 006.
+- OpenAPI: `redocly lint` valido (4 warnings preexistentes).
+- Web build: `flutter build web -t lib/main_merchant_web.dart` → OK.
+- **SC-001 – SC-010** cubiertos (una prueba por HU, p95/HUT-02, calculo
+  compartido, idempotencia, aislamiento app-layer, contrato antes, sin PII,
+  grants, web-merchant muestra el mismo valor, gates verdes).
+- Pendiente (no bloquea 003): RLS (deuda, regla 2.7), proveedor SMS, merge del PR.

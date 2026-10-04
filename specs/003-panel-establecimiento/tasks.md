@@ -175,21 +175,21 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 
 ## Phase 9: Cross-Cutting Verification
 
-- [ ] T120 [V1] Formateo + análisis global: `fvm dart format --set-exit-if-changed . && fvm dart analyze --fatal-warnings`. Flutter: `cd apps/mobile && fvm flutter analyze`.
-- [ ] T121 [V2] Tests por capas: `cd apps/api && fvm dart test test/domain test/application test/routes` (todos verdes).
-- [ ] T122 [V3] Integración: levantar BD 5433, `cd apps/api && fvm dart test test/integration` (todos verdes).
-- [ ] T123 [V4] Flutter tests: `cd apps/mobile && fvm flutter test` verde.
-- [ ] T124 [V5] OpenAPI: `npx --yes @redocly/cli@2 lint docs/openapi.yaml` → 0 errores (4 warnings preexistentes OK).
-- [ ] T125 [V6] Migraciones desde cero: validar con `migrate info`/aplicación limpia (coincide con CI).
-- [ ] T126 [V7] Revisión de seguridad: logs sin PII (tickets/QR/teléfonos/correos), JWT sin PII, grants mínimos verificados, saldo nunca escrito por API, ledger insert-only.
-- [ ] T127 [V8] Actualizar `docs/agent-audit.md` si hay cambios relevantes de estado (opcional pero coherente con plantilla).
-- [ ] T128 [V9] Verificar SC-001–SC-010: HU-10/11/13/HUT-02 con tests, p95<500ms/HUT-02, cálculo compartido, idempotencia, aislamiento app-layer, contrato antes, sin PII, grants OK, web-merchant muestra mismo valor.
+- [x] T120 [V1] Formateo + análisis global: `fvm dart format --set-exit-if-changed . && fvm dart analyze --fatal-warnings`. Flutter: `cd apps/mobile && fvm flutter analyze`.
+- [x] T121 [V2] Tests por capas: `cd apps/api && fvm dart test test/domain test/application test/routes` (todos verdes).
+- [x] T122 [V3] Integración: levantar BD 5433, `cd apps/api && fvm dart test test/integration` (todos verdes).
+- [x] T123 [V4] Flutter tests: `cd apps/mobile && fvm flutter test` verde.
+- [x] T124 [V5] OpenAPI: `npx --yes @redocly/cli@2 lint docs/openapi.yaml` → 0 errores (4 warnings preexistentes OK).
+- [x] T125 [V6] Migraciones desde cero: validar con `migrate info`/aplicación limpia (coincide con CI).
+- [x] T126 [V7] Revisión de seguridad: logs sin PII (tickets/QR/teléfonos/correos), JWT sin PII, grants mínimos verificados, saldo nunca escrito por API, ledger insert-only.
+- [x] T127 [V8] Actualizar `docs/agent-audit.md` si hay cambios relevantes de estado (opcional pero coherente con plantilla).
+- [x] T128 [V9] Verificar SC-001–SC-010: HU-10/11/13/HUT-02 con tests, p95<500ms/HUT-02, cálculo compartido, idempotencia, aislamiento app-layer, contrato antes, sin PII, grants OK, web-merchant muestra mismo valor.
 
 ## Phase 10: Finalización
 
-- [ ] T130 [F1] Revisar diff: solo archivos de esta feature. No tocar `V001`–`V003`, `lib/main.dart`, worker, web-admin.
-- [ ] T131 [F2] Ejecutar todos los comandos de verificación en orden (V1–V9). Todo verde.
-- [ ] T132 [F3] Confirmar rama `feat/003-panel-establecimiento` lista para PR. Incluir referencia a HU-10/HU-11/HU-13/HUT-02 en descripción.
+- [x] T130 [F1] Revisar diff: solo archivos de esta feature. No tocar `V001`–`V003`, `lib/main.dart`, worker, web-admin.
+- [x] T131 [F2] Ejecutar todos los comandos de verificación en orden (V1–V9). Todo verde.
+- [x] T132 [F3] Confirmar rama `feat/003-panel-establecimiento` lista para PR. Incluir referencia a HU-10/HU-11/HU-13/HUT-02 en descripción.
 
 ## Dependencies & Execution Order
 
