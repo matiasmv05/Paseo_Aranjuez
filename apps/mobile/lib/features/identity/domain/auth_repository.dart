@@ -2,5 +2,6 @@
 abstract class AuthRepository {
   Future<void> sendOtp(String phone);
 
-  Future<bool> verifyOtp(String phone, String code);
+  /// Devuelve el token de sesión si el OTP es válido; `null` si no.
+  Future<String?> verifyOtp(String phone, String code);
 }

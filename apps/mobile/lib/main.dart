@@ -7,6 +7,9 @@ import 'features/identity/registration_screen.dart';
 /// Punto de entrada móvil del cliente (AGENTS.md §4).
 void main() {
   InjectionContainer.setupDependencies();
-  final identityNotifier = IdentityNotifier(InjectionContainer.authRepository);
+  final identityNotifier = IdentityNotifier(
+    InjectionContainer.authRepository,
+    tokenStorage: InjectionContainer.tokenStorage,
+  );
   runApp(RegistrationScreen(notifier: identityNotifier));
 }

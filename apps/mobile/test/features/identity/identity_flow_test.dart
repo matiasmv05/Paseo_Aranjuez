@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:paseo_mobile/core/di/injection.dart';
 import 'package:paseo_mobile/features/identity/registration_screen.dart';
 import 'package:paseo_mobile/features/identity/otp_verify_screen.dart';
+import 'package:paseo_mobile/features/identity/login_screen.dart';
 
 void main() {
   setUp(() {
@@ -55,5 +56,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Login Screen'), findsOneWidget);
+  });
+
+  testWidgets('Login con OTP válido navega a ProfileScreen', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(LoginScreen());
+
+    await tester.enterText(
+      find.byKey(const Key('loginPhoneField')),
+      '+59170123456',
+    );
+    await tester.enterText(find.byKey(const Key('loginCodeField')), '123456');
+    await tester.tap(find.byKey(const Key('loginButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Profile'), findsOneWidget);
   });
 }

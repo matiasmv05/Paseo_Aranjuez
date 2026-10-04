@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
 
+import 'data/token_storage.dart';
 import 'domain/auth_repository.dart';
 
-/// Estados del flujo de identidad (registro + verificación OTP).
+/// Estados del flujo de identidad (registro + verificación OTP + sesión).
 sealed class IdentityState {
   const IdentityState();
 }
@@ -29,11 +30,22 @@ final class IdentityFailure extends IdentityState {
   final String message;
 }
 
+final class IdentityAuthenticated extends IdentityState {
+  const IdentityAuthenticated();
+}
+
+final class IdentityUnauthenticated extends IdentityState {
+  const IdentityUnauthenticated();
+}
+
 /// Controlador de estado del flujo de identidad.
 class IdentityNotifier extends ValueNotifier<IdentityState> {
-  IdentityNotifier(this._repository) : super(const IdentityInitial());
+  IdentityNotifier(this._repository, {TokenStorage? tokenStorage})
+    : _tokenStorage = tokenStorage ?? InMemoryTokenStorage(),
+      super(const IdentityInitial());
 
   final AuthRepository _repository;
+  final TokenStorage _tokenStorage;
 
   Future<void> sendOtp(String phone) async {
     value = const IdentityLoading();
@@ -48,12 +60,27 @@ class IdentityNotifier extends ValueNotifier<IdentityState> {
   Future<void> verifyOtp(String phone, String code) async {
     value = const IdentityLoading();
     try {
-      final isValid = await _repository.verifyOtp(phone, code);
-      value = isValid
-          ? const OtpVerified()
-          : const IdentityFailure('Código OTP inválido');
+      final token = await _repository.verifyOtp(phone, code);
+      if (token == null) {
+        value = const IdentityFailure('Código OTP inválido');
+        return;
+      }
+      await _tokenStorage.saveToken(token);
+      value = const OtpVerified();
     } catch (e) {
       value = IdentityFailure(e.toString());
     }
+  }
+
+  Future<void> checkAuthStatus() async {
+    final token = await _tokenStorage.getToken();
+    value = token != null && token.isNotEmpty
+        ? const IdentityAuthenticated()
+        : const IdentityUnauthenticated();
+  }
+
+  Future<void> signOut() async {
+    await _tokenStorage.deleteToken();
+    value = const IdentityUnauthenticated();
   }
 }

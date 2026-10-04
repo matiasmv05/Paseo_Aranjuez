@@ -77,7 +77,7 @@ void main() {
 
       final result = await repo.verifyOtp('+59170123456', '123456');
 
-      expect(result, isTrue);
+      expect(result, isNotNull);
     });
 
     test('devuelve false ante 422 (OTP inválido)', () async {
@@ -96,7 +96,7 @@ void main() {
 
       final result = await repo.verifyOtp('+59170123456', '000000');
 
-      expect(result, isFalse);
+      expect(result, isNull);
     });
   });
 }

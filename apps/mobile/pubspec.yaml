@@ -8,11 +8,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_secure_storage: ^11.2.0
   http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  mocktail: ^1.0.5
   very_good_analysis: ^11.0.0
 
 flutter:

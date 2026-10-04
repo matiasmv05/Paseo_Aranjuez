@@ -42,7 +42,7 @@ final class HttpAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<bool> verifyOtp(String phone, String code) async {
+  Future<String?> verifyOtp(String phone, String code) async {
     final response = await _client.post(
       _uri('/auth/phone/verify'),
       headers: _jsonHeaders,
@@ -50,10 +50,13 @@ final class HttpAuthRepository implements AuthRepository {
     );
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      return body['phone_verified'] == true;
+      if (body['phone_verified'] != true) {
+        return null;
+      }
+      return (body['access_token'] as String?) ?? 'otp-verified';
     }
     if (response.statusCode == 422) {
-      return false; // OTP inválido, vencido o sin intentos (code OTP_INVALID).
+      return null; // OTP inválido, vencido o sin intentos (code OTP_INVALID).
     }
     throw _toException(response);
   }

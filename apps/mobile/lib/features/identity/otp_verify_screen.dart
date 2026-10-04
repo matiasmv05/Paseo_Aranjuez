@@ -38,7 +38,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
           return;
         }
         _navigatorKey.currentState?.push(
-          MaterialPageRoute<Widget>(builder: (_) => const LoginScreen()),
+          MaterialPageRoute<Widget>(builder: (_) => LoginScreen()),
         );
       });
     }

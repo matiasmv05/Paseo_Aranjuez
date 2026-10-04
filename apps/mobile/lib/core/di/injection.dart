@@ -1,5 +1,6 @@
 import '../../features/identity/data/http_auth_repository.dart';
 import '../../features/identity/data/mock_auth_repository.dart';
+import '../../features/identity/data/token_storage.dart';
 import '../../features/identity/domain/auth_repository.dart';
 
 /// Contenedor simple de dependencias (service locator) del app móvil.
@@ -10,11 +11,16 @@ final class InjectionContainer {
   InjectionContainer._();
 
   static AuthRepository? _authRepository;
+  static TokenStorage? _tokenStorage;
 
   /// Repositorio de identidad configurado. Si no se llamó a
   /// [setupDependencies], devuelve un [MockAuthRepository] (defecto seguro).
   static AuthRepository get authRepository =>
       _authRepository ?? MockAuthRepository();
+
+  /// Almacenamiento de tokens. Por defecto, en memoria (seguro en tests).
+  static TokenStorage get tokenStorage =>
+      _tokenStorage ?? InMemoryTokenStorage();
 
   /// Inicializa el contenedor. [useMock] por defecto lee el
   /// `--dart-define=USE_MOCK` (true en desarrollo/tests si no se especifica).
@@ -30,10 +36,14 @@ final class InjectionContainer {
     _authRepository = resolvedUseMock
         ? MockAuthRepository()
         : HttpAuthRepository(baseUrl: resolvedBaseUrl);
+    _tokenStorage = resolvedUseMock
+        ? InMemoryTokenStorage()
+        : SecureTokenStorage();
   }
 
   /// Limpia el contenedor (útil entre tests).
   static void reset() {
     _authRepository = null;
+    _tokenStorage = null;
   }
 }
