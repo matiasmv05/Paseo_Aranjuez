@@ -61,16 +61,19 @@ void main() {
   });
 
   group('CryptoTokenGenerator', () {
-    test('randomToken returns base64url of n bytes, deterministic hash via SHA-256', () {
-      const gen = CryptoTokenGenerator();
-      final t1 = gen.randomToken(32);
-      final t2 = gen.randomToken(32);
-      expect(t1, isNot(t2));
-      expect(base64Url.decode(base64Url.normalize(t1)).length, 32);
-      final h = gen.hashToken(t1);
-      expect(h.length, 64); // SHA-256 hex
-      expect(gen.hashToken(t1), equals(h)); // deterministic
-    });
+    test(
+      'randomToken returns base64url of n bytes, deterministic hash via SHA-256',
+      () {
+        const gen = CryptoTokenGenerator();
+        final t1 = gen.randomToken(32);
+        final t2 = gen.randomToken(32);
+        expect(t1, isNot(t2));
+        expect(base64Url.decode(base64Url.normalize(t1)).length, 32);
+        final h = gen.hashToken(t1);
+        expect(h.length, 64); // SHA-256 hex
+        expect(gen.hashToken(t1), equals(h)); // deterministic
+      },
+    );
 
     test('randomOtp returns 6 digits', () {
       const gen = CryptoTokenGenerator();

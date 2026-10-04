@@ -7,16 +7,18 @@ import 'package:test/test.dart';
 
 import '../../routes/ready.dart';
 
-class _MockRequestContext extends Mock implements RequestContext;
+class _MockRequestContext extends Mock implements RequestContext {}
 
 void main() {
   group('GET /ready', () {
     test('200 {"status":"ready"} cuando el check devuelve true', () async {
       final context = _MockRequestContext();
-      when(() => context.request)
-          .thenReturn(Request('GET', Uri.parse('http://localhost/ready')));
-      when(() => context.read<Future<bool> Function()>())
-          .thenReturn(() async => true);
+      when(
+        () => context.request,
+      ).thenReturn(Request('GET', Uri.parse('http://localhost/ready')));
+      when(
+        () => context.read<Future<bool> Function()>(),
+      ).thenReturn(() async => true);
 
       final response = await onRequest(context);
 
@@ -29,10 +31,12 @@ void main() {
       '503 problem+json (SERVICE_UNAVAILABLE) cuando el check falla',
       () async {
         final context = _MockRequestContext();
-        when(() => context.request)
-            .thenReturn(Request('GET', Uri.parse('http://localhost/ready')));
-        when(() => context.read<Future<bool> Function()>())
-            .thenReturn(() async => false);
+        when(
+          () => context.request,
+        ).thenReturn(Request('GET', Uri.parse('http://localhost/ready')));
+        when(
+          () => context.read<Future<bool> Function()>(),
+        ).thenReturn(() async => false);
 
         final response = await onRequest(context);
 

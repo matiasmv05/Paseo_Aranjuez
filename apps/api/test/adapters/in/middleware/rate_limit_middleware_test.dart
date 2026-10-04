@@ -6,7 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:paseo_api/adapters/in/middleware/rate_limit_middleware.dart';
 import 'package:test/test.dart';
 
-class _MockContext extends Mock implements RequestContext;
+class _MockContext extends Mock implements RequestContext {}
 
 RequestContext _ctx({
   String path = '/auth/login',
@@ -53,23 +53,27 @@ void main() {
       )((c) async => Response.json(body: {'ok': true}));
 
       expect(
-        (await handler(_ctx(headers: {'x-forwarded-for': '10.0.0.1'})))
-            .statusCode,
+        (await handler(
+          _ctx(headers: {'x-forwarded-for': '10.0.0.1'}),
+        )).statusCode,
         HttpStatus.ok,
       );
       expect(
-        (await handler(_ctx(headers: {'x-forwarded-for': '10.0.0.1'})))
-            .statusCode,
+        (await handler(
+          _ctx(headers: {'x-forwarded-for': '10.0.0.1'}),
+        )).statusCode,
         HttpStatus.ok,
       );
       expect(
-        (await handler(_ctx(headers: {'x-forwarded-for': '10.0.0.1'})))
-            .statusCode,
+        (await handler(
+          _ctx(headers: {'x-forwarded-for': '10.0.0.1'}),
+        )).statusCode,
         HttpStatus.tooManyRequests,
       );
       expect(
-        (await handler(_ctx(headers: {'x-forwarded-for': '10.0.0.2'})))
-            .statusCode,
+        (await handler(
+          _ctx(headers: {'x-forwarded-for': '10.0.0.2'}),
+        )).statusCode,
         HttpStatus.ok,
       );
     });

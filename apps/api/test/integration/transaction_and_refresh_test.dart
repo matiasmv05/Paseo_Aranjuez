@@ -92,14 +92,14 @@ void main() {
     final at = DateTime.now().toUtc();
     final results = await Future.wait([
       db1.runInTransaction(
-        () =>
-            PostgresRefreshTokenRepository(db1)
-                .tryClaimRotation(id: tokenId, at: at),
+        () => PostgresRefreshTokenRepository(
+          db1,
+        ).tryClaimRotation(id: tokenId, at: at),
       ),
       db2.runInTransaction(
-        () =>
-            PostgresRefreshTokenRepository(db2)
-                .tryClaimRotation(id: tokenId, at: at),
+        () => PostgresRefreshTokenRepository(
+          db2,
+        ).tryClaimRotation(id: tokenId, at: at),
       ),
     ]);
     expect(results.where((won) => won), hasLength(1));
@@ -112,9 +112,9 @@ void main() {
 
     // revokeAllForUser idempotente y sin error sobre ya revocados.
     await db.runInTransaction(
-      () =>
-          PostgresRefreshTokenRepository(db)
-              .revokeAllForUser(userId: userId, at: at),
+      () => PostgresRefreshTokenRepository(
+        db,
+      ).revokeAllForUser(userId: userId, at: at),
     );
   });
 

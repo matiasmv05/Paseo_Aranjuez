@@ -174,6 +174,18 @@ El cliente pide restablecer su contraseña por correo y la define con el token r
 - `audit_log` mínima se adelanta a V002 (su versión completa con `fraud_*` sigue en V009).
 - **OPEN**: proveedor de SMS y correo; librería Argon2id; regex de teléfono endurecida; interpretaciones de la encuesta.
 
+## Persona 1 Enhancements
+
+- **QR Endpoint**: `GET /api/v1/customers/me/qr` returns a signed QR ticket containing the customer ID and an expiry timestamp. The ticket is valid for 5 minutes and is intended for merchant‑side recognition.
+- **Flutter UI** (in `apps/mobile/lib/features/identity`):
+  - Registration flow screens – email, phone, password input and OTP entry view.
+  - Phone OTP verification screen.
+  - Login screen with `X‑Paseo‑Client: paseo‑mobile` and refresh handling.
+  - Profile screen that displays and allows editing of customer data; includes a QR viewer component (`qr_view.dart`).
+  - Responsive design: use `LayoutBuilder` and `MediaQuery` to adjust layout for mobile and desktop, passing tests for at least three common breakpoints.
+
+- **New Tasks**: `T099–T104` in `tasks.md` cover the Flutter implementation.
+
 ## Definition of Done
 
 - [ ] Spec reviewed and approved by a human

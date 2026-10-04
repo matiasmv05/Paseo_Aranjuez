@@ -140,20 +140,25 @@ void main() {
       },
     );
 
-    test('web-admin con rol admin -> aud=paseo-web-admin (cookie propia del adapter)', () async {
-      when(() => users.findByEmail(any()))
-          .thenAnswer((_) async => user(role: UserRole.admin));
-      final session = await login.call(
-        email: 'ana@example.com',
-        password: 'secreto123',
-        client: ClientApp.webAdmin,
-      );
-      final claims =
-          verify(() => signer.sign(captureAny())).captured.single as AuthClaims;
-      expect(claims.audience, ClientApp.webAdmin.audience);
-      expect(ClientApp.webAdmin.refreshCookieName, '__Secure-rt_admin');
-      expect(session.refreshToken, isNotEmpty);
-    });
+    test(
+      'web-admin con rol admin -> aud=paseo-web-admin (cookie propia del adapter)',
+      () async {
+        when(
+          () => users.findByEmail(any()),
+        ).thenAnswer((_) async => user(role: UserRole.admin));
+        final session = await login.call(
+          email: 'ana@example.com',
+          password: 'secreto123',
+          client: ClientApp.webAdmin,
+        );
+        final claims =
+            verify(() => signer.sign(captureAny())).captured.single
+                as AuthClaims;
+        expect(claims.audience, ClientApp.webAdmin.audience);
+        expect(ClientApp.webAdmin.refreshCookieName, '__Secure-rt_admin');
+        expect(session.refreshToken, isNotEmpty);
+      },
+    );
 
     test('web-admin sin rol admin -> 403 FORBIDDEN', () async {
       when(() => users.findByEmail(any())).thenAnswer((_) async => user());
@@ -254,8 +259,9 @@ void main() {
     });
 
     test('rotacion: emite tokens nuevos en la misma familia', () async {
-      when(() => refresh.findByTokenHash('sha:rt-actual'))
-          .thenAnswer((_) async => record());
+      when(
+        () => refresh.findByTokenHash('sha:rt-actual'),
+      ).thenAnswer((_) async => record());
       final session = await useCase.call(refreshToken: 'rt-actual');
       expect(session.accessToken, 'signed.jwt');
       verify(
@@ -283,40 +289,45 @@ void main() {
       );
     });
 
-    test('reutilizacion del refresh anterior -> TOKEN_REUSE_DETECTED + familia revocada', () async {
-      when(() => refresh.findByTokenHash('sha:rt-viejo'))
-          .thenAnswer((_) async => record(revokedAt: now));
-      when(
-        () => refresh.tryClaimRotation(
-          id: any(named: 'id'),
-          at: any(named: 'at'),
-        ),
-      ).thenAnswer((_) async => false);
-      await expectLater(
-        useCase.call(refreshToken: 'rt-viejo'),
-        throwsA(
-          isA<IdentityException>().having(
-            (e) => e.code,
-            'code',
-            ApiErrorCode.tokenReuseDetected,
+    test(
+      'reutilizacion del refresh anterior -> TOKEN_REUSE_DETECTED + familia revocada',
+      () async {
+        when(
+          () => refresh.findByTokenHash('sha:rt-viejo'),
+        ).thenAnswer((_) async => record(revokedAt: now));
+        when(
+          () => refresh.tryClaimRotation(
+            id: any(named: 'id'),
+            at: any(named: 'at'),
           ),
-        ),
-      );
-      verify(
-        () => refresh.revokeFamily(
-          familyId: 'fam-1',
-          at: any(named: 'at'),
-        ),
-      ).called(1);
-      // no se emite nada
-      verifyNever(() => signer.sign(any()));
-    });
+        ).thenAnswer((_) async => false);
+        await expectLater(
+          useCase.call(refreshToken: 'rt-viejo'),
+          throwsA(
+            isA<IdentityException>().having(
+              (e) => e.code,
+              'code',
+              ApiErrorCode.tokenReuseDetected,
+            ),
+          ),
+        );
+        verify(
+          () => refresh.revokeFamily(
+            familyId: 'fam-1',
+            at: any(named: 'at'),
+          ),
+        ).called(1);
+        // no se emite nada
+        verifyNever(() => signer.sign(any()));
+      },
+    );
 
     test(
       'concurrencia: el reclamo atomico perdido se trata como reutilizacion',
       () async {
-        when(() => refresh.findByTokenHash('sha:rt-x'))
-            .thenAnswer((_) async => record());
+        when(
+          () => refresh.findByTokenHash('sha:rt-x'),
+        ).thenAnswer((_) async => record());
         when(
           () => refresh.tryClaimRotation(
             id: any(named: 'id'),
@@ -406,8 +417,9 @@ void main() {
       await useCase.call(refreshToken: 'rt-1');
       verify(() => refresh.tryClaimRotation(id: 'rt-1', at: now)).called(1);
 
-      when(() => refresh.findByTokenHash('sha:desconocido'))
-          .thenAnswer((_) async => null);
+      when(
+        () => refresh.findByTokenHash('sha:desconocido'),
+      ).thenAnswer((_) async => null);
       await useCase.call(refreshToken: 'desconocido'); // no lanza
     });
   });
@@ -453,8 +465,9 @@ void main() {
     });
 
     test('correo no verificado -> termina normal, NO envia', () async {
-      when(() => users.findByEmail(any()))
-          .thenAnswer((_) async => user(emailVerified: false));
+      when(
+        () => users.findByEmail(any()),
+      ).thenAnswer((_) async => user(emailVerified: false));
       await useCase.call(email: 'ana@example.com');
       verifyNever(
         () => emailSender.sendPasswordReset(
@@ -540,8 +553,9 @@ void main() {
 
         verify(() => resets.tryMarkUsed(id: 'pr-1', at: now)).called(1);
         verify(() => users.incrementTokenVersion('u-1')).called(1);
-        verify(() => refresh.revokeAllForUser(userId: 'u-1', at: now))
-            .called(1);
+        verify(
+          () => refresh.revokeAllForUser(userId: 'u-1', at: now),
+        ).called(1);
         verify(
           () => audit.write(
             action: 'auth.password.reset',

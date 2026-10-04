@@ -63,7 +63,8 @@ void main() {
 
     test('verify handles wrong algorithm gracefully', () async {
       final ok = await hasher.verify(
-        hash: '\$argon2i\$v=19\$m=19456,t=2,p=1\$c29tZXNhbHQ\$GpZ3sK/oH9p7VIiV56G/64Zo/8GaUw434IimaPqxwCo',
+        hash:
+            '\$argon2i\$v=19\$m=19456,t=2,p=1\$c29tZXNhbHQ\$GpZ3sK/oH9p7VIiV56G/64Zo/8GaUw434IimaPqxwCo',
         plain: 'password',
       );
       expect(ok, isFalse);

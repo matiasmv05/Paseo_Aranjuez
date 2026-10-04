@@ -78,6 +78,15 @@ infra/tests/rls/002_identity.sql
 
 ## Implementation Sequence
 
+## Flutter Implementation Sequence
+
+- [ ] T099: Crear carpeta `apps/mobile/lib/features/identity` y sub‑módulos.
+- [ ] T100: Implementar pantallas de Registro, OTP, Login, Perfil y visualizador de QR.
+- [ ] T101: Lógica de navegación y gestión de estados (Bloc/Provider).
+- [ ] T102: Diseño responsive con `LayoutBuilder`/`MediaQuery` (mobile, tablet, desktop).
+- [ ] T103: Tests unitarios y de widget, integración con rutas Flutter.
+- [ ] T104: Integración con el backend (`GET /customers/me/qr`).
+
 Orden (cada tarea termina en verde con sus pruebas y commit propio):
 
 - [ ] **T-A0** Contrato: actualizar `docs/openapi.yaml` (renombres + `verify-email`) → `redocly lint` verde.

@@ -38,3 +38,8 @@ Desktop.ini
 # Local artifacts
 uploads/
 backups/
+
+
+# Ignorar ejecutables
+*.exe
+bin/*.exe

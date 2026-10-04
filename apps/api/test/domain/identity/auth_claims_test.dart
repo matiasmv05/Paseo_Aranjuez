@@ -50,26 +50,29 @@ void main() {
       expect(_claims().lifetime, AuthClaims.maxLifetime);
     });
 
-    test('role merchant_cashier se serializa con guion bajo y br aparece si hay sucursal', () {
-      final json = AuthClaims(
-        issuer: 'paseo-api',
-        audience: 'paseo-web-merchant',
-        subject: 'u-9',
-        issuedAt: DateTime.utc(2026),
-        expiresAt: DateTime.utc(2026, 1, 1, 0, 15),
-        jwtId: 'j',
-        role: UserRole.merchantCashier,
-        customerId: null,
-        establishmentId: 'est-1',
-        branchId: 'br-1',
-        phoneVerified: false,
-        emailVerified: true,
-        tokenVersion: 1,
-      ).toJson();
-      expect(json['role'], 'merchant_cashier');
-      expect(json['est'], 'est-1');
-      expect(json['br'], 'br-1');
-      expect(json.keys, isNot(contains('cid')));
-    });
+    test(
+      'role merchant_cashier se serializa con guion bajo y br aparece si hay sucursal',
+      () {
+        final json = AuthClaims(
+          issuer: 'paseo-api',
+          audience: 'paseo-web-merchant',
+          subject: 'u-9',
+          issuedAt: DateTime.utc(2026),
+          expiresAt: DateTime.utc(2026, 1, 1, 0, 15),
+          jwtId: 'j',
+          role: UserRole.merchantCashier,
+          customerId: null,
+          establishmentId: 'est-1',
+          branchId: 'br-1',
+          phoneVerified: false,
+          emailVerified: true,
+          tokenVersion: 1,
+        ).toJson();
+        expect(json['role'], 'merchant_cashier');
+        expect(json['est'], 'est-1');
+        expect(json['br'], 'br-1');
+        expect(json.keys, isNot(contains('cid')));
+      },
+    );
   });
 }
