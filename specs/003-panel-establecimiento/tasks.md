@@ -97,14 +97,14 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 ### Auth/firmas + rate limit
 
 - [x] T060 [P] [US-O1] `apps/api/lib/adapters/out/auth/identification_signer.dart`: HMAC-SHA256 para ticket identificación (TTL 300s) y QR (TTL 60s), mismo `IDENTIFICATION_SECRET`. Métodos `sign`/`verify` con reloj inyectable. No expone payload legible al cliente indebido.
-- [ ] T061 [P] [US-O2] `apps/api/lib/adapters/out/rate_limit/establishment_rate_limiter.dart`: rate limit por `establishment_id` para `preview`/`purchases` (429 `RATE_LIMITED`). Implementación sencilla (in-memory o store compartido según ambiente; tests usan fake).
+- [x] T061 [P] [US-O2] `apps/api/lib/adapters/out/rate_limit/establishment_rate_limiter.dart`: rate limit por `establishment_id` para `preview`/`purchases` (429 `RATE_LIMITED`). Implementación sencilla (in-memory o store compartido según ambiente; tests usan fake).
 
 ### Repositorios Postgres
 
-- [ ] T062 [US-O3] `apps/api/lib/adapters/out/postgres/postgres_establishment_repository.dart`: staff+branch, validar branch pertenece a estab, obtener datos para identificar.
-- [ ] T063 [US-O4] `apps/api/lib/adapters/out/postgres/postgres_points_rule_repository.dart`: cargar reglas activas (scope estab/cat/global) con filtros de vigencia.
-- [ ] T064 [US-O5] `apps/api/lib/adapters/out/postgres/postgres_purchase_repository.dart`: transacción única para insertar purchase+ledger+CREDIT; detectar violación `idempotency_key` único → devolver existente; detectar `(establishment_id,invoice_ref)` único → mapear a `DUPLICATE_INVOICE`. No actualizar saldo (trigger). Insert-only ledger.
-- [ ] T065 [US-O6] `apps/api/lib/adapters/out/postgres/postgres_movement_repository.dart`: query con `WHERE establishment_id=?` + seller filter si aplica, orden `created_at DESC,id DESC`, cursor opaco (base64/serializado mínimo), mapeo a DTO con nombre enmascarado.
+- [x] T062 [US-O3] `apps/api/lib/adapters/out/postgres/postgres_establishment_repository.dart`: staff+branch, validar branch pertenece a estab, obtener datos para identificar.
+- [x] T063 [US-O4] `apps/api/lib/adapters/out/postgres/postgres_points_rule_repository.dart`: cargar reglas activas (scope estab/cat/global) con filtros de vigencia.
+- [x] T064 [US-O5] `apps/api/lib/adapters/out/postgres/postgres_purchase_repository.dart`: transacción única para insertar purchase+ledger+CREDIT; detectar violación `idempotency_key` único → devolver existente; detectar `(establishment_id,invoice_ref)` único → mapear a `DUPLICATE_INVOICE`. No actualizar saldo (trigger). Insert-only ledger.
+- [x] T065 [US-O6] `apps/api/lib/adapters/out/postgres/postgres_movement_repository.dart`: query con `WHERE establishment_id=?` + seller filter si aplica, orden `created_at DESC,id DESC`, cursor opaco (base64/serializado mínimo), mapeo a DTO con nombre enmascarado.
 
 **Checkpoint O1:** adapters compilan; fakes pueden reemplazarse.
 
