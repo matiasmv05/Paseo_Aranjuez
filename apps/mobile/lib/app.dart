@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:paseo_mobile/design_system/tokens/paseo_theme.dart';
+import 'package:paseo_mobile/pages/admin_overview_page.dart';
 import 'package:paseo_mobile/pages/customer_main_page.dart';
+import 'package:paseo_mobile/pages/merchant_pos_page.dart';
 
 /// Widget raíz de la aplicación móvil del cliente (Paseo Points).
 class CustomerApp extends StatelessWidget {
@@ -26,13 +28,10 @@ class MerchantWebApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Paseo Points — Comercio',
+      title: 'Paseo Points — Boutique POS Terminal',
       debugShowCheckedModeBanner: false,
       theme: PaseoTheme.darkTheme,
-      home: Scaffold(
-        appBar: AppBar(title: const Text('Paseo Points — Comercio')),
-        body: const Center(child: Text('Commerce dashboard (placeholder)')),
-      ),
+      home: const MerchantPosPage(),
     );
   }
 }
@@ -45,13 +44,10 @@ class AdminWebApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Paseo Points — Administración',
+      title: 'Paseo Points — Executive Overview',
       debugShowCheckedModeBanner: false,
       theme: PaseoTheme.darkTheme,
-      home: Scaffold(
-        appBar: AppBar(title: const Text('Paseo Points — Administración')),
-        body: const Center(child: Text('Admin panel (placeholder)')),
-      ),
+      home: const AdminOverviewPage(),
     );
   }
 }
