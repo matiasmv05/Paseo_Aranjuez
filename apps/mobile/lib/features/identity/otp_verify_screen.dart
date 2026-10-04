@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'data/mock_auth_repository.dart';
+import '../../core/di/injection.dart';
 import 'identity_state.dart';
 import 'login_screen.dart';
 
 class OtpVerifyScreen extends StatefulWidget {
   OtpVerifyScreen({Key? key, this.phone = '', IdentityNotifier? notifier})
-    : notifier = notifier ?? IdentityNotifier(MockAuthRepository()),
+    : notifier =
+          notifier ?? IdentityNotifier(InjectionContainer.authRepository),
       super(key: key);
 
   final String phone;

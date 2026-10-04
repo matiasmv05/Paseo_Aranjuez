@@ -1,9 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
+import 'package:paseo_mobile/core/di/injection.dart';
 import 'package:paseo_mobile/features/identity/registration_screen.dart';
 import 'package:paseo_mobile/features/identity/otp_verify_screen.dart';
 
 void main() {
+  setUp(() {
+    InjectionContainer.setupDependencies(useMock: true);
+  });
   testWidgets('Registration flow', (WidgetTester tester) async {
     await tester.pumpWidget(RegistrationScreen());
     expect(find.text('Register'), findsOneWidget);

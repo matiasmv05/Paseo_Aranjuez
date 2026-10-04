@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'data/mock_auth_repository.dart';
+import '../../core/di/injection.dart';
 import 'identity_state.dart';
 import 'otp_verify_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   RegistrationScreen({Key? key, IdentityNotifier? notifier})
-    : notifier = notifier ?? IdentityNotifier(MockAuthRepository()),
+    : notifier =
+          notifier ?? IdentityNotifier(InjectionContainer.authRepository),
       super(key: key);
 
   final IdentityNotifier notifier;

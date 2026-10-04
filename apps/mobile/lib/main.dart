@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:paseo_mobile/features/identity/registration_screen.dart';
+
+import 'core/di/injection.dart';
+import 'features/identity/identity_state.dart';
+import 'features/identity/registration_screen.dart';
 
 /// Punto de entrada móvil del cliente (AGENTS.md §4).
 void main() {
-  runApp(const Placeholder());
+  InjectionContainer.setupDependencies();
+  final identityNotifier = IdentityNotifier(InjectionContainer.authRepository);
+  runApp(RegistrationScreen(notifier: identityNotifier));
 }
-
-//void main() {
-//  runApp(const MaterialApp(
-//    home: RegistrationScreen(),
-//  ));
-//}
