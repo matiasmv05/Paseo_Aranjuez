@@ -23,8 +23,9 @@ RequestContext _ctx(Object body, AuthUseCases useCases) {
       body: jsonEncode(body),
     ),
   );
-  when(() => ctx.read<Future<AuthUseCases>>())
-      .thenAnswer((_) async => useCases);
+  when(
+    () => ctx.read<Future<AuthUseCases>>(),
+  ).thenAnswer((_) async => useCases);
   return ctx;
 }
 
@@ -91,8 +92,9 @@ void main() {
       when(
         () => ctx.request,
       ).thenReturn(Request('GET', Uri.parse('http://localhost/auth/register')));
-      when(() => ctx.read<Future<AuthUseCases>>())
-          .thenAnswer((_) async => useCases);
+      when(
+        () => ctx.read<Future<AuthUseCases>>(),
+      ).thenAnswer((_) async => useCases);
 
       final res = await route.onRequest(ctx);
       expect(res.statusCode, HttpStatus.methodNotAllowed);

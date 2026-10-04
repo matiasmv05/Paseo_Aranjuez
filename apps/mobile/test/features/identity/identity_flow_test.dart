@@ -28,7 +28,9 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('Navigate to OtpVerifyScreen after register', (WidgetTester tester) async {
+  testWidgets('Navigate to OtpVerifyScreen after register', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(RegistrationScreen());
     final submitButton = find.byKey(const Key('registerButton'));
     await tester.tap(submitButton);
@@ -50,5 +52,4 @@ void main() {
 
     expect(find.text('Login Screen'), findsOneWidget);
   });
-
 }

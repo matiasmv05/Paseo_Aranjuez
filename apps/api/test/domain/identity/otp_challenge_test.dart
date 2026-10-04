@@ -43,11 +43,14 @@ void main() {
       expect(c.attempts, 0);
     });
 
-    test('intento incorrecto incrementa el contador (OTP_INVALID se mapea en aplicacion)', () {
-      final c = OtpChallenge.issue(t0).verify(t0, matches: false);
-      expect(c.attempts, 1);
-      expect(c.isConsumed, isFalse);
-    });
+    test(
+      'intento incorrecto incrementa el contador (OTP_INVALID se mapea en aplicacion)',
+      () {
+        final c = OtpChallenge.issue(t0).verify(t0, matches: false);
+        expect(c.attempts, 1);
+        expect(c.isConsumed, isFalse);
+      },
+    );
 
     test(
       'el 5.o intento fallido agota y bloquea: 6.o -> OTP_TOO_MANY_ATTEMPTS',

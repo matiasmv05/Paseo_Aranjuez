@@ -9,7 +9,12 @@ class IdentityState extends ChangeNotifier {
   IdentityStatus get status => _status;
   String? get error => _error;
 
-  Future<void> register({required String phone, required String email, required String password, bool fail = false}) async {
+  Future<void> register({
+    required String phone,
+    required String email,
+    required String password,
+    bool fail = false,
+  }) async {
     _status = IdentityStatus.loading;
     notifyListeners();
     try {

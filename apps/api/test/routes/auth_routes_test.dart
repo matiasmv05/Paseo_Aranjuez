@@ -36,8 +36,9 @@ RequestContext _ctx(
       body: body is String ? body : (body == null ? null : jsonEncode(body)),
     ),
   );
-  when(() => ctx.read<Future<AuthUseCases>>())
-      .thenAnswer((_) async => useCases);
+  when(
+    () => ctx.read<Future<AuthUseCases>>(),
+  ).thenAnswer((_) async => useCases);
   return ctx;
 }
 
@@ -45,8 +46,9 @@ void main() {
   group('POST /auth/phone/verify', () {
     test('200 on valid otp', () async {
       final useCases = _FakeAuthUseCases();
-      when(() => useCases.verifyPhoneOtp)
-          .thenReturn(({required String phone, required String code}) async {});
+      when(
+        () => useCases.verifyPhoneOtp,
+      ).thenReturn(({required String phone, required String code}) async {});
       final res = await otp_verify.onRequest(
         _ctx('POST', '/auth/phone/verify', {
           'phone': '+59160000000',
@@ -101,8 +103,9 @@ void main() {
   group('POST /auth/phone/send-otp', () {
     test('202 always', () async {
       final useCases = _FakeAuthUseCases();
-      when(() => useCases.resendPhoneOtp)
-          .thenReturn(({required String phone}) async {});
+      when(
+        () => useCases.resendPhoneOtp,
+      ).thenReturn(({required String phone}) async {});
       final res = await send_otp.onRequest(
         _ctx('POST', '/auth/phone/send-otp', {
           'phone': '+59160000000',
@@ -129,8 +132,9 @@ void main() {
   group('POST /auth/verify-email', () {
     test('204 on success', () async {
       final useCases = _FakeAuthUseCases();
-      when(() => useCases.verifyEmail)
-          .thenReturn(({required String token}) async {});
+      when(
+        () => useCases.verifyEmail,
+      ).thenReturn(({required String token}) async {});
       final res = await verify_email.onRequest(
         _ctx('POST', '/auth/verify-email', {'token': 'tok'}, useCases),
       );
@@ -207,8 +211,9 @@ void main() {
   group('POST /auth/logout', () {
     test('204 always (idempotent)', () async {
       final useCases = _FakeAuthUseCases();
-      when(() => useCases.logout)
-          .thenReturn(({required String refreshToken}) async {});
+      when(
+        () => useCases.logout,
+      ).thenReturn(({required String refreshToken}) async {});
       final res = await logout_route.onRequest(
         _ctx('POST', '/auth/logout', {'refresh_token': 't123'}, useCases),
       );
@@ -226,8 +231,9 @@ void main() {
   group('POST /auth/password/forgot', () {
     test('202 always (no account disclosure)', () async {
       final useCases = _FakeAuthUseCases();
-      when(() => useCases.forgotPassword)
-          .thenReturn(({required String email}) async {});
+      when(
+        () => useCases.forgotPassword,
+      ).thenReturn(({required String email}) async {});
       final res = await forgot_route.onRequest(
         _ctx('POST', '/auth/password/forgot', {'email': 'a@b.com'}, useCases),
       );

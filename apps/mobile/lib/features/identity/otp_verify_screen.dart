@@ -8,9 +8,7 @@ class OtpVerifyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Verify OTP'),
-        ),
+        appBar: AppBar(title: const Text('Verify OTP')),
         body: Builder(
           builder: (context) => Padding(
             padding: const EdgeInsets.all(16),
@@ -27,9 +25,7 @@ class OtpVerifyScreen extends StatelessWidget {
                   key: const Key('verifyOtpButton'),
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const LoginScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
                     );
                   },
                   child: const Text('Verify'),

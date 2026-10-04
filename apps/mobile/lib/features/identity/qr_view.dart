@@ -5,8 +5,6 @@ class QRView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('QR View'),
-    );
+    return const Center(child: Text('QR View'));
   }
 }

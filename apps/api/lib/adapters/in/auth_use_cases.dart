@@ -1,32 +1,29 @@
 import 'package:paseo_api/application/identity/ports.dart';
 import 'package:paseo_api/domain/identity/client_app.dart';
 
-typedef RegisterFn = Future<String> Function({
-  required String email,
-  required String phone,
-  required String password,
-  String? fullName,
-});
-typedef VerifyPhoneFn = Future<void> Function({
-  required String phone,
-  required String code,
-});
+typedef RegisterFn =
+    Future<String> Function({
+      required String email,
+      required String phone,
+      required String password,
+      String? fullName,
+    });
+typedef VerifyPhoneFn =
+    Future<void> Function({required String phone, required String code});
 typedef SendOtpFn = Future<void> Function({required String phone});
 typedef VerifyEmailFn = Future<void> Function({required String token});
-typedef LoginFn = Future<IssuedSession> Function({
-  required String email,
-  required String password,
-  required ClientApp client,
-});
-typedef RefreshFn = Future<IssuedSession> Function({
-  required String refreshToken,
-});
+typedef LoginFn =
+    Future<IssuedSession> Function({
+      required String email,
+      required String password,
+      required ClientApp client,
+    });
+typedef RefreshFn =
+    Future<IssuedSession> Function({required String refreshToken});
 typedef LogoutFn = Future<void> Function({required String refreshToken});
 typedef ForgotFn = Future<void> Function({required String email});
-typedef ResetFn = Future<void> Function({
-  required String token,
-  required String newPassword,
-});
+typedef ResetFn =
+    Future<void> Function({required String token, required String newPassword});
 
 /// Casos de uso de identidad disponibles para las rutas (AGENTS.md §3).
 /// Las rutas son finas: leen este provider, validan DTO, llaman UN caso de

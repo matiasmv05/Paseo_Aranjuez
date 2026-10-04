@@ -296,8 +296,9 @@ void main() {
 
       await useCase.call(phone: '+59170000000', code: '123456');
 
-      verify(() => customers.markPhoneVerified(userId: 'u-1', at: now))
-          .called(1);
+      verify(
+        () => customers.markPhoneVerified(userId: 'u-1', at: now),
+      ).called(1);
       verify(
         () => audit.write(
           action: 'auth.phone.verify',
@@ -328,9 +329,9 @@ void main() {
         ),
       );
       final updated =
-          verify(() => codes.updateChallenge('vc-1', captureAny()))
-                  .captured
-                  .single
+          verify(
+                () => codes.updateChallenge('vc-1', captureAny()),
+              ).captured.single
               as OtpChallenge;
       expect(updated.attempts, 1);
       verifyNever(
