@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
 import 'package:paseo_api/domain/identity/errors.dart';
+import 'package:paseo_api/domain/loyalty/loyalty_errors.dart';
 import 'package:paseo_api/problem.dart';
 import 'package:paseo_shared/paseo_shared.dart';
 
@@ -30,11 +31,30 @@ Response? mapIdentityError(Object error, {String? correlationId}) {
   return null;
 }
 
+/// Mapea `LoyaltyException` a problem+json (T072, §9).
+/// Devuelve `null` si la excepcion no es del panel de comercio.
+Response? mapLoyaltyError(Object error, {String? correlationId}) {
+  if (error is! LoyaltyException) return null;
+  return problemJson(
+    status: _statusFor(error.code),
+    title: _titleFor(error.code),
+    code: error.code.wire,
+    detail: error.message,
+    correlationId: correlationId,
+  );
+}
+
 int _statusFor(ApiErrorCode code) => switch (code) {
   ApiErrorCode.validationFailed ||
-  ApiErrorCode.phoneNotSupported => HttpStatus.unprocessableEntity,
+  ApiErrorCode.phoneNotSupported ||
+  ApiErrorCode.invalidQrToken ||
+  ApiErrorCode.invalidIdentificationTicket => HttpStatus.unprocessableEntity,
   ApiErrorCode.otpInvalid => HttpStatus.unprocessableEntity,
   ApiErrorCode.otpExpired => HttpStatus.unprocessableEntity,
+  ApiErrorCode.phoneNotVerified => HttpStatus.forbidden,
+  ApiErrorCode.customerNotFound => HttpStatus.notFound,
+  ApiErrorCode.duplicateInvoice ||
+  ApiErrorCode.noApplicableRule => HttpStatus.conflict,
   ApiErrorCode.otpTooManyAttempts => HttpStatus.tooManyRequests,
   ApiErrorCode.otpRateLimited => HttpStatus.tooManyRequests,
   ApiErrorCode.credentialsInvalid => HttpStatus.unauthorized,
@@ -55,9 +75,11 @@ String _titleFor(ApiErrorCode code) => switch (code) {
   ApiErrorCode.unauthenticated ||
   ApiErrorCode.tokenInvalid ||
   ApiErrorCode.tokenReuseDetected => 'Unauthorized',
-  ApiErrorCode.forbidden => 'Forbidden',
-  ApiErrorCode.notFound => 'Not Found',
-  ApiErrorCode.conflict => 'Conflict',
+  ApiErrorCode.forbidden || ApiErrorCode.phoneNotVerified => 'Forbidden',
+  ApiErrorCode.notFound || ApiErrorCode.customerNotFound => 'Not Found',
+  ApiErrorCode.conflict ||
+  ApiErrorCode.duplicateInvoice ||
+  ApiErrorCode.noApplicableRule => 'Conflict',
   _ => 'Unprocessable Entity',
 };
 
