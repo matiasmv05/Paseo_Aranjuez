@@ -4,24 +4,17 @@ import 'package:paseo_api/domain/identity/identity.dart';
 /// US1: reenvio del OTP (`POST /auth/phone/send-otp`, FR-004).
 /// Cooldown de 60 s y tope diario por telefono.
 final class ResendPhoneOtp {
-  const ResendPhoneOtp({
-    required VerificationCodeRepository codes,
+  const new({
+    required this._codes,
     required CustomerRepository customers,
-    required PasswordHasher hasher,
-    required OtpSender otpSender,
-    required TokenGenerator tokens,
-    required IdGenerator ids,
-    required Clock clock,
-    required AuditLogWriter audit,
+    required this._hasher,
+    required this._otpSender,
+    required this._tokens,
+    required this._ids,
+    required this._clock,
+    required this._audit,
     this.dailyLimit = 10,
-  }) : _codes = codes,
-       _customers = customers,
-       _hasher = hasher,
-       _otpSender = otpSender,
-       _tokens = tokens,
-       _ids = ids,
-       _clock = clock,
-       _audit = audit;
+  }) : _customers = customers;
 
   final VerificationCodeRepository _codes;
   final CustomerRepository _customers;

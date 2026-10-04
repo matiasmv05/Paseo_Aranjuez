@@ -8,7 +8,7 @@ import 'package:postgres/postgres.dart';
 /// NOT NULL: se persiste la cadena vacia cuando el registro no lo trae
 /// (columna informativa; nunca viaja al JWT).
 final class PostgresCustomerRepository implements CustomerRepository {
-  const PostgresCustomerRepository(this._db);
+  const new(this._db);
 
   final PgDatabase _db;
 

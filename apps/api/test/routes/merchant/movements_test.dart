@@ -8,7 +8,7 @@ import 'package:test/test.dart';
 import '../../../routes/merchant/movements/index.dart' as movements_route;
 import '_support.dart';
 
-contract.Movement _movement() => contract.Movement(
+contract.MerchantMovement _movement() => contract.MerchantMovement(
   id: 'm-1',
   createdAt: DateTime.utc(2026),
   invoiceRef: 'F-001',
@@ -28,8 +28,10 @@ void main() {
             required MerchantContext context,
             int? limit,
             String? cursor,
-          }) async =>
-              contract.MovementPage(items: [_movement()], nextCursor: 'next'),
+          }) async => contract.MerchantMovementPage(
+            items: [_movement()],
+            nextCursor: 'next',
+          ),
     );
     final res = await movements_route.onRequest(
       routeContext(method: 'GET', path: '/merchant/movements', deps: deps),
@@ -51,7 +53,7 @@ void main() {
         required MerchantContext context,
         int? limit,
         String? cursor,
-      }) async => const contract.MovementPage(items: []),
+      }) async => const contract.MerchantMovementPage(items: []),
     );
     final res = await movements_route.onRequest(
       routeContext(method: 'GET', path: '/merchant/movements', deps: deps),
@@ -86,7 +88,7 @@ void main() {
           }) async {
             seenLimit = limit;
             seenCursor = cursor;
-            return const contract.MovementPage(items: []);
+            return const contract.MerchantMovementPage(items: []);
           },
     );
     final res = await movements_route.onRequest(
@@ -111,7 +113,7 @@ void main() {
             String? cursor,
           }) async {
             seen = context;
-            return const contract.MovementPage(items: []);
+            return const contract.MerchantMovementPage(items: []);
           },
     );
     final res = await movements_route.onRequest(

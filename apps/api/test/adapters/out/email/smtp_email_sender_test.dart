@@ -45,7 +45,7 @@ void main() {
         password: '',
         from: '',
       );
-      final sender = SmtpEmailSender(config: cfg);
+      const sender = SmtpEmailSender(config: cfg);
 
       expect(
         () => sender.sendEmailVerification(
@@ -64,7 +64,7 @@ void main() {
         password: '',
         from: '',
       );
-      final sender = SmtpEmailSender(config: cfg);
+      const sender = SmtpEmailSender(config: cfg);
 
       expect(
         () => sender.sendPasswordReset(

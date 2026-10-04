@@ -4,5 +4,7 @@
 library;
 
 export 'src/auth/dto.dart';
+export 'src/catalog/dto.dart';
 export 'src/errors/api_error_code.dart';
+export 'src/points/dto.dart';
 export 'src/merchant/dto.dart';

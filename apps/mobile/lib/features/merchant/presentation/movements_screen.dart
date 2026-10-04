@@ -21,7 +21,7 @@ class MovementsScreen extends ConsumerStatefulWidget {
 
 class _MovementsScreenState extends ConsumerState<MovementsScreen> {
   final _scroll = ScrollController();
-  final _items = <contract.Movement>[];
+  final _items = <contract.MerchantMovement>[];
 
   String? _nextCursor;
   String? _error;

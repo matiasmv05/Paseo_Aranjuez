@@ -3,7 +3,7 @@ import 'package:paseo_api/domain/identity/identity.dart';
 /// Registro persistido de un codigo de verificacion (OTP o token de correo).
 /// **Nunca** guarda el valor en claro (FR-004).
 final class VerificationCodeRecord {
-  const VerificationCodeRecord({
+  const new({
     required this.id,
     required this.target,
     required this.purpose,
@@ -25,7 +25,7 @@ enum VerificationPurpose { phoneVerification, emailVerification }
 /// Registro persistido de un token de recuperacion (FR-008): hash del
 /// token, 30 min, un solo uso.
 final class PasswordResetRecord {
-  const PasswordResetRecord({
+  const new({
     required this.id,
     required this.userId,
     required this.expiresAt,
@@ -42,7 +42,7 @@ final class PasswordResetRecord {
 
 /// Resultado de emitir un par access + refresh para una sesion.
 final class IssuedSession {
-  const IssuedSession({
+  const new({
     required this.accessToken,
     required this.expiresIn,
     required this.refreshToken,

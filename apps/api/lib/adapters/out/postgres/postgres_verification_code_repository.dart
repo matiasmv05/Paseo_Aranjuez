@@ -11,7 +11,7 @@ import 'package:postgres/postgres.dart';
 /// (indice V002) porque el cliente no conoce el target.
 final class PostgresVerificationCodeRepository
     implements VerificationCodeRepository {
-  const PostgresVerificationCodeRepository(this._db);
+  const new(this._db);
 
   final PgDatabase _db;
 

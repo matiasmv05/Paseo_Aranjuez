@@ -316,9 +316,9 @@ final class Purchase {
   };
 }
 
-/// `Movement` de `GET /merchant/movements`.
-final class Movement {
-  const Movement({
+/// `MerchantMovement` de `GET /merchant/movements`.
+final class MerchantMovement {
+  const MerchantMovement({
     required this.id,
     required this.createdAt,
     required this.invoiceRef,
@@ -330,17 +330,18 @@ final class Movement {
     required this.branchId,
   });
 
-  factory Movement.fromJson(Map<String, Object?> json) => Movement(
-    id: json['id']! as String,
-    createdAt: DateTime.parse(json['created_at']! as String),
-    invoiceRef: json['invoice_ref']! as String,
-    grossCents: json['gross_cents']! as int,
-    discountCents: json['discount_cents']! as int,
-    netCents: json['net_cents']! as int,
-    pointsCredited: json['points_credited']! as int,
-    customerName: json['customer_name']! as String,
-    branchId: json['branch_id']! as String,
-  );
+  factory MerchantMovement.fromJson(Map<String, Object?> json) =>
+      MerchantMovement(
+        id: json['id']! as String,
+        createdAt: DateTime.parse(json['created_at']! as String),
+        invoiceRef: json['invoice_ref']! as String,
+        grossCents: json['gross_cents']! as int,
+        discountCents: json['discount_cents']! as int,
+        netCents: json['net_cents']! as int,
+        pointsCredited: json['points_credited']! as int,
+        customerName: json['customer_name']! as String,
+        branchId: json['branch_id']! as String,
+      );
 
   final String id;
   final DateTime createdAt;
@@ -367,20 +368,22 @@ final class Movement {
   };
 }
 
-/// `MovementPage`: `CursorPage<Movement>`, orden `created_at DESC, id DESC`.
-final class MovementPage extends CursorPage<Movement> {
-  const MovementPage({required super.items, super.nextCursor});
+/// `MerchantMovementPage`: `CursorPage<MerchantMovement>`, orden
+/// `created_at DESC, id DESC`.
+final class MerchantMovementPage extends CursorPage<MerchantMovement> {
+  const MerchantMovementPage({required super.items, super.nextCursor});
 
-  factory MovementPage.fromJson(Map<String, Object?> json) => MovementPage(
-    items: (json['items']! as List<Object?>)
-        .map(
-          (item) => Movement.fromJson(
-            (item! as Map<Object?, Object?>).cast<String, Object?>(),
-          ),
-        )
-        .toList(growable: false),
-    nextCursor: json['next_cursor'] as String?,
-  );
+  factory MerchantMovementPage.fromJson(Map<String, Object?> json) =>
+      MerchantMovementPage(
+        items: (json['items']! as List<Object?>)
+            .map(
+              (item) => MerchantMovement.fromJson(
+                (item! as Map<Object?, Object?>).cast<String, Object?>(),
+              ),
+            )
+            .toList(growable: false),
+        nextCursor: json['next_cursor'] as String?,
+      );
 
   Map<String, Object?> toJson() => {
     'items': items.map((movement) => movement.toJson()).toList(growable: false),

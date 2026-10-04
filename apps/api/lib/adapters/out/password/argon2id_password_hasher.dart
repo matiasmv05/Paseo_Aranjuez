@@ -15,7 +15,7 @@ final class Argon2idPasswordHasher implements PasswordHasher {
   static const _parallelism = 1;
   static const _saltLength = 16;
   static const _hashLength = 32;
-  static const _phcPrefix = '\$argon2id\$v=19\$m=19456,t=2,p=1';
+  static const _phcPrefix = r'$argon2id$v=19$m=19456,t=2,p=1';
 
   final Argon2id _argon2id = Argon2id(
     memory: _memoryKib,
@@ -66,18 +66,18 @@ final class Argon2idPasswordHasher implements PasswordHasher {
   String _encodePHC(Uint8List salt, Uint8List hash) {
     final saltB64 = base64.encode(salt);
     final hashB64 = base64.encode(hash);
-    return '$_phcPrefix\$${saltB64}\$${hashB64}';
+    return '$_phcPrefix\$$saltB64\$$hashB64';
   }
 
   /// Decode PHC string into (salt, hash) bytes.
   /// Expected format: $argon2id$v=19$m=19456,t=2,p=1$salt_b64$hash_b64
   (Uint8List, Uint8List) _decodePHC(String phc) {
-    if (!phc.startsWith('\$argon2id\$v=19\$m=19456,t=2,p=1\$')) {
+    if (!phc.startsWith(r'$argon2id$v=19$m=19456,t=2,p=1$')) {
       throw const FormatException(
         'Invalid PHC format: wrong algorithm or parameters',
       );
     }
-    final parts = phc.split('\$');
+    final parts = phc.split(r'$');
     if (parts.length != 6) {
       throw const FormatException('Invalid PHC format: expected 6 parts');
     }

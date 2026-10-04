@@ -4,7 +4,7 @@ import 'package:paseo_api/application/identity/ports.dart';
 /// `TransactionRunner` Postgres (T030). Abre la transaccion y ejecuta
 /// el cuerpo dentro; commit/rollback reales.
 final class PostgresTransactionRunner implements TransactionRunner {
-  const PostgresTransactionRunner(this._db);
+  const new(this._db);
 
   final PgDatabase _db;
 

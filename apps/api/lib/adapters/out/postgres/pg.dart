@@ -8,7 +8,7 @@ import 'package:postgres/postgres.dart';
 /// (por defecto 5432). La API siempre conecta como `paseo_app`
 /// (AGENTS.md §5.2).
 final class PgConfig {
-  const PgConfig({
+  const new({
     required this.host,
     required this.database,
     required this.user,
@@ -17,7 +17,7 @@ final class PgConfig {
   });
 
   /// Lee el entorno del proceso si no se pasa [environment].
-  factory PgConfig.fromEnvironment([Map<String, String>? environment]) {
+  factory fromEnvironment([Map<String, String>? environment]) {
     final env = environment ?? Platform.environment;
     final user = env['DB_USER'];
     final password = env['DB_PASSWORD'];
@@ -53,7 +53,7 @@ final class PgConfig {
 /// e inyectarla con `provider<PgDatabase>` (el readiness check actual es un
 /// stub `( ) async => true`; sustituir por `SELECT 1` sobre esta conexion).
 final class PgDatabase {
-  PgDatabase._(this.connection);
+  new _(this.connection);
 
   /// Abre la conexion (SSL desactivado: trafico interno compose/loopback).
   static Future<PgDatabase> open(PgConfig config) async {

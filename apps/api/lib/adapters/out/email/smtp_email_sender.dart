@@ -8,11 +8,7 @@ import 'package:paseo_api/domain/identity/identity.dart';
 
 /// Email message content for identity notifications.
 final class EmailMessage {
-  const EmailMessage({
-    required this.to,
-    required this.subject,
-    required this.body,
-  });
+  const new({required this.to, required this.subject, required this.body});
 
   final String to;
   final String subject;
@@ -21,20 +17,6 @@ final class EmailMessage {
 
 /// SMTP configuration read from environment.
 final class SmtpConfig {
-  const SmtpConfig({
-    required this.host,
-    required this.port,
-    required this.username,
-    required this.password,
-    required this.from,
-  });
-
-  final String host;
-  final int port;
-  final String username;
-  final String password;
-  final String from;
-
   factory SmtpConfig.fromEnv() {
     final host = Platform.environment['SMTP_HOST'] ?? 'smtp.gmail.com';
     final port = int.tryParse(Platform.environment['SMTP_PORT'] ?? '') ?? 587;
@@ -49,6 +31,19 @@ final class SmtpConfig {
       from: from,
     );
   }
+  const new({
+    required this.host,
+    required this.port,
+    required this.username,
+    required this.password,
+    required this.from,
+  });
+
+  final String host;
+  final int port;
+  final String username;
+  final String password;
+  final String from;
 
   bool get isConfigured =>
       host.isNotEmpty && username.isNotEmpty && password.isNotEmpty;
@@ -58,7 +53,7 @@ final class SmtpConfig {
 /// Uses STARTTLS (port 587) with Gmail/Google Workspace.
 /// Reads configuration from environment; no hardcoded credentials.
 final class SmtpEmailSender implements EmailSender {
-  const SmtpEmailSender({required SmtpConfig config}) : _config = config;
+  const new({required this._config});
 
   final SmtpConfig _config;
 
@@ -104,8 +99,6 @@ final class SmtpEmailSender implements EmailSender {
       port: _config.port,
       username: _config.username,
       password: _config.password,
-      // STARTTLS on port 587
-      ssl: false,
     );
     final message = Message()
       ..from = Address(_config.from)
@@ -122,13 +115,13 @@ final class SmtpEmailSender implements EmailSender {
 
 /// Exception when SMTP is not configured.
 class EmailNotConfiguredException implements Exception {
-  EmailNotConfiguredException(this.message);
+  new(this.message);
   final String message;
 }
 
 /// Exception when SMTP send fails.
 class EmailSendException implements Exception {
-  EmailSendException(this.message, this.cause);
+  new(this.message, this.cause);
   final String message;
   final MailerException cause;
 }

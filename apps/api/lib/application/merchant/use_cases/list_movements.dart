@@ -27,7 +27,7 @@ final class ListMovements {
   final MovementRepository _movements;
 
   /// Lista los movimientos visibles para [context].
-  Future<contract.MovementPage> call({
+  Future<contract.MerchantMovementPage> call({
     required MerchantContext context,
     int? limit,
     String? cursor,
@@ -40,10 +40,10 @@ final class ListMovements {
         cursor: cursor,
       ),
     );
-    return contract.MovementPage(
+    return contract.MerchantMovementPage(
       items: [
         for (final record in page.items)
-          contract.Movement(
+          contract.MerchantMovement(
             id: record.id,
             createdAt: record.createdAt,
             invoiceRef: record.invoiceRef,

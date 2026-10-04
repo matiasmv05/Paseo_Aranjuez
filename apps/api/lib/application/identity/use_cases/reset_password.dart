@@ -5,23 +5,16 @@ import 'package:paseo_api/domain/identity/identity.dart';
 /// Un solo uso y 30 min; exito = nueva contrasena + `token_version++` +
 /// revocacion de todos los refresh tokens de la cuenta.
 final class ResetPassword {
-  const ResetPassword({
-    required UserRepository users,
+  const new({
+    required this._users,
     required PasswordResetRepository resets,
-    required RefreshTokenRepository refreshTokens,
-    required PasswordHasher hasher,
-    required TokenGenerator tokens,
-    required Clock clock,
-    required AuditLogWriter audit,
-    required TransactionRunner tx,
-  }) : _users = users,
-       _resets = resets,
-       _refreshTokens = refreshTokens,
-       _hasher = hasher,
-       _tokens = tokens,
-       _clock = clock,
-       _audit = audit,
-       _tx = tx;
+    required this._refreshTokens,
+    required this._hasher,
+    required this._tokens,
+    required this._clock,
+    required this._audit,
+    required this._tx,
+  }) : _resets = resets;
 
   final UserRepository _users;
   final PasswordResetRepository _resets;

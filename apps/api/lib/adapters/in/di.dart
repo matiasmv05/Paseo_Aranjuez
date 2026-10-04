@@ -28,6 +28,7 @@ import 'package:paseo_api/application/merchant/use_cases/identify_customer.dart'
 import 'package:paseo_api/application/merchant/use_cases/list_movements.dart';
 import 'package:paseo_api/application/merchant/use_cases/preview_purchase.dart';
 import 'package:paseo_api/application/merchant/use_cases/register_purchase.dart';
+import 'package:paseo_api/application/points/read_use_cases.dart';
 import 'package:paseo_api/domain/loyalty/points_calculator.dart';
 import 'package:paseo_api/domain/loyalty/rule_resolver.dart';
 
@@ -67,6 +68,10 @@ final class AppDependencies implements AuthUseCases, MerchantUseCases {
     required this.logout,
     required this.forgotPassword,
     required this.resetPassword,
+    required this.getBalance,
+    required this.getMovements,
+    required this.listRewards,
+    required this.listEstablishments,
   });
 
   static AppDependencies? _instance;
@@ -84,6 +89,10 @@ final class AppDependencies implements AuthUseCases, MerchantUseCases {
     final refreshTokens = PostgresRefreshTokenRepository(db);
     final audit = PostgresAuditLogWriter(db);
     final tx = PostgresTransactionRunner(db);
+    final balances = PostgresBalanceRepository(db);
+    final movements = PostgresMovementsRepository(db);
+    final rewards = PostgresRewardsRepository(db);
+    final establishmentsRepo = PostgresEstablishmentsRepository(db);
 
     final hasher = Argon2idPasswordHasher();
     const tokens = CryptoTokenGenerator();
@@ -100,7 +109,7 @@ final class AppDependencies implements AuthUseCases, MerchantUseCases {
         'OTP_SENDER no soportado (por decidir; AGENTS.md §15)',
       ),
     };
-    final EmailSender emailSender = switch (env['EMAIL_SENDER'] ?? 'console') {
+    final emailSender = switch (env['EMAIL_SENDER'] ?? 'console') {
       'console' => ConsoleEmailSender(),
       'smtp' => SmtpEmailSender(config: SmtpConfig.fromEnv()),
       _ => throw StateError('EMAIL_SENDER desconocido'),
@@ -188,12 +197,18 @@ final class AppDependencies implements AuthUseCases, MerchantUseCases {
       audit: audit,
       tx: tx,
     );
+    final getBalance = GetBalance(balances: balances);
+    final getMovements = GetMovements(movements: movements);
+    final listRewards = ListRewards(rewards: rewards, clock: clock);
+    final listEstablishments = ListEstablishments(
+      establishments: establishmentsRepo,
+    );
 
     // Panel del comercio (HU-10/11/13, feature 003).
     final establishments = PostgresEstablishmentRepository(db);
     final pointsRules = PostgresPointsRuleRepository(db);
     final purchases = PostgresPurchaseRepository(db);
-    final movements = PostgresMovementRepository(db);
+    final merchantMovements = PostgresMovementRepository(db);
     final ticketSigner = IdentificationSigner(
       secret: env['IDENTIFICATION_SECRET'] ?? '',
     );
@@ -221,7 +236,7 @@ final class AppDependencies implements AuthUseCases, MerchantUseCases {
       purchases: purchases,
       clock: clock,
     );
-    final listMovements = ListMovements(movements: movements);
+    final listMovements = ListMovements(movements: merchantMovements);
     final merchant = MerchantDependencies(
       identifyCustomer: identifyCustomer.call,
       previewPurchase: previewPurchase.call,
@@ -245,7 +260,7 @@ final class AppDependencies implements AuthUseCases, MerchantUseCases {
       establishments: establishments,
       pointsRules: pointsRules,
       purchases: purchases,
-      movements: movements,
+      movements: merchantMovements,
       ticketSigner: ticketSigner,
       verifier: verifier,
       rateLimiter: rateLimiter,
@@ -267,6 +282,10 @@ final class AppDependencies implements AuthUseCases, MerchantUseCases {
       logout: logout.call,
       forgotPassword: forgotPassword.call,
       resetPassword: resetPassword.call,
+      getBalance: getBalance,
+      getMovements: getMovements,
+      listRewards: listRewards,
+      listEstablishments: listEstablishments,
     );
   }
 
@@ -313,6 +332,13 @@ final class AppDependencies implements AuthUseCases, MerchantUseCases {
   @override
   final ResetFn resetPassword;
 
+  // 002: Points & Catalog
+  final GetBalance getBalance;
+  final GetMovements getMovements;
+  final ListRewards listRewards;
+  final ListEstablishments listEstablishments;
+
+  // 003: Merchant panel
   @override
   IdentifyFn get identifyCustomer => merchant.identifyCustomer;
 

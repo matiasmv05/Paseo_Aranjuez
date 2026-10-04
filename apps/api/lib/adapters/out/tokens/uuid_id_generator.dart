@@ -3,7 +3,7 @@ import 'package:uuid/uuid.dart';
 
 /// Generador de UUID v4.
 final class UuidIdGenerator implements IdGenerator {
-  const UuidIdGenerator();
+  const new();
 
   @override
   String newId() => const Uuid().v4();

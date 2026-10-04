@@ -59,7 +59,7 @@ enum ApiErrorCode {
   purchaseAlreadyRefunded('PURCHASE_ALREADY_REFUNDED', reserved: true),
   redemptionAlreadyUsed('REDEMPTION_ALREADY_USED', reserved: true);
 
-  const ApiErrorCode(this.wire, {this.reserved = false});
+  new(this.wire, {this.reserved = false});
 
   /// Valor exacto del campo `code` en el contrato.
   final String wire;

@@ -6,7 +6,7 @@ import 'package:paseo_api/application/identity/ports.dart';
 
 /// Tokens aleatorios (criptograficos) + hash SHA-256 hex (determinista).
 final class CryptoTokenGenerator implements TokenGenerator {
-  const CryptoTokenGenerator();
+  const new();
 
   @override
   String randomToken(int bytes) {

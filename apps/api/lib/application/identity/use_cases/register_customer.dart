@@ -4,29 +4,19 @@ import 'package:paseo_api/domain/identity/identity.dart';
 /// US1: registro de cliente (FR-001, FR-002).
 /// Crea la cuenta con `pv=false`, envia OTP (SMS) y correo de verificacion.
 final class RegisterCustomer {
-  const RegisterCustomer({
-    required UserRepository users,
+  const new({
+    required this._users,
     required CustomerRepository customers,
-    required VerificationCodeRepository codes,
-    required PasswordHasher hasher,
-    required OtpSender otpSender,
-    required EmailSender emailSender,
-    required TokenGenerator tokens,
-    required IdGenerator ids,
-    required Clock clock,
-    required AuditLogWriter audit,
-    required TransactionRunner tx,
-  }) : _users = users,
-       _customers = customers,
-       _codes = codes,
-       _hasher = hasher,
-       _otpSender = otpSender,
-       _emailSender = emailSender,
-       _tokens = tokens,
-       _ids = ids,
-       _clock = clock,
-       _audit = audit,
-       _tx = tx;
+    required this._codes,
+    required this._hasher,
+    required this._otpSender,
+    required this._emailSender,
+    required this._tokens,
+    required this._ids,
+    required this._clock,
+    required this._audit,
+    required this._tx,
+  }) : _customers = customers;
 
   static const emailVerificationTokenBytes = 32;
 

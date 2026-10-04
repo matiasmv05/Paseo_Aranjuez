@@ -7,7 +7,7 @@ import 'package:postgres/postgres.dart';
 /// `UserRepository` sobre `app.users` (V002). Requiere contexto RLS activo
 /// (rol `system` en identidad); sin el, RLS oculta las filas.
 final class PostgresUserRepository implements UserRepository {
-  const PostgresUserRepository(this._db);
+  const new(this._db);
 
   final PgDatabase _db;
 

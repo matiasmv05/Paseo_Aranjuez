@@ -1,34 +1,33 @@
 import 'package:mocktail/mocktail.dart';
 import 'package:paseo_api/application/identity/ports.dart';
 
-class MockUserRepository extends Mock implements UserRepository {}
+class MockUserRepository extends Mock implements UserRepository;
 
-class MockCustomerRepository extends Mock implements CustomerRepository {}
+class MockCustomerRepository extends Mock implements CustomerRepository;
 
 class MockVerificationCodeRepository extends Mock
-    implements VerificationCodeRepository {}
+    implements VerificationCodeRepository;
 
 class MockPasswordResetRepository extends Mock
-    implements PasswordResetRepository {}
+    implements PasswordResetRepository;
 
-class MockRefreshTokenRepository extends Mock
-    implements RefreshTokenRepository {}
+class MockRefreshTokenRepository extends Mock implements RefreshTokenRepository;
 
-class MockAuditLogWriter extends Mock implements AuditLogWriter {}
+class MockAuditLogWriter extends Mock implements AuditLogWriter;
 
-class MockPasswordHasher extends Mock implements PasswordHasher {}
+class MockPasswordHasher extends Mock implements PasswordHasher;
 
-class MockTokenSigner extends Mock implements TokenSigner {}
+class MockTokenSigner extends Mock implements TokenSigner;
 
-class MockOtpSender extends Mock implements OtpSender {}
+class MockOtpSender extends Mock implements OtpSender;
 
-class MockEmailSender extends Mock implements EmailSender {}
+class MockEmailSender extends Mock implements EmailSender;
 
-class MockClock extends Mock implements Clock {}
+class MockClock extends Mock implements Clock;
 
-class MockIdGenerator extends Mock implements IdGenerator {}
+class MockIdGenerator extends Mock implements IdGenerator;
 
-class MockTokenGenerator extends Mock implements TokenGenerator {}
+class MockTokenGenerator extends Mock implements TokenGenerator;
 
 /// TransactionRunner trivial (sin rollback): ejecuta el cuerpo tal cual.
 final class PassThroughTx implements TransactionRunner {
@@ -49,8 +48,8 @@ final class FakeTransactionRunner implements TransactionRunner {
 
   void register(RollbackStore<Object?> store) => _stores.add(store);
 
-  var committed = false;
-  var rolledBack = false;
+  bool committed = false;
+  bool rolledBack = false;
 
   @override
   Future<T> run<T>(Future<T> Function() body) async {
@@ -71,7 +70,7 @@ final class FakeTransactionRunner implements TransactionRunner {
 
 /// Reloj fijo para tests.
 final class FixedClock implements Clock {
-  FixedClock(this.now);
+  new(this.now);
 
   final DateTime now;
 

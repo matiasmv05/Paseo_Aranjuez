@@ -6,7 +6,7 @@ import 'package:postgres/postgres.dart';
 /// (revocado UPDATE/DELETE a `paseo_app`). Sin datos personales: el caso de
 /// uso decide los campos; aqui solo se persiste.
 final class PostgresAuditLogWriter implements AuditLogWriter {
-  const PostgresAuditLogWriter(this._db);
+  const new(this._db);
 
   final PgDatabase _db;
 
@@ -26,7 +26,7 @@ final class PostgresAuditLogWriter implements AuditLogWriter {
       ),
       parameters: <String, Object?>{
         'role': role,
-        'userId': userId == null ? null : userId,
+        'userId': userId,
         'action': action,
         'entity': entityType,
         'entityId': entityId,

@@ -3,17 +3,13 @@ import 'package:paseo_api/domain/identity/identity.dart';
 
 /// US1: verificacion del telefono con OTP (FR-004).
 final class VerifyPhoneOtp {
-  const VerifyPhoneOtp({
-    required CustomerRepository customers,
+  const new({
+    required this._customers,
     required VerificationCodeRepository codes,
-    required PasswordHasher hasher,
-    required Clock clock,
-    required AuditLogWriter audit,
-  }) : _customers = customers,
-       _codes = codes,
-       _hasher = hasher,
-       _clock = clock,
-       _audit = audit;
+    required this._hasher,
+    required this._clock,
+    required this._audit,
+  }) : _codes = codes;
 
   final CustomerRepository _customers;
   final VerificationCodeRepository _codes;

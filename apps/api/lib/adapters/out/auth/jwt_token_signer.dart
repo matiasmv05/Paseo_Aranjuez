@@ -7,7 +7,7 @@ import 'package:paseo_api/domain/identity/identity.dart';
 /// HS256 JWT signer (SEC-002: sin PII en claims). `kid` del entorno.
 /// HMAC-SHA256 sincronico (firma barata; el hash de contrasena pesado ya va en Isolate).
 final class JwtTokenSigner implements TokenSigner {
-  const JwtTokenSigner({required this.secret, required this.kid});
+  const new({required this.secret, required this.kid});
 
   final String secret;
   final String kid;

@@ -14,8 +14,8 @@ void main() {
     test('hash produces valid PHC format with OWASP parameters', () async {
       final hash = await hasher.hash('test-password-123');
 
-      expect(hash, startsWith('\$argon2id\$v=19\$m=19456,t=2,p=1\$'));
-      final parts = hash.split('\$');
+      expect(hash, startsWith(r'$argon2id$v=19$m=19456,t=2,p=1$'));
+      final parts = hash.split(r'$');
       expect(parts.length, 6);
       // parts: '', 'argon2id', 'v=19', 'm=19456,t=2,p=1', 'salt_b64', 'hash_b64'
       expect(parts[1], 'argon2id');
@@ -63,7 +63,7 @@ void main() {
 
     test('verify handles wrong algorithm gracefully', () async {
       final ok = await hasher.verify(
-        hash: '\$argon2i\$v=19\$m=19456,t=2,p=1\$c29tZXNhbHQ\$GpZ3sK/oH9p7VIiV56G/64Zo/8GaUw434IimaPqxwCo',
+        hash: r'$argon2i$v=19$m=19456,t=2,p=1$c29tZXNhbHQ$GpZ3sK/oH9p7VIiV56G/64Zo/8GaUw434IimaPqxwCo',
         plain: 'password',
       );
       expect(ok, isFalse);
@@ -79,7 +79,7 @@ void main() {
       ]);
       expect(results.length, 3);
       for (final h in results) {
-        expect(h, startsWith('\$argon2id\$v=19\$m=19456,t=2,p=1\$'));
+        expect(h, startsWith(r'$argon2id$v=19$m=19456,t=2,p=1$'));
       }
     });
   });

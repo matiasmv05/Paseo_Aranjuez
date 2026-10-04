@@ -3,15 +3,12 @@ import 'package:paseo_api/application/identity/ports.dart';
 /// US4: logout (FR-007). Revoca el refresh actual; idempotente frente a
 /// tokens desconocidos (204 igual: no revela nada).
 final class Logout {
-  const Logout({
-    required RefreshTokenRepository refreshTokens,
+  const new({
+    required this._refreshTokens,
     required TokenGenerator tokens,
-    required Clock clock,
-    required AuditLogWriter audit,
-  }) : _refreshTokens = refreshTokens,
-       _tokens = tokens,
-       _clock = clock,
-       _audit = audit;
+    required this._clock,
+    required this._audit,
+  }) : _tokens = tokens;
 
   final RefreshTokenRepository _refreshTokens;
   final TokenGenerator _tokens;

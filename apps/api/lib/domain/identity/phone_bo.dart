@@ -1,4 +1,4 @@
-import 'errors.dart';
+import 'package:paseo_api/domain/identity/errors.dart';
 
 /// Telefono boliviano en E.164 (objeto de valor).
 ///
@@ -7,9 +7,9 @@ import 'errors.dart';
 /// `+591` lanza `PHONE_NOT_SUPPORTED`; un `+591` mal formado es
 /// `VALIDATION_FAILED`.
 final class PhoneBO {
-  const PhoneBO._(this.value);
+  const new _(this.value);
 
-  factory PhoneBO.parse(String raw) {
+  factory parse(String raw) {
     final value = raw.trim();
     if (!value.startsWith('+591')) {
       throw IdentityException.phoneNotSupported();

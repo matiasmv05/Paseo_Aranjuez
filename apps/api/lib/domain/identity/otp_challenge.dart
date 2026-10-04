@@ -1,4 +1,9 @@
-import 'errors.dart';
+import 'package:paseo_api/domain/identity/email_verification.dart'
+    show EmailVerification;
+
+import 'package:paseo_api/domain/identity/identity.dart' show EmailVerification;
+
+import 'package:paseo_api/domain/identity/errors.dart';
 
 /// Estado de un codigo/token de verificacion persistido.
 ///
@@ -22,7 +27,7 @@ abstract interface class VerificationState {
 /// La comparacion del codigo la hace la aplicacion (puerto `PasswordHasher`);
 /// esta entidad modela el estado: expiracion, consumo y contador de intentos.
 final class OtpChallenge implements VerificationState {
-  const OtpChallenge._({
+  const new _({
     required this.createdAt,
     required this.expiresAt,
     required this.attempts,
@@ -30,7 +35,7 @@ final class OtpChallenge implements VerificationState {
   });
 
   /// Reconstruye desde persistencia.
-  factory OtpChallenge.restore({
+  factory restore({
     required DateTime createdAt,
     required DateTime expiresAt,
     required int attempts,
@@ -42,7 +47,7 @@ final class OtpChallenge implements VerificationState {
     consumedAt: consumedAt,
   );
 
-  factory OtpChallenge.issue(DateTime now) => OtpChallenge._(
+  factory issue(DateTime now) => OtpChallenge._(
     createdAt: now,
     expiresAt: now.add(ttl),
     attempts: 0,

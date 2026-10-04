@@ -16,19 +16,13 @@ info:
     - Tres audiencias JWT (`aud`): `paseo-mobile`, `paseo-web-merchant`,
       `paseo-web-admin`. Los tokens de una web no se aceptan en los endpoints
       de la otra, y `paseo-web-admin` solo existe junto a `role=admin`.
-    - Alcance de esta línea base: salud, identidad (registro, OTP, sesión,
-      recuperación de contraseña) y el **panel del comercio** (identificación del
-      cliente, previsualización y registro de compra, y movimientos). Canje,
-      reembolsos y administración se añaden cuando exista su spec aprobada.
-    - El panel del comercio exige `aud = paseo-web-merchant` con
-      `role` ∈ {`merchant_owner`, `merchant_cashier`}; un token de `cliente` o de
-      `admin` recibe 403 `FORBIDDEN` (FR-024).
-    - Aislamiento: toda operación se limita al `establishment_id` del token. Un
-      `merchant_cashier` ve solo lo que él mismo registró (FR-020).
+    - Alcance de esta línea base: salud e identidad (registro, OTP, sesión,
+      recuperación de contraseña). Los endpoints de puntos, compras, canje y
+      administración se añaden cuando exista su spec aprobada.
 
-    Teléfono (AGENTS.md §8, decisión 03/10/2026): solo `+591` seguido de **8
-    dígitos cualesquiera**; no se exige que empiece en 6 o 7. Es el mismo patrón
-    que valida el `CHECK` de `V002` y no debe endurecerse.
+    Decisión abierta (AGENTS.md §15): la expresión regular del teléfono usa el
+    formato laxo `+591` + 8 dígitos hasta verificar la regla de numeración del
+    móvil boliviano (inicio en 6 o 7). No endurecer el patrón sin esa verificación.
   contact:
     name: Equipo Paseo Points
 
@@ -40,6 +34,10 @@ tags:
     description: Salud del servicio (AGENTS.md §16 / INFRASTRUCTURE.md §13)
   - name: auth
     description: Identidad y sesión (AGENTS.md §6 y §8)
+  - name: points
+    description: Saldo y movimientos del cliente (feature 002, HU-04/HU-05)
+  - name: catalog
+    description: Catálogo de beneficios y establecimientos (feature 002, HU-06/HU-09)
   - name: comercio
     description: |
       Panel del comercio: identificar cliente, previsualizar y registrar compra,
@@ -426,6 +424,176 @@ paths:
                 status: 422
                 code: TOKEN_INVALID
 
+  /me/balance:
+    get:
+      tags: [points]
+      summary: Saldo de puntos del cliente (HU-04)
+      description: |
+        Saldo real derivado del ledger (`points_ledger` append-only, trigger).
+        Sin movimientos devuelve `balance_points=0`. Identidad desde el JWT
+        (`cid`): nunca se acepta un identificador del cliente (AGENTS.md §6/§9).
+        Exige `pv=true`.
+      operationId: getMyBalance
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Saldo actual del cliente autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Teléfono no verificado o rol distinto de `customer`.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Teléfono no verificado
+                status: 403
+                code: PHONE_NOT_VERIFIED
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /me/movements:
+    get:
+      tags: [points]
+      summary: Historial de movimientos del cliente (HU-05)
+      description: |
+        Movimientos del ledger del cliente, orden cronológico inverso, con
+        `balance_after` (saldo resultante calculado en el servidor). Paginación
+        por cursor `(occurred_at, ledger_id)`; `limit` por defecto 20, máximo 50.
+        Sin movimientos devuelve lista vacía (200, no error).
+      operationId: getMyMovements
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          description: Cursor opaco de la página anterior (`next_cursor`).
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: Página de movimientos.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CursorPage'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Movement'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenPhoneNotVerified'
+        '422':
+          description: Cursor o `limit` inválidos.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Validación fallida
+                status: 422
+                code: VALIDATION_FAILED
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /rewards:
+    get:
+      tags: [catalog]
+      summary: Catálogo de beneficios del cliente (HU-06)
+      description: |
+        Recompensas `ACTIVE` y vigentes. Las de `stock=0` aparecen marcadas con
+        `available=false` (decisión de spec 002, aclaración 2026-10-03). Las
+        vencidas o no aprobadas (`DRAFT/PENDING/PAUSED/RETIRED`) nunca aparecen.
+        No se exponen campos administrativos.
+      operationId: listRewards
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Catálogo visible para el cliente.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RewardSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Rol distinto de `customer`.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Sin permiso
+                status: 403
+                code: FORBIDDEN
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /establishments:
+    get:
+      tags: [catalog]
+      summary: Establecimientos participantes (HU-09)
+      description: |
+        Establecimientos activos (sin baja lógica) con sus sucursales activas.
+        No se exponen `max_purchase_cents` ni `compliance_status`.
+      operationId: listEstablishments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Establecimientos participantes (puede ser lista vacía).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EstablishmentSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Rol distinto de `customer`.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Sin permiso
+                status: 403
+                code: FORBIDDEN
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /merchant/customers/identify:
     post:
       tags: [comercio]
@@ -609,14 +777,26 @@ paths:
         `customer_id` completo ni el saldo del cliente.
       operationId: listMovements
       parameters:
-        - $ref: '#/components/parameters/MovementLimit'
-        - $ref: '#/components/parameters/MovementCursor'
+        - name: cursor
+          in: query
+          required: false
+          description: Cursor opaco de la página anterior (`next_cursor`).
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
       responses:
         '200':
           description: Página de movimientos; `next_cursor` es `null` en la última.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/MovementPage' }
+              schema: { $ref: '#/components/schemas/MerchantMovementPage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '422': { $ref: '#/components/responses/ValidationFailed' }
@@ -649,43 +829,14 @@ components:
       in: header
       required: true
       description: |
-        Clave única por operación crítica de escritura (AGENTS.md §9). Reenviar la
-        misma clave con el mismo cuerpo devuelve `200` con la respuesta original
-        en lugar de duplicar el efecto.
-
-        En Persona 3 es **obligatoria** en `POST /merchant/purchases` y su
-        unicidad es por `(establishment_id, idempotency_key)`, no global: dos
-        comercios distintos pueden mandar la misma clave. Reenviarla con un cuerpo
-        **distinto** es un error del cliente, no una segunda compra. El canje la
-        usará también cuando su spec exista.
+        Clave única por operación crítica de escritura (AGENTS.md §9).
+        Reenviar la misma clave devuelve `200` con la respuesta original en
+        lugar de duplicar el efecto. Reservado para compra y canje cuando su
+        spec exista.
       schema:
         type: string
         minLength: 8
         maxLength: 128
-    MovementLimit:
-      name: limit
-      in: query
-      required: false
-      description: |
-        Movimientos por página. Se valida: un valor negativo, cero o mayor que el
-        máximo devuelve 422 `VALIDATION_FAILED` con el detalle del límite.
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-    MovementCursor:
-      name: cursor
-      in: query
-      required: false
-      description: |
-        Cursor **opaco** devuelto como `next_cursor` en la página anterior. Se
-        reenvía sin interpretar; el cliente no debe construirlo ni assumptionar
-        su formato.
-      schema:
-        type: string
-        minLength: 1
-        maxLength: 512
 
   schemas:
     Problem:
@@ -701,33 +852,213 @@ components:
         code:
           type: string
           description: |
-            Código estable. El cliente programa contra este valor, nunca contra
-            `title` ni `detail`.
-
-            De identidad y sistema: `VALIDATION_FAILED`,
-            `PHONE_NOT_SUPPORTED`, `OTP_INVALID`, `OTP_EXPIRED`,
-            `OTP_TOO_MANY_ATTEMPTS`, `CREDENTIALS_INVALID`, `UNAUTHENTICATED`,
-            `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `RATE_LIMITED`,
-            `TOKEN_INVALID`, `TOKEN_REUSE_DETECTED`, `PHONE_NOT_VERIFIED`,
-            `METHOD_NOT_ALLOWED`, `SERVICE_UNAVAILABLE`.
-
-            Del panel del comercio (Persona 3): `CUSTOMER_NOT_FOUND`,
-            `INVALID_QR_TOKEN`, `INVALID_IDENTIFICATION_TICKET`,
-            `DUPLICATE_INVOICE`.
-
-            De canje y reembolsos (Personas 4 y 5; ya definidos en `AGENTS.md` §9
-            y §10.1, con endpoints propios más adelante):
+            Código estable. Códigos ya definidos por AGENTS.md:
+            `VALIDATION_FAILED`, `PHONE_NOT_SUPPORTED`, `OTP_INVALID`,
+            `OTP_EXPIRED`, `OTP_TOO_MANY_ATTEMPTS`, `CREDENTIALS_INVALID`,
+            `UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`,
+            `RATE_LIMITED`, `TOKEN_INVALID`, `TOKEN_REUSE_DETECTED`,
             `NO_APPLICABLE_RULE`, `INSUFFICIENT_POINTS`,
+            `PHONE_NOT_VERIFIED`,
             `INSUFFICIENT_POINTS_FOR_REVERSAL`, `REFUND_WINDOW_EXPIRED`,
-            `REFUND_ALREADY_RESOLVED`.
-
-            Reservados del documento 9-stack que aún no figuran en este contrato:
-            `OTP_RATE_LIMITED`, `INVALID_ATTACHMENT`, `ATTACHMENT_TOO_LARGE`,
-            `REFUND_ALREADY_REQUESTED`, `PURCHASE_ALREADY_REFUNDED`,
-            `REDEMPTION_ALREADY_USED`.
+            `REFUND_ALREADY_RESOLVED`, `INTERNAL_ERROR`.
         detail: { type: string }
         instance: { type: string, format: uri }
 
+    PhoneBO:
+      type: string
+      example: "+59171234567"
+      pattern: '^\+591[0-9]{8}$'
+      description: |
+        Teléfono boliviano en E.164 (AGENTS.md §8). Patrón laxo pendiente de
+        endurecer a inicio 6/7 cuando se verifique la regla de numeración.
+
+    Email:
+      type: string
+      format: email
+      example: cliente@ejemplo.bo
+
+    Password:
+      type: string
+      minLength: 8
+      maxLength: 128
+      description: Se guarda con Argon2id (formato PHC); nunca en logs ni claims.
+
+    RegisterRequest:
+      type: object
+      required: [email, phone, password]
+      properties:
+        email: { $ref: '#/components/schemas/Email' }
+        phone: { $ref: '#/components/schemas/PhoneBO' }
+        password: { $ref: '#/components/schemas/Password' }
+        full_name:
+          type: string
+          maxLength: 120
+          description: Nombre visible; el comercio lo recibe enmascarado (AGENTS.md §8).
+
+    OtpVerifyRequest:
+      type: object
+      required: [phone, code]
+      properties:
+        phone: { $ref: '#/components/schemas/PhoneBO' }
+        code:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: OTP de 6 dígitos; solo su hash se guarda (5 min, 5 intentos).
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { $ref: '#/components/schemas/Email' }
+        password: { type: string }
+
+    TokenResponse:
+      type: object
+      required: [access_token, token_type, expires_in]
+      properties:
+        access_token: { type: string }
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          description: Segundos de vida del access token (≤ 900).
+          maximum: 900
+          example: 900
+        refresh_token:
+          type: string
+          description: Solo para `paseo-mobile`; las webs reciben su cookie.
+
+    MoneyCents:
+      type: integer
+      format: int64
+      description: Montos en centavos enteros; nunca `double`/`float` (regla 9).
+
+    CursorPage:
+      type: object
+      description: Envoltura de paginación por cursor (AGENTS.md §9).
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {}
+        next_cursor:
+          type: [string, 'null']
+          description: Cursor de la página siguiente; `null` cuando no hay más.
+
+    Balance:
+      type: object
+      description: Saldo real del cliente, derivado del ledger (regla 2.2/2.3).
+      required: [balance_points, updated_at]
+      properties:
+        balance_points:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Nunca negativo (`CHECK (balance >= 0)`).
+        updated_at:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC del último movimiento (o de la consulta si no hay).
+
+    Movement:
+      type: object
+      description: |
+        Movimiento del `points_ledger`. El historial renderiza los cinco tipos
+        aunque la feature 002 solo origina `CREDIT` y `REDEEM`.
+      required: [id, type, delta_points, occurred_at, origin, reference_id, balance_after]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [CREDIT, REDEEM, ADJUST, BONUS, REVERSAL]
+        delta_points:
+          type: integer
+          format: int64
+          description: Con signo (positivo acredita, negativo descuenta).
+        occurred_at:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC fijada por el servidor.
+        origin:
+          type: string
+          enum: [purchase, redemption, adjustment, reversal]
+          description: Origen funcional de la operación.
+        reference_id:
+          type: string
+          description: Referencia de la operación (compra, canje o movimiento revertido).
+        balance_after:
+          type: integer
+          format: int64
+          description: Saldo resultante tras este movimiento (calculado en el servidor).
+
+    RewardSummary:
+      type: object
+      description: Vista de cliente del catálogo; sin campos administrativos.
+      required: [id, name, description, reward_type, cost_points, available, establishment_id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        reward_type:
+          type: string
+          enum: [PERCENT, FIXED, GIFT]
+        cost_points:
+          type: integer
+          format: int64
+          minimum: 0
+        stock:
+          type: [integer, 'null']
+          description: Stock restante; `null` = sin límite.
+        available:
+          type: boolean
+          description: '`false` cuando `stock=0` (o agotado); el cliente no puede canjearla.'
+        valid_from:
+          type: [string, 'null']
+          format: date-time
+        valid_to:
+          type: [string, 'null']
+          format: date-time
+        establishment_id:
+          type: string
+          format: uuid
+
+    EstablishmentSummary:
+      type: object
+      description: Vista de cliente; sin `max_purchase_cents` ni `compliance_status`.
+      required: [id, name, category, branches]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+        branches:
+          type: array
+          items:
+            $ref: '#/components/schemas/BranchSummary'
+
+    BranchSummary:
+      type: object
+      required: [id, name, address]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          type: string
+
+    # --- Merchant (Panel del comercio) schemas ---
     MaskedName:
       type: string
       maxLength: 120
@@ -938,7 +1269,7 @@ components:
           description: Campaña aplicada, o `null` si ninguna.
         created_at: { type: string, format: date-time }
 
-    Movement:
+    MerchantMovement:
       type: object
       required:
         [id, created_at, invoice_ref, gross_cents, discount_cents, net_cents, points_credited, customer_name, branch_id]
@@ -958,7 +1289,7 @@ components:
             Sucursal donde se registró la compra, siempre del servidor. El dueño
             cuadra caja por sucursal; el cajero ve solo la suya.
 
-    MovementPage:
+    MerchantMovementPage:
       allOf:
         - $ref: '#/components/schemas/CursorPage'
         - type: object
@@ -966,91 +1297,7 @@ components:
           properties:
             items:
               type: array
-              items: { $ref: '#/components/schemas/Movement' }
-
-    PhoneBO:
-      type: string
-      example: "+59171234567"
-      pattern: '^\+591[0-9]{8}$'
-      description: |
-        Teléfono boliviano en E.164 (AGENTS.md §8): `+591` y **8 dígitos
-        cualesquiera**. No se exige que empiece en 6 o 7 (decisión 03/10/2026) y
-        coincide con el `CHECK` de `V002`. Prefijo distinto → 422
-        `PHONE_NOT_SUPPORTED` en registro y en `identify`.
-
-    Email:
-      type: string
-      format: email
-      example: cliente@ejemplo.bo
-
-    Password:
-      type: string
-      minLength: 8
-      maxLength: 128
-      description: Se guarda con Argon2id (formato PHC); nunca en logs ni claims.
-
-    RegisterRequest:
-      type: object
-      required: [email, phone, password]
-      properties:
-        email: { $ref: '#/components/schemas/Email' }
-        phone: { $ref: '#/components/schemas/PhoneBO' }
-        password: { $ref: '#/components/schemas/Password' }
-        full_name:
-          type: string
-          maxLength: 120
-          description: Nombre visible; el comercio lo recibe enmascarado (AGENTS.md §8).
-
-    OtpVerifyRequest:
-      type: object
-      required: [phone, code]
-      properties:
-        phone: { $ref: '#/components/schemas/PhoneBO' }
-        code:
-          type: string
-          pattern: '^[0-9]{6}$'
-          description: OTP de 6 dígitos; solo su hash se guarda (5 min, 5 intentos).
-
-    LoginRequest:
-      type: object
-      required: [email, password]
-      properties:
-        email: { $ref: '#/components/schemas/Email' }
-        password: { type: string }
-
-    TokenResponse:
-      type: object
-      required: [access_token, token_type, expires_in]
-      properties:
-        access_token: { type: string }
-        token_type:
-          type: string
-          enum: [Bearer]
-        expires_in:
-          type: integer
-          description: Segundos de vida del access token (≤ 900).
-          maximum: 900
-          example: 900
-        refresh_token:
-          type: string
-          description: Solo para `paseo-mobile`; las webs reciben su cookie.
-
-    MoneyCents:
-      type: integer
-      format: int64
-      description: Montos en centavos enteros; nunca `double`/`float` (regla 9).
-
-    CursorPage:
-      type: object
-      description: Envoltura de paginación por cursor (AGENTS.md §9).
-      required: [items]
-      properties:
-        items:
-          type: array
-          items: {}
-        next_cursor:
-          type: [string, 'null']
-          description: Cursor de la página siguiente; `null` cuando no hay más.
+              items: { $ref: '#/components/schemas/MerchantMovement' }
 
   responses:
     Unauthorized:
@@ -1083,7 +1330,28 @@ components:
             title: No disponible
             status: 503
             code: SERVICE_UNAVAILABLE
+    ForbiddenPhoneNotVerified:
+      description: El teléfono del cliente no está verificado (`pv=false`).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: about:blank
+            title: Teléfono no verificado
+            status: 403
+            code: PHONE_NOT_VERIFIED
+    InternalServerError:
+      description: Error interno del servidor.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: about:blank
+            title: Error interno
+            status: 500
+            code: INTERNAL_ERROR
 
+    # --- Merchant responses ---
     Forbidden:
       description: |
         El token no es de comercio, o su `role` no habilita esta operación
@@ -1092,7 +1360,9 @@ components:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
           examples:
-            forbidden: { $ref: '#/components/examples/Forbidden' }
+            forbidden:
+              $ref: '#/components/examples/Forbidden'
+
     ValidationFailed:
       description: |
         El cuerpo o la query no cumplen el contrato; `detail` señala el campo.
@@ -1100,117 +1370,84 @@ components:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
           examples:
-            validationFailed: { $ref: '#/components/examples/ValidationFailed' }
+            validationFailed:
+              $ref: '#/components/examples/ValidationFailed'
+
     CustomerNotFound:
-      description: |
-        No hay ningún cliente con ese teléfono. Un comercio ajeno también recibe
-        esta respuesta: el aislamiento se aplica en la capa de aplicación
-        (regla 2.7) y no revela la existencia de datos de otro comercio.
+      description: El cliente no existe o no pertenece al comercio del llamador.
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
           examples:
-            customerNotFound: { $ref: '#/components/examples/CustomerNotFound' }
+            customerNotFound:
+              $ref: '#/components/examples/CustomerNotFound'
+
     NoApplicableRule:
       description: |
-        Ninguna regla `BASE` ni `CAMPAIGN` aplica a esta compra (FR-014). El
-        sistema **no inventa una conversión por defecto**; un `admin` debe
-        publicar una regla.
+        No hay regla de conversión aplicable (`BASE` ni `CAMPAIGN`); nunca se
+        acredita un valor por defecto (FR-014).
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
           examples:
-            noApplicableRule: { $ref: '#/components/examples/NoApplicableRule' }
+            noApplicableRule:
+              $ref: '#/components/examples/NoApplicableRule'
 
   examples:
     Forbidden:
-      summary: FORBIDDEN
-      description: Rol o audiencia sin permiso sobre esta operación.
       value:
         type: about:blank
         title: Sin permiso
         status: 403
         code: FORBIDDEN
     ValidationFailed:
-      summary: VALIDATION_FAILED
-      description: El cuerpo o la query no cumplen el contrato.
       value:
         type: about:blank
         title: Validación fallida
         status: 422
         code: VALIDATION_FAILED
-        detail: gross_cents, discount_cents y net_cents deben ser enteros >= 0.
-    PhoneNotSupported:
-      summary: PHONE_NOT_SUPPORTED
-      description: El prefijo no es `+591`.
-      value:
-        type: about:blank
-        title: Prefijo no soportado
-        status: 422
-        code: PHONE_NOT_SUPPORTED
-        detail: Solo se aceptan teléfonos bolivianos +591.
-    PhoneNotVerified:
-      summary: PHONE_NOT_VERIFIED
-      description: |
-        El cliente existe pero no verificó su teléfono (`pv=false`). Sin teléfono
-        verificado no hay acumulación ni identificación por `QR` o `PHONE`
-        (AGENTS.md §8, FR-004).
-      value:
-        type: about:blank
-        title: Teléfono no verificado
-        status: 403
-        code: PHONE_NOT_VERIFIED
-        detail: Pide al cliente verificar su teléfono antes de continuar.
     CustomerNotFound:
-      summary: CUSTOMER_NOT_FOUND
-      description: No hay cliente registrado con ese teléfono.
       value:
         type: about:blank
         title: Cliente no encontrado
         status: 404
         code: CUSTOMER_NOT_FOUND
-        detail: Ningún cliente registrado coincide con ese teléfono.
-    InvalidQrToken:
-      summary: INVALID_QR_TOKEN
-      description: Token de QR malformado, con firma inválida o vencido (~60 s).
+    NoApplicableRule:
       value:
         type: about:blank
-        title: Token de QR inválido
+        title: Regla no aplicable
+        status: 409
+        code: NO_APPLICABLE_RULE
+    PhoneNotVerified:
+      value:
+        type: about:blank
+        title: Teléfono no verificado
+        status: 403
+        code: PHONE_NOT_VERIFIED
+    PhoneNotSupported:
+      value:
+        type: about:blank
+        title: Teléfono no soportado
+        status: 422
+        code: PHONE_NOT_SUPPORTED
+    InvalidQrToken:
+      value:
+        type: about:blank
+        title: QR inválido
         status: 422
         code: INVALID_QR_TOKEN
-        detail: El token de QR expiró o no es válido.
     InvalidIdentificationTicket:
-      summary: INVALID_IDENTIFICATION_TICKET
-      description: Ticket vencido (~5 min), de otro comercio o manipulado.
       value:
         type: about:blank
         title: Ticket de identificación inválido
         status: 422
         code: INVALID_IDENTIFICATION_TICKET
-        detail: Vuelve a identificar al cliente; el ticket expiró o no es de este comercio.
     DuplicateInvoice:
-      summary: DUPLICATE_INVOICE
-      description: |
-        El `invoice_ref` ya se usó en este comercio. Como `invoice_ref` es
-        obligatorio, la unicidad es un índice **completo** sobre
-        `(establishment_id, invoice_ref)` (FR-016).
       value:
         type: about:blank
         title: Factura duplicada
         status: 409
         code: DUPLICATE_INVOICE
-        detail: Ese número de factura ya se registró en este comercio.
-    NoApplicableRule:
-      summary: NO_APPLICABLE_RULE
-      description: |
-        Ninguna regla `BASE` ni `CAMPAIGN` aplica. No se acredita un valor por
-        defecto (FR-014).
-      value:
-        type: about:blank
-        title: Sin regla aplicable
-        status: 409
-        code: NO_APPLICABLE_RULE
-        detail: Ninguna regla de conversión aplica a esta compra.
 
 security:
   - bearerAuth: []
