@@ -34,6 +34,10 @@ final class IdentityException implements Exception {
       const IdentityException(ApiErrorCode.forbidden, 'sin permiso');
   factory IdentityException.tokenInvalid() =>
       const IdentityException(ApiErrorCode.tokenInvalid, 'token invalido');
+  factory IdentityException.unauthenticated() => const IdentityException(
+    ApiErrorCode.unauthenticated,
+    'falta autenticacion',
+  );
   factory IdentityException.tokenReuseDetected() => const IdentityException(
     ApiErrorCode.tokenReuseDetected,
     'reutilizacion detectada',

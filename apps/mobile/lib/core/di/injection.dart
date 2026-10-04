@@ -1,3 +1,6 @@
+import '../../features/customer/data/customer_repository.dart';
+import '../../features/customer/data/http_customer_repository.dart';
+import '../../features/customer/data/mock_customer_repository.dart';
 import '../../features/identity/data/http_auth_repository.dart';
 import '../../features/identity/data/mock_auth_repository.dart';
 import '../../features/identity/data/token_storage.dart';
@@ -12,6 +15,7 @@ final class InjectionContainer {
 
   static AuthRepository? _authRepository;
   static TokenStorage? _tokenStorage;
+  static CustomerRepository? _customerRepository;
 
   /// Repositorio de identidad configurado. Si no se llamó a
   /// [setupDependencies], devuelve un [MockAuthRepository] (defecto seguro).
@@ -21,6 +25,10 @@ final class InjectionContainer {
   /// Almacenamiento de tokens. Por defecto, en memoria (seguro en tests).
   static TokenStorage get tokenStorage =>
       _tokenStorage ?? InMemoryTokenStorage();
+
+  /// Repositorio del perfil del cliente (ticket QR).
+  static CustomerRepository get customerRepository =>
+      _customerRepository ?? MockCustomerRepository();
 
   /// Inicializa el contenedor. [useMock] por defecto lee el
   /// `--dart-define=USE_MOCK` (true en desarrollo/tests si no se especifica).
@@ -39,11 +47,15 @@ final class InjectionContainer {
     _tokenStorage = resolvedUseMock
         ? InMemoryTokenStorage()
         : SecureTokenStorage();
+    _customerRepository = resolvedUseMock
+        ? MockCustomerRepository()
+        : HttpCustomerRepository(baseUrl: resolvedBaseUrl);
   }
 
   /// Limpia el contenedor (útil entre tests).
   static void reset() {
     _authRepository = null;
     _tokenStorage = null;
+    _customerRepository = null;
   }
 }

@@ -47,6 +47,9 @@ class IdentityNotifier extends ValueNotifier<IdentityState> {
   final AuthRepository _repository;
   final TokenStorage _tokenStorage;
 
+  /// Token de sesión almacenado (para llamadas autenticadas al API).
+  Future<String?> currentAccessToken() => _tokenStorage.getToken();
+
   Future<void> sendOtp(String phone) async {
     value = const IdentityLoading();
     try {

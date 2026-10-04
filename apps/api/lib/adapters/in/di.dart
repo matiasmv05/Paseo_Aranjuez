@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:paseo_api/adapters/in/auth_use_cases.dart';
 import 'package:paseo_api/adapters/out/auth/jwt_token_signer.dart';
+import 'package:paseo_api/adapters/out/auth/jwt_token_verifier.dart';
 import 'package:paseo_api/adapters/out/clock/system_clock.dart';
 import 'package:paseo_api/adapters/out/email/console_email_sender.dart';
 import 'package:paseo_api/adapters/out/email/smtp_email_sender.dart';
@@ -35,6 +36,7 @@ final class AppDependencies implements AuthUseCases {
     required this.tx,
     required this.hasher,
     required this.signer,
+    required this.verifier,
     required this.otpSender,
     required this.emailSender,
     required this.tokens,
@@ -75,6 +77,10 @@ final class AppDependencies implements AuthUseCases {
     final signer = JwtTokenSigner(
       secret: env['JWT_SECRET'] ?? '',
       kid: env['JWT_KID'] ?? 'dev-key-1',
+    );
+    final verifier = JwtTokenVerifier(
+      secret: env['JWT_SECRET'] ?? '',
+      clock: clock,
     );
     final OtpSender otpSender = switch (env['OTP_SENDER'] ?? 'console') {
       'console' => ConsoleOtpSender(),
@@ -182,6 +188,7 @@ final class AppDependencies implements AuthUseCases {
       tx: tx,
       hasher: hasher,
       signer: signer,
+      verifier: verifier,
       otpSender: otpSender,
       emailSender: emailSender,
       tokens: tokens,
@@ -209,6 +216,7 @@ final class AppDependencies implements AuthUseCases {
   final PostgresTransactionRunner tx;
   final PasswordHasher hasher;
   final TokenSigner signer;
+  final TokenVerifier verifier;
   final OtpSender otpSender;
   final EmailSender emailSender;
   final TokenGenerator tokens;

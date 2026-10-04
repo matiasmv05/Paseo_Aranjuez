@@ -206,6 +206,12 @@ abstract interface class TokenSigner {
   String sign(AuthClaims claims);
 }
 
+/// Verificación de access tokens HS256 (firma, expiración y claims).
+abstract interface class TokenVerifier {
+  /// Devuelve los claims o lanza [IdentityException.unauthenticated].
+  AuthClaims verify(String token);
+}
+
 abstract interface class OtpSender {
   Future<void> sendOtp({required PhoneBO phone, required String code});
 }

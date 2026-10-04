@@ -34,6 +34,8 @@ tags:
     description: Salud del servicio (AGENTS.md §16 / INFRASTRUCTURE.md §13)
   - name: auth
     description: Identidad y sesión (AGENTS.md §6 y §8)
+  - name: customer
+    description: Perfil del cliente y ticket QR (AGENTS.md §8)
 
 paths:
   /health:
@@ -414,6 +416,44 @@ paths:
                 title: Validación fallida
                 status: 422
                 code: TOKEN_INVALID
+
+  /customers/me/qr:
+    get:
+      tags: [customer]
+      summary: Emitir el ticket QR del cliente autenticado
+      description: |
+        Devuelve un **ticket QR firmado** (≤ 5 min) ligado al `cid` del JWT
+        (AGENTS.md §8: sin datos personales en el ticket). El comercio lo
+        valida offline en `identify` cuando esa spec exista.
+      operationId: getCustomerQr
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Ticket QR firmado.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [qr_ticket, expires_in]
+                properties:
+                  qr_ticket:
+                    type: string
+                    description: Ticket JWT firmado ligado al cliente.
+                  expires_in:
+                    type: integer
+                    maximum: 300
+                    description: Segundos de vida del ticket (≤ 300).
+        '401':
+          description: Access token ausente, inválido o vencido.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                code: UNAUTHENTICATED
 
 components:
   securitySchemes:
