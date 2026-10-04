@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:paseo_mobile/design_system/tokens/paseo_theme.dart';
 import 'package:paseo_mobile/pages/admin_overview_page.dart';
-import 'package:paseo_mobile/pages/customer_main_page.dart';
 import 'package:paseo_mobile/pages/merchant_pos_page.dart';
+import 'package:paseo_mobile/pages/welcome_page.dart';
 
 /// Widget raíz de la aplicación móvil del cliente (Paseo Points).
 class CustomerApp extends StatelessWidget {
@@ -15,7 +15,7 @@ class CustomerApp extends StatelessWidget {
       title: 'Paseo Points — VIP Obsidian',
       debugShowCheckedModeBanner: false,
       theme: PaseoTheme.darkTheme,
-      home: const CustomerMainPage(),
+      home: const WelcomePage(),
     );
   }
 }

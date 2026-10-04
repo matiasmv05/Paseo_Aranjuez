@@ -89,4 +89,51 @@ abstract final class PaseoTypography {
     fontWeight: FontWeight.w700,
     letterSpacing: 1.2,
   );
+
+  /// Título de la pantalla de bienvenida ("Paseo Points").
+  static const TextStyle welcomeTitle = TextStyle(
+    fontFamily: 'serif',
+    fontSize: 40,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0.4,
+    color: PaseoColors.textWhite,
+    height: 1.15,
+  );
+
+  /// Subtítulo de bienvenida
+  /// ("Tu experiencia en Paseo Aranjuez, ahora con más beneficios.").
+  static const TextStyle welcomeSubtitle = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0.2,
+    color: Color(0xFFE2DDD5),
+    height: 1.45,
+  );
+
+  /// Texto del botón de bienvenida "Comenzar".
+  static const TextStyle welcomeButton = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.3,
+    color: PaseoColors.champagneTextDark,
+  );
+
+  /// Enlace subrayado "Iniciar sesión".
+  static const TextStyle welcomeLink = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.3,
+    color: PaseoColors.champagneLight,
+    decoration: TextDecoration.underline,
+    decorationColor: PaseoColors.champagneLight,
+  );
+
+  /// Texto del emblema de marca ("PASEO ARANJUEZ").
+  static const TextStyle brandCrestText = TextStyle(
+    fontFamily: 'serif',
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 3.5,
+    color: Color(0xFFE8CA9D),
+  );
 }

@@ -167,8 +167,10 @@ class _AdminTransactionChartState extends State<AdminTransactionChart>
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 6,
               children: [
                 const Text(
                   'Recent Transaction Activity',
@@ -179,7 +181,6 @@ class _AdminTransactionChartState extends State<AdminTransactionChart>
                     color: PaseoColors.textWhite,
                   ),
                 ),
-                const SizedBox(width: 12),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,

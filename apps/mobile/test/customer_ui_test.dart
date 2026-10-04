@@ -1,100 +1,165 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paseo_mobile/app.dart';
-import 'package:paseo_mobile/design_system/atoms/paseo_end_of_ledger.dart';
-import 'package:paseo_mobile/design_system/atoms/paseo_nfc_beacon.dart';
-import 'package:paseo_mobile/design_system/atoms/paseo_nfc_chip.dart';
-import 'package:paseo_mobile/design_system/atoms/paseo_points_pill.dart';
-import 'package:paseo_mobile/design_system/atoms/paseo_section_tag.dart';
-import 'package:paseo_mobile/design_system/atoms/paseo_vip_pill.dart';
-import 'package:paseo_mobile/design_system/molecules/paseo_curated_reward_card.dart';
-import 'package:paseo_mobile/design_system/molecules/paseo_history_card.dart';
-import 'package:paseo_mobile/design_system/organisms/membership_pass_card.dart';
+import 'package:paseo_mobile/design_system/atoms/paseo_filter_chip.dart';
+import 'package:paseo_mobile/design_system/atoms/paseo_points_tag.dart';
+import 'package:paseo_mobile/design_system/atoms/paseo_qr_code.dart';
+import 'package:paseo_mobile/design_system/molecules/benefit_list_card.dart';
+import 'package:paseo_mobile/design_system/molecules/paseo_bottom_nav_bar.dart';
+import 'package:paseo_mobile/design_system/molecules/paseo_points_card.dart';
+import 'package:paseo_mobile/design_system/molecules/qr_display_card.dart';
+import 'package:paseo_mobile/design_system/molecules/transaction_tile.dart';
+import 'package:paseo_mobile/design_system/organisms/redemption_confirm_dialog.dart';
+import 'package:paseo_mobile/design_system/organisms/redemption_success_sheet.dart';
+import 'package:paseo_mobile/pages/benefit_detail_page.dart';
+import 'package:paseo_mobile/pages/client_shell_page.dart';
+import 'package:paseo_mobile/pages/points_history_page.dart';
+import 'package:paseo_mobile/pages/welcome_page.dart';
 
 void main() {
   testWidgets(
-    'CustomerApp renders VIP Club landing screen and navigates all tabs',
+    'CustomerApp navigates complete Paseo Points client experience and all 5 '
+    'tabs',
     (tester) async {
       await tester.pumpWidget(const CustomerApp());
       await tester.pumpAndSettle();
 
-      // 1. Verifica elementos de la pantalla CLUB (Screenshot 4)
-      expect(find.text('PASEO ARANJUEZ PRIVILÈGES'), findsOneWidget);
-      expect(find.text('Good evening,\nAlejandro'), findsOneWidget);
-      expect(find.byType(PaseoVipPill), findsOneWidget);
-      expect(find.text('VIP\nOBSIDIAN'), findsOneWidget);
-      expect(find.text('#ARJ-9921'), findsOneWidget);
+      // 0. Verifica pantalla de bienvenida y pulsa "Comenzar"
+      expect(find.byType(WelcomePage), findsOneWidget);
+      expect(find.text('Paseo Points'), findsOneWidget);
+      expect(find.text('Comenzar'), findsOneWidget);
 
-      // Tarjeta de membresía (MembershipPassCard)
-      expect(find.byType(MembershipPassCard), findsOneWidget);
-      expect(find.text('MEMBERSHIP PASS'), findsOneWidget);
-      expect(find.byType(PaseoNfcChip), findsOneWidget);
-      expect(find.text('NFC READY'), findsOneWidget);
-      expect(find.text('ACCUMULATED PRIVILEGE BALANCE'), findsOneWidget);
-      expect(find.text('3,450'), findsOneWidget);
-      expect(find.text('PTS'), findsOneWidget);
-      expect(find.text('PROGRESS'), findsOneWidget);
-      expect(find.text('550 PTS TO SOVEREIGN TIER'), findsOneWidget);
-      expect(find.text('PASEO ARANJUEZ'), findsOneWidget);
-      expect(find.text('VALID THRU 12/27'), findsOneWidget);
-
-      // Botones de acción CTA
-      expect(find.text('REDEEM PRIVILÈGES  →'), findsOneWidget);
-      expect(find.text('TAP TO PAY (NFC READY)'), findsOneWidget);
-
-      // 2. Interacción con Tap to Pay (NFC Modal)
-      await tester.ensureVisible(find.text('TAP TO PAY (NFC READY)'));
-      await tester.tap(find.text('TAP TO PAY (NFC READY)'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.text('CONCIERGE NFC READY'), findsOneWidget);
-      expect(find.text('Aproxima tu dispositivo'), findsOneWidget);
-
-      // Cierra el modal NFC
-      await tester.tap(find.text('CANCELAR'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // 3. Navega a REWARDS mediante el botón de canje
-      await tester.ensureVisible(find.text('REDEEM PRIVILÈGES  →'));
-      await tester.tap(find.text('REDEEM PRIVILÈGES  →'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-
-      expect(find.text('ATELIER ALLOCATIONS'), findsOneWidget);
-      expect(find.text('Curated Privilèges'), findsOneWidget);
-      expect(find.byType(PaseoPointsPill), findsOneWidget);
-      expect(find.byType(PaseoCuratedRewardCard), findsNWidgets(2));
-      expect(find.text('Swiss Automatic Watch\nService'), findsOneWidget);
-      expect(find.byType(PaseoNfcBeacon), findsOneWidget);
-
-      // 4. Navega a la pestaña ACTIVITY
-      await tester.tap(find.text('ACTIVITY'));
+      await tester.tap(find.text('Comenzar'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(PaseoSectionTag), findsOneWidget);
-      expect(find.text('MEMBER ACTIVITY'), findsOneWidget);
-      expect(find.text('Points History'), findsOneWidget);
-      expect(find.byType(PaseoHistoryCard), findsNWidgets(2));
-      expect(find.text('Haute Horlogerie Boutique'), findsOneWidget);
-      expect(find.byType(PaseoEndOfLedger), findsOneWidget);
+      // 1. Verifica pantalla de Inicio / Dashboard (Pantalla 3)
+      expect(find.byType(ClientShellPage), findsOneWidget);
+      expect(find.text('Hola, Valentina 👋'), findsOneWidget);
+      expect(
+        find.text('Disfruta todos los beneficios de Paseo Aranjuez'),
+        findsOneWidget,
+      );
+      expect(find.byType(PaseoPointsCard), findsOneWidget);
+      expect(find.text('2.450'), findsOneWidget);
+      expect(find.text('Mostrar mi QR'), findsOneWidget);
+      expect(find.text('Beneficios para ti'), findsOneWidget);
+      expect(find.text('Promociones vigentes'), findsOneWidget);
+      // Desplaza la lista para revelar la sección de establecimientos
+      await tester.drag(find.byType(ListView).first, const Offset(0, -260));
+      await tester.pumpAndSettle();
+      expect(find.text('Establecimientos'), findsOneWidget);
+      expect(find.byType(PaseoBottomNavBar), findsOneWidget);
 
-      // 5. Navega a la pestaña PROFILE
-      await tester.tap(find.text('PROFILE'));
+      // 2. Abre historial de puntos desde la tarjeta principal
+      await tester.drag(find.byType(ListView).first, const Offset(0, 260));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(PaseoPointsCard));
       await tester.pumpAndSettle();
 
-      expect(find.text('Alejandro Morales'), findsOneWidget);
-      expect(find.text('VIP OBSIDIAN MEMBER'), findsOneWidget);
-      expect(find.text('Settings'), findsOneWidget);
-      expect(find.text('Help & Support'), findsOneWidget);
-      expect(find.text('Log Out'), findsOneWidget);
+      expect(find.byType(PointsHistoryPage), findsOneWidget);
+      expect(find.text('Mis puntos'), findsOneWidget);
+      expect(find.text('puntos disponibles'), findsOneWidget);
+      expect(
+        find.byType(PaseoFilterChip),
+        findsNWidgets(3),
+      ); // Todos, Ganados, Canjeados
+      expect(find.byType(TransactionTile), findsWidgets);
 
-      // 6. Regresa a la pestaña CLUB
-      await tester.tap(find.text('CLUB'));
+      // Retorna a Inicio
+      await tester.tap(find.byIcon(Icons.chevron_left_rounded));
+      await tester.pumpAndSettle();
+      expect(find.byType(ClientShellPage), findsOneWidget);
+
+      // 3. Navega a la pestaña de QR desde el botón "Mostrar mi QR"
+      await tester.tap(find.text('Mostrar mi QR'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Good evening,\nAlejandro'), findsOneWidget);
-      expect(find.byType(MembershipPassCard), findsOneWidget);
+      expect(find.byType(QrDisplayCard), findsOneWidget);
+      expect(find.byType(PaseoQrCode), findsOneWidget);
+      expect(find.text('Valentina Rodríguez'), findsOneWidget);
+      expect(find.text('+591 720 12345'), findsOneWidget);
+
+      // 4. Navega a la pestaña de Beneficios (Tab 1)
+      final benefitsTab = find.descendant(
+        of: find.byType(PaseoBottomNavBar),
+        matching: find.text('Beneficios'),
+      );
+      await tester.tap(benefitsTab);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Beneficios'), findsNWidgets(2));
+      expect(find.byType(PaseoFilterChip), findsNWidgets(4)); // Categorías
+      expect(find.byType(BenefitListCard), findsWidgets);
+      expect(find.text('20% de descuento en Café Aranjuez'), findsOneWidget);
+
+      // 5. Entra al detalle de un beneficio y ejecuta el flujo de canje
+      await tester.tap(find.text('20% de descuento en Café Aranjuez'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BenefitDetailPage), findsOneWidget);
+      expect(find.byType(PaseoPointsTag), findsOneWidget);
+      expect(find.text('Canjear por 500 puntos'), findsOneWidget);
+      expect(find.text('Condiciones'), findsOneWidget);
+
+      // Inicia el canje (muestra diálogo de confirmación - Pantalla 7)
+      await tester.tap(find.text('Canjear por 500 puntos'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(RedemptionConfirmDialog), findsOneWidget);
+      expect(find.text('¿Quieres canjear esta\nrecompensa?'), findsOneWidget);
+      expect(
+        find.text('Se descontarán 500 puntos\nde tu saldo.'),
+        findsOneWidget,
+      );
+      expect(find.text('Confirmar'), findsOneWidget);
+      expect(find.text('Cancelar'), findsOneWidget);
+
+      // Confirma el canje (Pantalla 8: Canje realizado)
+      await tester.tap(find.text('Confirmar'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(RedemptionSuccessView), findsOneWidget);
+      expect(find.text('¡Canje realizado!'), findsOneWidget);
+      expect(find.text('PA-483921'), findsOneWidget);
+      expect(find.text('Volver a beneficios'), findsOneWidget);
+
+      // Retorna al catálogo de beneficios
+      await tester.tap(find.text('Volver a beneficios'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ClientShellPage), findsOneWidget);
+
+      // 6. Navega a la pestaña de Promociones (Tab 3)
+      final promosTab = find.descendant(
+        of: find.byType(PaseoBottomNavBar),
+        matching: find.text('Promociones'),
+      );
+      await tester.tap(promosTab);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Promociones'), findsNWidgets(2));
+      expect(find.text('Puntos dobles este fin de semana'), findsOneWidget);
+
+      // 7. Navega a la pestaña de Perfil (Tab 4)
+      final profileTab = find.descendant(
+        of: find.byType(PaseoBottomNavBar),
+        matching: find.text('Perfil'),
+      );
+      await tester.tap(profileTab);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mi perfil'), findsOneWidget);
+      expect(find.text('Valentina Rodríguez'), findsOneWidget);
+      expect(find.text('valentina@email.com'), findsOneWidget);
+      expect(find.text('+591 720 12345'), findsOneWidget);
+      expect(find.text('Cerrar sesión'), findsOneWidget);
+
+      // 8. Cierra sesión y retorna a WelcomePage
+      await tester.drag(find.byType(ListView).first, const Offset(0, -220));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cerrar sesión'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WelcomePage), findsOneWidget);
     },
   );
 }
