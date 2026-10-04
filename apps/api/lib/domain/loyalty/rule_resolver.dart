@@ -15,6 +15,14 @@ final class ResolvedRules {
 
   /// Campana que multiplica, si hay una activa.
   final PointsRule? campaign;
+
+  /// Fotografia de las reglas aplicadas para `purchases.rule_snapshot`.
+  ///
+  /// Congela la base y, si hubo, la campana (`FR-014`, `R-05`).
+  Map<String, Object?> toSnapshot() => {
+    'base': base.toSnapshot(),
+    if (campaign != null) 'campaign': campaign!.toSnapshot(),
+  };
 }
 
 /// Elige la regla base y la campana entre un conjunto candidato.

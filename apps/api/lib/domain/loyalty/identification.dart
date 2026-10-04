@@ -161,6 +161,31 @@ final class QrTokenClaims {
   }
 }
 
+/// Enmascara el nombre de un cliente para exponerlo al comercio (FR-003).
+///
+/// El nombre completo nunca sale en una respuesta del panel (§8): se
+/// conserva el primer nombre y se reducen los apellidos a su inicial. Un
+/// nombre de una sola palabra queda como inicial seguida de punto.
+String maskCustomerName(String fullName) {
+  final parts = fullName
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList(growable: false);
+  if (parts.isEmpty) {
+    return '';
+  }
+  final first = parts.first;
+  if (parts.length == 1) {
+    return '${first.substring(0, 1).toUpperCase()}.';
+  }
+  final initials = parts
+      .skip(1)
+      .map((part) => '${part.substring(0, 1).toUpperCase()}.')
+      .join(' ');
+  return '$first $initials';
+}
+
 DateTime? _secondsToUtc(Object? value) {
   if (value is! int || value < 0) {
     return null;

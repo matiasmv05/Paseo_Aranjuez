@@ -76,19 +76,19 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 
 ### Use cases
 
-- [ ] T041 [US-A2] `apps/api/lib/application/merchant/use_cases/identify_customer.dart`: valida QR (firma+edad 60s) o PHONE (+591 8 dígitos); exige `phone_verified`; devuelve ticket firmado + nombre enmascarado; bindea a establishment/branch.
-- [ ] T042 [US-A3] `apps/api/lib/application/merchant/use_cases/preview_purchase.dart`: resuelve reglas + calcula con mismo motor; no escribe. Lanza `NO_APPLICABLE_RULE` si no aplica.
-- [ ] T043 [US-A4] `apps/api/lib/application/merchant/use_cases/register_purchase.dart`: verifica ticket (5min, mismo estab/branch válido); valida invariantes (`net==gross-disc`, no negativos, invoice_ref no vacío); idempotencia por `(establishment_id,idempotency_key)` (reintento devuelve 200 body original); unique `(establishment_id,invoice_ref)` → `DUPLICATE_INVOICE`; calcula; si `points_credited==0` guarda compra sin ledger; si >0 guarda compra+ledger+CREDIT en transacción + `audit_log`. Nunca escribe saldo directamente.
-- [ ] T044 [US-A5] `apps/api/lib/application/merchant/use_cases/list_movements.dart`: cursor `created_at DESC,id DESC`, limit validado, filtro seller para cashier, vacío si comercio ajeno (app layer). Mapea a DTO con nombre enmascarado.
+- [x] T041 [US-A2] `apps/api/lib/application/merchant/use_cases/identify_customer.dart`: valida QR (firma+edad 60s) o PHONE (+591 8 dígitos); exige `phone_verified`; devuelve ticket firmado + nombre enmascarado; bindea a establishment/branch.
+- [x] T042 [US-A3] `apps/api/lib/application/merchant/use_cases/preview_purchase.dart`: resuelve reglas + calcula con mismo motor; no escribe. Lanza `NO_APPLICABLE_RULE` si no aplica.
+- [x] T043 [US-A4] `apps/api/lib/application/merchant/use_cases/register_purchase.dart`: verifica ticket (5min, mismo estab/branch válido); valida invariantes (`net==gross-disc`, no negativos, invoice_ref no vacío); idempotencia por `(establishment_id,idempotency_key)` (reintento devuelve 200 body original); unique `(establishment_id,invoice_ref)` → `DUPLICATE_INVOICE`; calcula; si `points_credited==0` guarda compra sin ledger; si >0 guarda compra+ledger+CREDIT en transacción + `audit_log`. Nunca escribe saldo directamente.
+- [x] T044 [US-A5] `apps/api/lib/application/merchant/use_cases/list_movements.dart`: cursor `created_at DESC,id DESC`, limit validado, filtro seller para cashier, vacío si comercio ajeno (app layer). Mapea a DTO con nombre enmascarado.
 
 ### Fakes y tests aplicación
 
-- [ ] T045 [P] [US-TA1] `apps/api/test/application/merchant/fakes.dart`: fakes para todos los puertos (in-memory) con reloj falso.
-- [ ] T046 [P] [US-TA2] `test/application/merchant/identify_customer_test.dart`: escenarios US1 1–6.
-- [ ] T047 [P] [US-TA3] `test/application/merchant/preview_purchase_test.dart`: preview vs registro coherente; sin escritura; NO_APPLICABLE_RULE.
-- [ ] T048 [P] [US-TA4] `test/application/merchant/register_purchase_test.dart`: US2 1–8 + idempotencia + carrera única invoice_ref.
-- [ ] T049 [P] [US-TA5] `test/application/merchant/list_movements_test.dart`: US4 1–5 + aislamiento por seller + comercio ajeno vacío.
-- [ ] T050 Ejecutar `cd apps/api && fvm dart test test/application` verde.
+- [x] T045 [P] [US-TA1] `apps/api/test/application/merchant/fakes.dart`: fakes para todos los puertos (in-memory) con reloj falso.
+- [x] T046 [P] [US-TA2] `test/application/merchant/identify_customer_test.dart`: escenarios US1 1–6.
+- [x] T047 [P] [US-TA3] `test/application/merchant/preview_purchase_test.dart`: preview vs registro coherente; sin escritura; NO_APPLICABLE_RULE.
+- [x] T048 [P] [US-TA4] `test/application/merchant/register_purchase_test.dart`: US2 1–8 + idempotencia + carrera única invoice_ref.
+- [x] T049 [P] [US-TA5] `test/application/merchant/list_movements_test.dart`: US4 1–5 + aislamiento por seller + comercio ajeno vacío.
+- [x] T050 Ejecutar `cd apps/api && fvm dart test test/application` verde.
 
 **Checkpoint A1:** casos de uso cubiertos con fakes, tests verdes.
 

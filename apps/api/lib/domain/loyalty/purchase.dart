@@ -28,7 +28,11 @@ final class PurchaseDraft {
     required String idempotencyKey,
     required int pointsCredited,
   }) {
-    _validateAmounts(grossCents, discountCents, netCents);
+    validatePurchaseAmounts(
+      grossCents: grossCents,
+      discountCents: discountCents,
+      netCents: netCents,
+    );
     if (pointsCredited < 0) {
       throw LoyaltyException.validation(
         'points_credited no puede ser negativo',
@@ -134,7 +138,11 @@ final class Purchase {
     required int pointsCredited,
     required DateTime createdAt,
   }) {
-    _validateAmounts(grossCents, discountCents, netCents);
+    validatePurchaseAmounts(
+      grossCents: grossCents,
+      discountCents: discountCents,
+      netCents: netCents,
+    );
     final ref = invoiceRef.trim();
     if (ref.isEmpty) {
       throw LoyaltyException.validation('invoice_ref es obligatorio');
@@ -222,11 +230,21 @@ final class Purchase {
   final DateTime createdAt;
 }
 
-void _validateAmounts(int gross, int discount, int net) {
-  if (gross < 0 || discount < 0 || net < 0) {
+/// Valida las invariantes de montos de una compra.
+///
+/// La usan tanto la compra persistida como el preview, para que ambos
+/// rechacen los mismos cuerpos (§7: mismo codigo en preview y registro).
+/// Lanza [LoyaltyException.validation] si algun monto es negativo o si
+/// `net != gross - discount`.
+void validatePurchaseAmounts({
+  required int grossCents,
+  required int discountCents,
+  required int netCents,
+}) {
+  if (grossCents < 0 || discountCents < 0 || netCents < 0) {
     throw LoyaltyException.validation('los montos no pueden ser negativos');
   }
-  if (net != gross - discount) {
+  if (netCents != grossCents - discountCents) {
     throw LoyaltyException.validation(
       'net_cents debe ser gross_cents - discount_cents',
     );
