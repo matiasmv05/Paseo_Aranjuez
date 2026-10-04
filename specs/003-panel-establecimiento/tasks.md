@@ -57,7 +57,7 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 - [ ] T025 [US-D6] [P1] `apps/api/lib/domain/loyalty/rule_resolver.dart`: precedencia `ESTABLISHMENT > CATEGORY > GLOBAL`, desempate por `priority`, como máximo 1 `CAMPAIGN` activa, no acumulación. Devuelve `(base, campaign?)` o lanza `LoyaltyException(NO_APPLICABLE_RULE)`.
 - [ ] T026 [US-D7] [P1] `apps/api/lib/domain/loyalty/points_calculator.dart`: orden FR-012: `puntos_base = redondear(net_cents * puntos_otorgados / monto_por_tramo_centavos)`; `puntos = redondear(puntos_base * multiplicador_bp / 10000)`; `min(puntos, tope_puntos_por_compra)` si aplica; `0` si `net_cents < compra_minima`. Todo entero. Comparte lógica con preview/registro.
 - [ ] T027 [P] [US-D8] `apps/api/lib/domain/loyalty/purchase.dart`: entidad `Purchase` + invariantes (`net_cents == gross-discount`, no negativos, `invoice_ref` obligatorio). `rule_snapshot` JSON.
-- [ ] T028 [P] [US-D9] `apps/api/lib/domain/loyalty/identification.dart`: tipos puros para ticket QR y ticket identificación (claims), sin firma. TTLs (60s QR, 300s ticket) documentados.
+- [x] T028 [P] [US-D9] `apps/api/lib/domain/loyalty/identification.dart`: tipos puros para ticket QR y ticket identificación (claims), sin firma. TTLs (60s QR, 300s ticket) documentados.
 
 ### Tests dominio
 
@@ -96,7 +96,7 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 
 ### Auth/firmas + rate limit
 
-- [ ] T060 [P] [US-O1] `apps/api/lib/adapters/out/auth/identification_signer.dart`: HMAC-SHA256 para ticket identificación (TTL 300s) y QR (TTL 60s), mismo `IDENTIFICATION_SECRET`. Métodos `sign`/`verify` con reloj inyectable. No expone payload legible al cliente indebido.
+- [x] T060 [P] [US-O1] `apps/api/lib/adapters/out/auth/identification_signer.dart`: HMAC-SHA256 para ticket identificación (TTL 300s) y QR (TTL 60s), mismo `IDENTIFICATION_SECRET`. Métodos `sign`/`verify` con reloj inyectable. No expone payload legible al cliente indebido.
 - [ ] T061 [P] [US-O2] `apps/api/lib/adapters/out/rate_limit/establishment_rate_limiter.dart`: rate limit por `establishment_id` para `preview`/`purchases` (429 `RATE_LIMITED`). Implementación sencilla (in-memory o store compartido según ambiente; tests usan fake).
 
 ### Repositorios Postgres
