@@ -7,15 +7,16 @@ import 'package:test/test.dart';
 
 import '../../routes/_middleware.dart';
 
-class _MockRequestContext extends Mock implements RequestContext;
+class _MockRequestContext extends Mock implements RequestContext {}
 
 RequestContext _context({Map<String, String> headers = const {}}) {
   final context = _MockRequestContext();
   when(() => context.request).thenReturn(
     Request('GET', Uri.parse('http://localhost/health'), headers: headers),
   );
-  when(() => context.provide<Future<bool> Function()>(any()))
-      .thenReturn(context);
+  when(
+    () => context.provide<Future<bool> Function()>(any()),
+  ).thenReturn(context);
   return context;
 }
 

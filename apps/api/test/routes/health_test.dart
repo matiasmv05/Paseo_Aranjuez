@@ -7,14 +7,15 @@ import 'package:test/test.dart';
 
 import '../../routes/health.dart';
 
-class _MockRequestContext extends Mock implements RequestContext;
+class _MockRequestContext extends Mock implements RequestContext {}
 
 void main() {
   group('GET /health', () {
     test('responde 200 {"status":"ok"}', () async {
       final context = _MockRequestContext();
-      when(() => context.request)
-          .thenReturn(Request('GET', Uri.parse('http://localhost/health')));
+      when(
+        () => context.request,
+      ).thenReturn(Request('GET', Uri.parse('http://localhost/health')));
 
       final response = onRequest(context);
 
@@ -26,8 +27,9 @@ void main() {
 
     test('responde 405 problem+json con otro método', () async {
       final context = _MockRequestContext();
-      when(() => context.request)
-          .thenReturn(Request('POST', Uri.parse('http://localhost/health')));
+      when(
+        () => context.request,
+      ).thenReturn(Request('POST', Uri.parse('http://localhost/health')));
 
       final response = onRequest(context);
 
