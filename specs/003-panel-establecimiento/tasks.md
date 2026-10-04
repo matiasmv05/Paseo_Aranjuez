@@ -72,7 +72,7 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 
 ### Puertos
 
-- [ ] T040 [P] [US-A1] `apps/api/lib/application/merchant/ports.dart`: `EstablishmentRepository` (obtener staff+branch, validar establecimiento), `PointsRuleRepository` (obtener reglas activas por establecimiento/categoría/global), `PurchaseRepository` (find by idempotency_key+estab, insert purchase+ledger con transacción, unique violations), `MovementRepository` (listar con filtro seller por cursor), `TicketSigner` (firma/verifica ticket identificación y QR), `RateLimiter` (por establishment_id).
+- [x] T040 [P] [US-A1] `apps/api/lib/application/merchant/ports.dart`: `EstablishmentRepository` (obtener staff+branch, validar establecimiento), `PointsRuleRepository` (obtener reglas activas por establecimiento/categoría/global), `PurchaseRepository` (find by idempotency_key+estab, insert purchase+ledger con transacción, unique violations), `MovementRepository` (listar con filtro seller por cursor), `TicketSigner` (firma/verifica ticket identificación y QR), `RateLimiter` (por establishment_id).
 
 ### Use cases
 
