@@ -1,24 +1,24 @@
-import 'errors.dart';
-import 'otp_challenge.dart';
+import 'package:paseo_api/domain/identity/errors.dart';
+import 'package:paseo_api/domain/identity/otp_challenge.dart';
 
 /// Token de verificacion de correo (US2): es un **enlace**, no un OTP.
 /// TTL de 24 horas (constante documentada, pendiente de `system_settings`)
 /// y sin limite de intentos; un solo uso.
 final class EmailVerification implements VerificationState {
-  const EmailVerification._({
+  const new _({
     required this.createdAt,
     required this.expiresAt,
     required this.consumedAt,
   });
 
-  factory EmailVerification.issue(DateTime now) => EmailVerification._(
+  factory issue(DateTime now) => EmailVerification._(
     createdAt: now,
     expiresAt: now.add(ttl),
     consumedAt: null,
   );
 
   /// Reconstruye desde persistencia.
-  factory EmailVerification.restore({
+  factory restore({
     required DateTime createdAt,
     required DateTime expiresAt,
     required DateTime? consumedAt,

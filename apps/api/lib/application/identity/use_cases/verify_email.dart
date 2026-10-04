@@ -4,17 +4,13 @@ import 'package:paseo_api/domain/identity/identity.dart';
 /// US2: verificacion del correo con el token enviado (FR-001, spec US2).
 /// Token vencido/usado/desconocido -> `TOKEN_INVALID`.
 final class VerifyEmail {
-  const VerifyEmail({
-    required UserRepository users,
+  const new({
+    required this._users,
     required VerificationCodeRepository codes,
-    required TokenGenerator tokens,
-    required Clock clock,
-    required AuditLogWriter audit,
-  }) : _users = users,
-       _codes = codes,
-       _tokens = tokens,
-       _clock = clock,
-       _audit = audit;
+    required this._tokens,
+    required this._clock,
+    required this._audit,
+  }) : _codes = codes;
 
   final UserRepository _users;
   final VerificationCodeRepository _codes;

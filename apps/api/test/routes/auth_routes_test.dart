@@ -4,21 +4,20 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:paseo_api/adapters/in/auth_use_cases.dart';
-import 'package:paseo_api/domain/identity/client_app.dart';
 import 'package:paseo_api/domain/identity/errors.dart';
 import 'package:test/test.dart';
 
-import '../../routes/auth/phone/verify.dart' as otp_verify;
-import '../../routes/auth/phone/send-otp.dart' as send_otp;
-import '../../routes/auth/verify-email.dart' as verify_email;
 import '../../routes/auth/login.dart' as login_route;
 import '../../routes/auth/logout.dart' as logout_route;
 import '../../routes/auth/password/forgot.dart' as forgot_route;
 import '../../routes/auth/password/reset.dart' as reset_route;
+import '../../routes/auth/phone/send-otp.dart' as send_otp;
+import '../../routes/auth/phone/verify.dart' as otp_verify;
+import '../../routes/auth/verify-email.dart' as verify_email;
 
-class _MockContext extends Mock implements RequestContext {}
+class _MockContext extends Mock implements RequestContext;
 
-class _FakeAuthUseCases extends Mock implements AuthUseCases {}
+class _FakeAuthUseCases extends Mock implements AuthUseCases;
 
 RequestContext _ctx(
   String method,
@@ -46,7 +45,7 @@ void main() {
     test('200 on valid otp', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.verifyPhoneOtp)
-          .thenReturn(({required String phone, required String code}) async {});
+          .thenReturn(({required phone, required code}) async {});
       final res = await otp_verify.onRequest(
         _ctx('POST', '/auth/phone/verify', {
           'phone': '+59160000000',
@@ -61,7 +60,7 @@ void main() {
     test('422 OTP_INVALID', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.verifyPhoneOtp).thenReturn(
-        ({required String phone, required String code}) async =>
+        ({required phone, required code}) async =>
             throw IdentityException.otpInvalid(),
       );
       final res = await otp_verify.onRequest(
@@ -77,7 +76,7 @@ void main() {
     test('422 OTP_EXPIRED', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.verifyPhoneOtp).thenReturn(
-        ({required String phone, required String code}) async =>
+        ({required phone, required code}) async =>
             throw IdentityException.otpExpired(),
       );
       final res = await otp_verify.onRequest(
@@ -102,7 +101,7 @@ void main() {
     test('202 always', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.resendPhoneOtp)
-          .thenReturn(({required String phone}) async {});
+          .thenReturn(({required phone}) async {});
       final res = await send_otp.onRequest(
         _ctx('POST', '/auth/phone/send-otp', {
           'phone': '+59160000000',
@@ -114,8 +113,7 @@ void main() {
     test('429 OTP_RATE_LIMITED', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.resendPhoneOtp).thenReturn(
-        ({required String phone}) async =>
-            throw IdentityException.otpRateLimited(),
+        ({required phone}) async => throw IdentityException.otpRateLimited(),
       );
       final res = await send_otp.onRequest(
         _ctx('POST', '/auth/phone/send-otp', {
@@ -129,8 +127,7 @@ void main() {
   group('POST /auth/verify-email', () {
     test('204 on success', () async {
       final useCases = _FakeAuthUseCases();
-      when(() => useCases.verifyEmail)
-          .thenReturn(({required String token}) async {});
+      when(() => useCases.verifyEmail).thenReturn(({required token}) async {});
       final res = await verify_email.onRequest(
         _ctx('POST', '/auth/verify-email', {'token': 'tok'}, useCases),
       );
@@ -140,8 +137,7 @@ void main() {
     test('401 TOKEN_INVALID', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.verifyEmail).thenReturn(
-        ({required String token}) async =>
-            throw IdentityException.tokenInvalid(),
+        ({required token}) async => throw IdentityException.tokenInvalid(),
       );
       final res = await verify_email.onRequest(
         _ctx('POST', '/auth/verify-email', {'token': 'tok'}, useCases),
@@ -154,11 +150,8 @@ void main() {
     test('401 invalid credentials + CREDENTIALS_INVALID code', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.login).thenReturn(
-        ({
-          required String email,
-          required String password,
-          required ClientApp client,
-        }) async => throw IdentityException.credentialsInvalid(),
+        ({required email, required password, required client}) async =>
+            throw IdentityException.credentialsInvalid(),
       );
       final res = await login_route.onRequest(
         _ctx(
@@ -175,11 +168,8 @@ void main() {
     test('403 when web-admin without admin role', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.login).thenReturn(
-        ({
-          required String email,
-          required String password,
-          required ClientApp client,
-        }) async => throw IdentityException.forbidden(),
+        ({required email, required password, required client}) async =>
+            throw IdentityException.forbidden(),
       );
       final res = await login_route.onRequest(
         _ctx(
@@ -208,7 +198,7 @@ void main() {
     test('204 always (idempotent)', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.logout)
-          .thenReturn(({required String refreshToken}) async {});
+          .thenReturn(({required refreshToken}) async {});
       final res = await logout_route.onRequest(
         _ctx('POST', '/auth/logout', {'refresh_token': 't123'}, useCases),
       );
@@ -227,7 +217,7 @@ void main() {
     test('202 always (no account disclosure)', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.forgotPassword)
-          .thenReturn(({required String email}) async {});
+          .thenReturn(({required email}) async {});
       final res = await forgot_route.onRequest(
         _ctx('POST', '/auth/password/forgot', {'email': 'a@b.com'}, useCases),
       );
@@ -238,9 +228,8 @@ void main() {
   group('POST /auth/password/reset', () {
     test('204 on success', () async {
       final useCases = _FakeAuthUseCases();
-      when(() => useCases.resetPassword).thenReturn(
-        ({required String token, required String newPassword}) async {},
-      );
+      when(() => useCases.resetPassword)
+          .thenReturn(({required token, required newPassword}) async {});
       final res = await reset_route.onRequest(
         _ctx('POST', '/auth/password/reset', {
           'token': 't',
@@ -253,7 +242,7 @@ void main() {
     test('401 TOKEN_INVALID', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.resetPassword).thenReturn(
-        ({required String token, required String newPassword}) async =>
+        ({required token, required newPassword}) async =>
             throw IdentityException.tokenInvalid(),
       );
       final res = await reset_route.onRequest(

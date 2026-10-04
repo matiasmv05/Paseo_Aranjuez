@@ -7,7 +7,7 @@ import 'package:postgres/postgres.dart';
 /// token, 30 min (lo fija el caso de uso), un solo uso (`tryMarkUsed`
 /// atomico).
 final class PostgresPasswordResetRepository implements PasswordResetRepository {
-  const PostgresPasswordResetRepository(this._db);
+  const new(this._db);
 
   final PgDatabase _db;
 

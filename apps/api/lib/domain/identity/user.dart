@@ -7,7 +7,7 @@ enum UserStatus { active, blocked }
 /// Identidad de un actor (entidad). Sin telefono: el telefono del cliente
 /// vive en [CustomerProfile].
 final class User {
-  const User({
+  const new({
     required this.id,
     required this.email,
     required this.passwordHash,
@@ -43,7 +43,7 @@ final class User {
 
 /// Perfil del cliente (entidad). `fullName` nunca viaja al JWT (SEC-002).
 final class CustomerProfile {
-  const CustomerProfile({
+  const new({
     required this.userId,
     required this.phone,
     this.fullName,

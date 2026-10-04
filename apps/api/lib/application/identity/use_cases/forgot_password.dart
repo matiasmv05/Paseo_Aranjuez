@@ -5,23 +5,17 @@ import 'package:paseo_api/domain/identity/identity.dart';
 /// error (la ruta mapea a 202), exista o no el correo; solo envia si el
 /// correo existe y esta verificado.
 final class ForgotPassword {
-  const ForgotPassword({
-    required UserRepository users,
+  const new({
+    required this._users,
     required PasswordResetRepository resets,
-    required EmailSender emailSender,
-    required TokenGenerator tokens,
-    required IdGenerator ids,
-    required Clock clock,
-    required AuditLogWriter audit,
+    required this._emailSender,
+    required this._tokens,
+    required this._ids,
+    required this._clock,
+    required this._audit,
     this.tokenBytes = 32,
     this.tokenTtl = const Duration(minutes: 30),
-  }) : _users = users,
-       _resets = resets,
-       _emailSender = emailSender,
-       _tokens = tokens,
-       _ids = ids,
-       _clock = clock,
-       _audit = audit;
+  }) : _resets = resets;
 
   final UserRepository _users;
   final PasswordResetRepository _resets;

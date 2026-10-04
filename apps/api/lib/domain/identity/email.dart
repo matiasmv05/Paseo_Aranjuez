@@ -1,12 +1,12 @@
-import 'errors.dart';
+import 'package:paseo_api/domain/identity/errors.dart';
 
 /// Correo electronico validado (objeto de valor). Se normaliza a minusculas;
 /// la unicidad `citext` la garantiza la base.
 final class Email {
-  const Email._(this.value);
+  const new _(this.value);
 
   /// Normaliza (trim + minusculas) y valida formato basico.
-  factory Email.parse(String raw) {
+  factory parse(String raw) {
     final value = raw.trim().toLowerCase();
     if (!_regex.hasMatch(value)) {
       throw IdentityException.validation('correo invalido');

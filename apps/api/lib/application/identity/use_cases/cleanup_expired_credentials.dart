@@ -2,7 +2,7 @@ import 'package:paseo_api/application/identity/ports.dart';
 
 /// Worker: borra OTPs, reset tokens y refresh tokens expirados (T033).
 final class CleanupExpiredCredentials {
-  const CleanupExpiredCredentials({
+  const new({
     required this.verificationCodes,
     required this.passwordResets,
     required this.refreshTokens,

@@ -17,7 +17,7 @@ void main() {
     registerFallbackValue(Email.parse('fallback@example.com'));
     registerFallbackValue(PhoneBO.parse('+59160000000'));
     registerFallbackValue(
-      CustomerProfile(userId: 'u-0', phone: '+59160000000'),
+      const CustomerProfile(userId: 'u-0', phone: '+59160000000'),
     );
     registerFallbackValue(OtpChallenge.issue(now));
     registerFallbackValue(UserRole.customer);
@@ -291,7 +291,8 @@ void main() {
         ),
       ).thenAnswer((_) async => record());
       when(() => customers.findByPhone(any())).thenAnswer(
-        (_) async => CustomerProfile(userId: 'u-1', phone: '+59170000000'),
+        (_) async =>
+            const CustomerProfile(userId: 'u-1', phone: '+59170000000'),
       );
 
       await useCase.call(phone: '+59170000000', code: '123456');

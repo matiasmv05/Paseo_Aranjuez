@@ -1,9 +1,9 @@
-import 'errors.dart';
+import 'package:paseo_api/domain/identity/errors.dart';
 
 /// Refresh token persistido: solo su **hash**, con familia/cadena para
 /// deteccion de reutilizacion (FR-007).
 final class RefreshTokenRecord {
-  const RefreshTokenRecord({
+  const new({
     required this.id,
     required this.familyId,
     required this.userId,

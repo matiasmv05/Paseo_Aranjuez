@@ -10,20 +10,19 @@ library;
 
 /// `RegisterRequest`: correo + teléfono + contraseña (AGENTS.md §8).
 final class RegisterRequest {
-  const RegisterRequest({
+  const new({
     required this.email,
     required this.phone,
     required this.password,
     this.fullName,
   });
 
-  factory RegisterRequest.fromJson(Map<String, Object?> json) =>
-      RegisterRequest(
-        email: json['email']! as String,
-        phone: json['phone']! as String,
-        password: json['password']! as String,
-        fullName: json['full_name'] as String?,
-      );
+  factory fromJson(Map<String, Object?> json) => RegisterRequest(
+    email: json['email']! as String,
+    phone: json['phone']! as String,
+    password: json['password']! as String,
+    fullName: json['full_name'] as String?,
+  );
 
   final String email;
 
@@ -44,18 +43,17 @@ final class RegisterRequest {
 
 /// Respuesta 201 de `POST /auth/register`.
 final class RegisterResponse {
-  const RegisterResponse({
+  const new({
     required this.customerId,
     required this.phoneVerified,
     required this.emailVerificationSent,
   });
 
-  factory RegisterResponse.fromJson(Map<String, Object?> json) =>
-      RegisterResponse(
-        customerId: json['customer_id']! as String,
-        phoneVerified: json['phone_verified']! as bool,
-        emailVerificationSent: json['email_verification_sent']! as bool,
-      );
+  factory fromJson(Map<String, Object?> json) => RegisterResponse(
+    customerId: json['customer_id']! as String,
+    phoneVerified: json['phone_verified']! as bool,
+    emailVerificationSent: json['email_verification_sent']! as bool,
+  );
 
   final String customerId;
   final bool phoneVerified;
@@ -70,13 +68,12 @@ final class RegisterResponse {
 
 /// `OtpVerifyRequest` de `POST /auth/phone/verify`.
 final class OtpVerifyRequest {
-  const OtpVerifyRequest({required this.phone, required this.code});
+  const new({required this.phone, required this.code});
 
-  factory OtpVerifyRequest.fromJson(Map<String, Object?> json) =>
-      OtpVerifyRequest(
-        phone: json['phone']! as String,
-        code: json['code']! as String,
-      );
+  factory fromJson(Map<String, Object?> json) => OtpVerifyRequest(
+    phone: json['phone']! as String,
+    code: json['code']! as String,
+  );
 
   final String phone;
 
@@ -88,9 +85,9 @@ final class OtpVerifyRequest {
 
 /// Respuesta 200 de `POST /auth/phone/verify`.
 final class OtpVerifyResponse {
-  const OtpVerifyResponse({required this.phoneVerified});
+  const new({required this.phoneVerified});
 
-  factory OtpVerifyResponse.fromJson(Map<String, Object?> json) =>
+  factory fromJson(Map<String, Object?> json) =>
       OtpVerifyResponse(phoneVerified: json['phone_verified']! as bool);
 
   final bool phoneVerified;
@@ -100,9 +97,9 @@ final class OtpVerifyResponse {
 
 /// Cuerpo de `POST /auth/phone/send-otp`.
 final class SendOtpRequest {
-  const SendOtpRequest({required this.phone});
+  const new({required this.phone});
 
-  factory SendOtpRequest.fromJson(Map<String, Object?> json) =>
+  factory fromJson(Map<String, Object?> json) =>
       SendOtpRequest(phone: json['phone']! as String);
 
   final String phone;
@@ -112,9 +109,9 @@ final class SendOtpRequest {
 
 /// `LoginRequest` de `POST /auth/login`.
 final class LoginRequest {
-  const LoginRequest({required this.email, required this.password});
+  const new({required this.email, required this.password});
 
-  factory LoginRequest.fromJson(Map<String, Object?> json) => LoginRequest(
+  factory fromJson(Map<String, Object?> json) => LoginRequest(
     email: json['email']! as String,
     password: json['password']! as String,
   );
@@ -128,9 +125,9 @@ final class LoginRequest {
 /// Cuerpo opcional de `POST /auth/refresh` (solo `paseo-mobile`; las webs
 /// usan su cookie).
 final class RefreshRequest {
-  const RefreshRequest({required this.refreshToken});
+  const new({required this.refreshToken});
 
-  factory RefreshRequest.fromJson(Map<String, Object?> json) =>
+  factory fromJson(Map<String, Object?> json) =>
       RefreshRequest(refreshToken: json['refresh_token']! as String);
 
   final String refreshToken;
@@ -140,14 +137,14 @@ final class RefreshRequest {
 
 /// `TokenResponse` de `POST /auth/login` y `POST /auth/refresh`.
 final class TokenResponse {
-  const TokenResponse({
+  const new({
     required this.accessToken,
     required this.tokenType,
     required this.expiresIn,
     this.refreshToken,
   });
 
-  factory TokenResponse.fromJson(Map<String, Object?> json) => TokenResponse(
+  factory fromJson(Map<String, Object?> json) => TokenResponse(
     accessToken: json['access_token']! as String,
     tokenType: json['token_type']! as String,
     expiresIn: json['expires_in']! as int,
@@ -175,9 +172,9 @@ final class TokenResponse {
 
 /// Cuerpo de `POST /auth/verify-email`.
 final class VerifyEmailRequest {
-  const VerifyEmailRequest({required this.token});
+  const new({required this.token});
 
-  factory VerifyEmailRequest.fromJson(Map<String, Object?> json) =>
+  factory fromJson(Map<String, Object?> json) =>
       VerifyEmailRequest(token: json['token']! as String);
 
   final String token;
@@ -187,9 +184,9 @@ final class VerifyEmailRequest {
 
 /// Cuerpo de `POST /auth/password/forgot` (siempre responde 202).
 final class ForgotPasswordRequest {
-  const ForgotPasswordRequest({required this.email});
+  const new({required this.email});
 
-  factory ForgotPasswordRequest.fromJson(Map<String, Object?> json) =>
+  factory fromJson(Map<String, Object?> json) =>
       ForgotPasswordRequest(email: json['email']! as String);
 
   final String email;
@@ -199,13 +196,12 @@ final class ForgotPasswordRequest {
 
 /// Cuerpo de `POST /auth/password/reset`.
 final class ResetPasswordRequest {
-  const ResetPasswordRequest({required this.token, required this.newPassword});
+  const new({required this.token, required this.newPassword});
 
-  factory ResetPasswordRequest.fromJson(Map<String, Object?> json) =>
-      ResetPasswordRequest(
-        token: json['token']! as String,
-        newPassword: json['new_password']! as String,
-      );
+  factory fromJson(Map<String, Object?> json) => ResetPasswordRequest(
+    token: json['token']! as String,
+    newPassword: json['new_password']! as String,
+  );
 
   final String token;
   final String newPassword;

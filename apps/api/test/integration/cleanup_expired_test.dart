@@ -49,15 +49,24 @@ void main() {
     test('borra verification_codes expirados y no toca los vigentes', () async {
       final past = DateTime.now().toUtc().subtract(const Duration(minutes: 10));
       final future = DateTime.now().toUtc().add(const Duration(minutes: 10));
+      // Hashes y teléfono únicos por ejecución: los tests no limpian la BD
+      // (AGENTS.md §11) y re-correr con valores fijos chocaría con UNIQUE.
+      final expHash = 'hash-exp-vc-${newId()}';
+      final okHash = 'hash-ok-vc-${newId()}';
+      final phone = uniquePhone();
 
       // Código expirado: debe ser eliminado por el job.
       await db.session.execute(
         Sql.named(
           'INSERT INTO app.verification_codes '
           '(phone, code_hash, purpose, expires_at) '
-          "VALUES (@phone, 'hash-exp-vc', 'phone_verify', @exp)",
+          "VALUES (@phone, @hash, 'phone_verify', @exp)",
         ),
-        parameters: <String, Object?>{'phone': '+59179000001', 'exp': past},
+        parameters: <String, Object?>{
+          'phone': phone,
+          'hash': expHash,
+          'exp': past,
+        },
       );
 
       // Código vigente: no debe ser eliminado.
@@ -65,9 +74,13 @@ void main() {
         Sql.named(
           'INSERT INTO app.verification_codes '
           '(phone, code_hash, purpose, expires_at) '
-          "VALUES (@phone, 'hash-ok-vc', 'phone_verify', @exp)",
+          "VALUES (@phone, @hash, 'phone_verify', @exp)",
         ),
-        parameters: <String, Object?>{'phone': '+59179000001', 'exp': future},
+        parameters: <String, Object?>{
+          'phone': phone,
+          'hash': okHash,
+          'exp': future,
+        },
       );
 
       final result = await job();
@@ -75,10 +88,11 @@ void main() {
       expect(result['verification_codes'], greaterThanOrEqualTo(1));
 
       final remaining = await db.session.execute(
-        Sql(
+        Sql.named(
           'SELECT count(*)::int AS n FROM app.verification_codes '
-          "WHERE code_hash = 'hash-ok-vc'",
+          'WHERE code_hash = @hash',
         ),
+        parameters: <String, Object?>{'hash': okHash},
       );
       expect(remaining.first.toColumnMap()['n'], equals(1));
     });
@@ -87,23 +101,33 @@ void main() {
       final userId = await _insertUser(db);
       final past = DateTime.now().toUtc().subtract(const Duration(minutes: 10));
       final future = DateTime.now().toUtc().add(const Duration(minutes: 30));
+      final expHash = 'hash-exp-pr-${newId()}';
+      final okHash = 'hash-ok-pr-${newId()}';
 
       // Reset expirado.
       await db.session.execute(
         Sql.named(
           'INSERT INTO app.password_resets (user_id, token_hash, expires_at) '
-          "VALUES (@uid::uuid, 'hash-exp-pr', @exp)",
+          'VALUES (@uid::uuid, @hash, @exp)',
         ),
-        parameters: <String, Object?>{'uid': userId, 'exp': past},
+        parameters: <String, Object?>{
+          'uid': userId,
+          'hash': expHash,
+          'exp': past,
+        },
       );
 
       // Reset vigente.
       await db.session.execute(
         Sql.named(
           'INSERT INTO app.password_resets (user_id, token_hash, expires_at) '
-          "VALUES (@uid::uuid, 'hash-ok-pr', @exp)",
+          'VALUES (@uid::uuid, @hash, @exp)',
         ),
-        parameters: <String, Object?>{'uid': userId, 'exp': future},
+        parameters: <String, Object?>{
+          'uid': userId,
+          'hash': okHash,
+          'exp': future,
+        },
       );
 
       final result = await job();
@@ -111,10 +135,11 @@ void main() {
       expect(result['password_resets'], greaterThanOrEqualTo(1));
 
       final remaining = await db.session.execute(
-        Sql(
+        Sql.named(
           'SELECT count(*)::int AS n FROM app.password_resets '
-          "WHERE token_hash = 'hash-ok-pr'",
+          'WHERE token_hash = @hash',
         ),
+        parameters: <String, Object?>{'hash': okHash},
       );
       expect(remaining.first.toColumnMap()['n'], equals(1));
     });
@@ -124,6 +149,8 @@ void main() {
       final familyId = newId();
       final past = DateTime.now().toUtc().subtract(const Duration(minutes: 10));
       final future = DateTime.now().toUtc().add(const Duration(hours: 24));
+      final expHash = 'hash-exp-rt-${newId()}';
+      final okHash = 'hash-ok-rt-${newId()}';
 
       const insertSql =
           'INSERT INTO app.refresh_tokens '
@@ -135,7 +162,7 @@ void main() {
         Sql.named(insertSql),
         parameters: <String, Object?>{
           'uid': userId,
-          'hash': 'hash-exp-rt',
+          'hash': expHash,
           'fid': familyId,
           'exp': past,
         },
@@ -146,7 +173,7 @@ void main() {
         Sql.named(insertSql),
         parameters: <String, Object?>{
           'uid': userId,
-          'hash': 'hash-ok-rt',
+          'hash': okHash,
           'fid': familyId,
           'exp': future,
         },
@@ -157,10 +184,11 @@ void main() {
       expect(result['refresh_tokens'], greaterThanOrEqualTo(1));
 
       final remaining = await db.session.execute(
-        Sql(
+        Sql.named(
           'SELECT count(*)::int AS n FROM app.refresh_tokens '
-          "WHERE token_hash = 'hash-ok-rt'",
+          'WHERE token_hash = @hash',
         ),
+        parameters: <String, Object?>{'hash': okHash},
       );
       expect(remaining.first.toColumnMap()['n'], equals(1));
     });

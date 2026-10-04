@@ -1,11 +1,11 @@
-import 'user.dart';
+import 'package:paseo_api/domain/identity/user.dart';
 
 /// Claims del access token (FR-006, AGENTS.md §6).
 ///
 /// **Exactamente** estos campos; sin datos personales (SEC-002: nada de
 /// correo, telefono ni nombre). `sub` es el id de usuario (UUID).
 final class AuthClaims {
-  const AuthClaims({
+  const new({
     required this.issuer,
     required this.audience,
     required this.subject,

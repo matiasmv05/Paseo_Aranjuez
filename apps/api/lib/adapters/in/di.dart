@@ -20,11 +20,12 @@ import 'package:paseo_api/application/identity/use_cases/resend_phone_otp.dart';
 import 'package:paseo_api/application/identity/use_cases/reset_password.dart';
 import 'package:paseo_api/application/identity/use_cases/verify_email.dart';
 import 'package:paseo_api/application/identity/use_cases/verify_phone_otp.dart';
+import 'package:paseo_api/application/points/read_use_cases.dart';
 
 /// Grafo de dependencias de la API construido a partir del entorno.
 /// Un singleton por proceso (single isolate de dart_frog).
 final class AppDependencies implements AuthUseCases {
-  AppDependencies._({
+  new _({
     required this.db,
     required this.users,
     required this.customers,
@@ -49,6 +50,10 @@ final class AppDependencies implements AuthUseCases {
     required this.logout,
     required this.forgotPassword,
     required this.resetPassword,
+    required this.getBalance,
+    required this.getMovements,
+    required this.listRewards,
+    required this.listEstablishments,
   });
 
   static AppDependencies? _instance;
@@ -66,6 +71,10 @@ final class AppDependencies implements AuthUseCases {
     final refreshTokens = PostgresRefreshTokenRepository(db);
     final audit = PostgresAuditLogWriter(db);
     final tx = PostgresTransactionRunner(db);
+    final balances = PostgresBalanceRepository(db);
+    final movements = PostgresMovementsRepository(db);
+    final rewards = PostgresRewardsRepository(db);
+    final establishmentsRepo = PostgresEstablishmentsRepository(db);
 
     final hasher = Argon2idPasswordHasher();
     const tokens = CryptoTokenGenerator();
@@ -82,7 +91,7 @@ final class AppDependencies implements AuthUseCases {
         'OTP_SENDER no soportado (por decidir; AGENTS.md §15)',
       ),
     };
-    final EmailSender emailSender = switch (env['EMAIL_SENDER'] ?? 'console') {
+    final emailSender = switch (env['EMAIL_SENDER'] ?? 'console') {
       'console' => ConsoleEmailSender(),
       'smtp' => SmtpEmailSender(config: SmtpConfig.fromEnv()),
       _ => throw StateError('EMAIL_SENDER desconocido'),
@@ -170,6 +179,12 @@ final class AppDependencies implements AuthUseCases {
       audit: audit,
       tx: tx,
     );
+    final getBalance = GetBalance(balances: balances);
+    final getMovements = GetMovements(movements: movements);
+    final listRewards = ListRewards(rewards: rewards, clock: clock);
+    final listEstablishments = ListEstablishments(
+      establishments: establishmentsRepo,
+    );
 
     return _instance = AppDependencies._(
       db: db,
@@ -196,6 +211,10 @@ final class AppDependencies implements AuthUseCases {
       logout: logout.call,
       forgotPassword: forgotPassword.call,
       resetPassword: resetPassword.call,
+      getBalance: getBalance,
+      getMovements: getMovements,
+      listRewards: listRewards,
+      listEstablishments: listEstablishments,
     );
   }
 
@@ -233,4 +252,9 @@ final class AppDependencies implements AuthUseCases {
   final ForgotFn forgotPassword;
   @override
   final ResetFn resetPassword;
+
+  final GetBalance getBalance;
+  final GetMovements getMovements;
+  final ListRewards listRewards;
+  final ListEstablishments listEstablishments;
 }

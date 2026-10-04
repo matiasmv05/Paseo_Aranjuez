@@ -31,7 +31,7 @@ void main() {
     test('signs with kid and produces three-part JWT', () {
       const signer = JwtTokenSigner(secret: 'super-secret', kid: 'dev-key-1');
 
-      final token = signer.sign(claims(tokenVersion: 3));
+      final token = signer.sign(claims());
       final parts = token.split('.');
       expect(parts.length, 3, reason: 'header.payload.signature');
       final headerJson = utf8.decode(

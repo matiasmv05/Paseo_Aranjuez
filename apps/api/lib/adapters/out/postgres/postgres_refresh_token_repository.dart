@@ -8,7 +8,7 @@ import 'package:postgres/postgres.dart';
 /// para deteccion de reutilizacion (FR-007). `jti` lo genera la base
 /// (`DEFAULT gen_random_uuid()`, V002): el puerto no lo transporta.
 final class PostgresRefreshTokenRepository implements RefreshTokenRepository {
-  const PostgresRefreshTokenRepository(this._db);
+  const new(this._db);
 
   final PgDatabase _db;
 

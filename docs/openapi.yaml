@@ -34,6 +34,10 @@ tags:
     description: Salud del servicio (AGENTS.md §16 / INFRASTRUCTURE.md §13)
   - name: auth
     description: Identidad y sesión (AGENTS.md §6 y §8)
+  - name: points
+    description: Saldo y movimientos del cliente (feature 002, HU-04/HU-05)
+  - name: catalog
+    description: Catálogo de beneficios y establecimientos (feature 002, HU-06/HU-09)
 
 paths:
   /health:
@@ -415,6 +419,176 @@ paths:
                 status: 422
                 code: TOKEN_INVALID
 
+  /me/balance:
+    get:
+      tags: [points]
+      summary: Saldo de puntos del cliente (HU-04)
+      description: |
+        Saldo real derivado del ledger (`points_ledger` append-only, trigger).
+        Sin movimientos devuelve `balance_points=0`. Identidad desde el JWT
+        (`cid`): nunca se acepta un identificador del cliente (AGENTS.md §6/§9).
+        Exige `pv=true`.
+      operationId: getMyBalance
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Saldo actual del cliente autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Teléfono no verificado o rol distinto de `customer`.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Teléfono no verificado
+                status: 403
+                code: PHONE_NOT_VERIFIED
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /me/movements:
+    get:
+      tags: [points]
+      summary: Historial de movimientos del cliente (HU-05)
+      description: |
+        Movimientos del ledger del cliente, orden cronológico inverso, con
+        `balance_after` (saldo resultante calculado en el servidor). Paginación
+        por cursor `(occurred_at, ledger_id)`; `limit` por defecto 20, máximo 50.
+        Sin movimientos devuelve lista vacía (200, no error).
+      operationId: getMyMovements
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          description: Cursor opaco de la página anterior (`next_cursor`).
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: Página de movimientos.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CursorPage'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Movement'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenPhoneNotVerified'
+        '422':
+          description: Cursor o `limit` inválidos.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Validación fallida
+                status: 422
+                code: VALIDATION_FAILED
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /rewards:
+    get:
+      tags: [catalog]
+      summary: Catálogo de beneficios del cliente (HU-06)
+      description: |
+        Recompensas `ACTIVE` y vigentes. Las de `stock=0` aparecen marcadas con
+        `available=false` (decisión de spec 002, aclaración 2026-10-03). Las
+        vencidas o no aprobadas (`DRAFT/PENDING/PAUSED/RETIRED`) nunca aparecen.
+        No se exponen campos administrativos.
+      operationId: listRewards
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Catálogo visible para el cliente.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RewardSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Rol distinto de `customer`.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Sin permiso
+                status: 403
+                code: FORBIDDEN
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /establishments:
+    get:
+      tags: [catalog]
+      summary: Establecimientos participantes (HU-09)
+      description: |
+        Establecimientos activos (sin baja lógica) con sus sucursales activas.
+        No se exponen `max_purchase_cents` ni `compliance_status`.
+      operationId: listEstablishments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Establecimientos participantes (puede ser lista vacía).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EstablishmentSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Rol distinto de `customer`.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: about:blank
+                title: Sin permiso
+                status: 403
+                code: FORBIDDEN
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -472,8 +646,9 @@ components:
             `UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`,
             `RATE_LIMITED`, `TOKEN_INVALID`, `TOKEN_REUSE_DETECTED`,
             `NO_APPLICABLE_RULE`, `INSUFFICIENT_POINTS`,
+            `PHONE_NOT_VERIFIED`,
             `INSUFFICIENT_POINTS_FOR_REVERSAL`, `REFUND_WINDOW_EXPIRED`,
-            `REFUND_ALREADY_RESOLVED`.
+            `REFUND_ALREADY_RESOLVED`, `INTERNAL_ERROR`.
         detail: { type: string }
         instance: { type: string, format: uri }
 
@@ -559,6 +734,118 @@ components:
           type: [string, 'null']
           description: Cursor de la página siguiente; `null` cuando no hay más.
 
+    Balance:
+      type: object
+      description: Saldo real del cliente, derivado del ledger (regla 2.2/2.3).
+      required: [balance_points, updated_at]
+      properties:
+        balance_points:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Nunca negativo (`CHECK (balance >= 0)`).
+        updated_at:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC del último movimiento (o de la consulta si no hay).
+
+    Movement:
+      type: object
+      description: |
+        Movimiento del `points_ledger`. El historial renderiza los cinco tipos
+        aunque la feature 002 solo origina `CREDIT` y `REDEEM`.
+      required: [id, type, delta_points, occurred_at, origin, reference_id, balance_after]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [CREDIT, REDEEM, ADJUST, BONUS, REVERSAL]
+        delta_points:
+          type: integer
+          format: int64
+          description: Con signo (positivo acredita, negativo descuenta).
+        occurred_at:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC fijada por el servidor.
+        origin:
+          type: string
+          enum: [purchase, redemption, adjustment, reversal]
+          description: Origen funcional de la operación.
+        reference_id:
+          type: string
+          description: Referencia de la operación (compra, canje o movimiento revertido).
+        balance_after:
+          type: integer
+          format: int64
+          description: Saldo resultante tras este movimiento (calculado en el servidor).
+
+    RewardSummary:
+      type: object
+      description: Vista de cliente del catálogo; sin campos administrativos.
+      required: [id, name, description, reward_type, cost_points, available, establishment_id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        reward_type:
+          type: string
+          enum: [PERCENT, FIXED, GIFT]
+        cost_points:
+          type: integer
+          format: int64
+          minimum: 0
+        stock:
+          type: [integer, 'null']
+          description: Stock restante; `null` = sin límite.
+        available:
+          type: boolean
+          description: '`false` cuando `stock=0` (o agotado); el cliente no puede canjearla.'
+        valid_from:
+          type: [string, 'null']
+          format: date-time
+        valid_to:
+          type: [string, 'null']
+          format: date-time
+        establishment_id:
+          type: string
+          format: uuid
+
+    EstablishmentSummary:
+      type: object
+      description: Vista de cliente; sin `max_purchase_cents` ni `compliance_status`.
+      required: [id, name, category, branches]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+        branches:
+          type: array
+          items:
+            $ref: '#/components/schemas/BranchSummary'
+
+    BranchSummary:
+      type: object
+      required: [id, name, address]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          type: string
+
   responses:
     Unauthorized:
       description: Sin sesión válida.
@@ -590,6 +877,26 @@ components:
             title: No disponible
             status: 503
             code: SERVICE_UNAVAILABLE
+    ForbiddenPhoneNotVerified:
+      description: El teléfono del cliente no está verificado (`pv=false`).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: about:blank
+            title: Teléfono no verificado
+            status: 403
+            code: PHONE_NOT_VERIFIED
+    InternalServerError:
+      description: Error interno del servidor.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: about:blank
+            title: Error interno
+            status: 500
+            code: INTERNAL_ERROR
 
 security:
   - bearerAuth: []

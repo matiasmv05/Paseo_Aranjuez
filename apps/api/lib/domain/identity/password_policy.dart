@@ -1,4 +1,4 @@
-import 'errors.dart';
+import 'package:paseo_api/domain/identity/errors.dart';
 
 /// Politica de contrasenas del MVP (validacion de forma; el hash Argon2id
 /// vive tras el puerto `PasswordHasher`).

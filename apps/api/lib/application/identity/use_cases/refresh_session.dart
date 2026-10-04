@@ -4,24 +4,17 @@ import 'package:paseo_api/domain/identity/identity.dart';
 
 /// US4: refresh rotativo con deteccion de reutilizacion (FR-007).
 final class RefreshSession {
-  const RefreshSession({
-    required UserRepository users,
+  const new({
+    required this._users,
     required CustomerRepository customers,
-    required RefreshTokenRepository refreshTokens,
-    required TokenSigner signer,
-    required TokenGenerator tokens,
-    required IdGenerator ids,
-    required Clock clock,
-    required Login login,
+    required this._refreshTokens,
+    required this._signer,
+    required this._tokens,
+    required this._ids,
+    required this._clock,
+    required this._login,
     this.issuer = 'paseo-api',
-  }) : _users = users,
-       _customers = customers,
-       _refreshTokens = refreshTokens,
-       _signer = signer,
-       _tokens = tokens,
-       _ids = ids,
-       _clock = clock,
-       _login = login;
+  }) : _customers = customers;
 
   final UserRepository _users;
   final CustomerRepository _customers;

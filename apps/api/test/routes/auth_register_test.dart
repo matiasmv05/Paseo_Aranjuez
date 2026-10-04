@@ -9,9 +9,9 @@ import 'package:test/test.dart';
 
 import '../../routes/auth/register.dart' as route;
 
-class _MockContext extends Mock implements RequestContext {}
+class _MockContext extends Mock implements RequestContext;
 
-class _FakeAuthUseCases extends Mock implements AuthUseCases {}
+class _FakeAuthUseCases extends Mock implements AuthUseCases;
 
 RequestContext _ctx(Object body, AuthUseCases useCases) {
   final ctx = _MockContext();
@@ -33,12 +33,8 @@ void main() {
     test('201 on success', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.registerCustomer).thenReturn(
-        ({
-          required String email,
-          required String phone,
-          required String password,
-          String? fullName,
-        }) async => 'customer-1',
+        ({required email, required phone, required password, fullName}) async =>
+            'customer-1',
       );
 
       final res = await route.onRequest(
@@ -64,12 +60,8 @@ void main() {
     test('409 on duplicate email (CONFLICT)', () async {
       final useCases = _FakeAuthUseCases();
       when(() => useCases.registerCustomer).thenReturn(
-        ({
-          required String email,
-          required String phone,
-          required String password,
-          String? fullName,
-        }) async => throw IdentityException.conflict('correo ya registrado'),
+        ({required email, required phone, required password, fullName}) async =>
+            throw IdentityException.conflict('correo ya registrado'),
       );
 
       final res = await route.onRequest(

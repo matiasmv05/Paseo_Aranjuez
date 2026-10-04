@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Widget raíz del comercio (flujo comercio).
 class MerchantWebApp extends StatelessWidget {
-  const MerchantWebApp({super.key});
+  const new({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class MerchantWebApp extends StatelessWidget {
 
 /// Widget raíz de la administración (flujo admin).
 class AdminWebApp extends StatelessWidget {
-  const AdminWebApp({super.key});
+  const new({super.key});
 
   @override
   Widget build(BuildContext context) {

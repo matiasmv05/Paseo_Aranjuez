@@ -9,8 +9,8 @@ import 'package:test/test.dart';
 import 'fakes.dart';
 
 class InMemoryUsers implements RollbackStore<Object?>, UserRepository {
-  var byId = <String, User>{};
-  var failOnSetPassword = false;
+  Map<String, User> byId = <String, User>{};
+  bool failOnSetPassword = false;
 
   @override
   Object? snapshot() => Map.of(byId);
@@ -80,7 +80,7 @@ class InMemoryUsers implements RollbackStore<Object?>, UserRepository {
 }
 
 class InMemoryCustomers implements RollbackStore<Object?>, CustomerRepository {
-  var byUserId = <String, CustomerProfile>{};
+  Map<String, CustomerProfile> byUserId = <String, CustomerProfile>{};
 
   @override
   Object? snapshot() => Map.of(byUserId);
@@ -112,7 +112,7 @@ class InMemoryCustomers implements RollbackStore<Object?>, CustomerRepository {
 
 class InMemoryResets
     implements RollbackStore<Object?>, PasswordResetRepository {
-  var byHash = <String, PasswordResetRecord>{};
+  Map<String, PasswordResetRecord> byHash = <String, PasswordResetRecord>{};
 
   @override
   Object? snapshot() => Map.of(byHash);
@@ -159,14 +159,16 @@ class InMemoryResets
     final expired = byHash.keys
         .where((k) => byHash[k]!.expiresAt.isBefore(now))
         .toList();
-    for (final k in expired) byHash.remove(k);
+    for (final k in expired) {
+      byHash.remove(k);
+    }
     return expired.length;
   }
 }
 
 class InMemoryRefreshTokens
     implements RollbackStore<Object?>, RefreshTokenRepository {
-  var byHash = <String, RefreshTokenRecord>{};
+  Map<String, RefreshTokenRecord> byHash = <String, RefreshTokenRecord>{};
 
   @override
   Object? snapshot() => Map.of(byHash);
@@ -225,7 +227,9 @@ class InMemoryRefreshTokens
     final expired = byHash.keys
         .where((k) => byHash[k]!.expiresAt.isBefore(now))
         .toList();
-    for (final k in expired) byHash.remove(k);
+    for (final k in expired) {
+      byHash.remove(k);
+    }
     return expired.length;
   }
 }
@@ -354,7 +358,7 @@ void main() {
 
     setUp(() {
       users = InMemoryUsers()
-        ..byId['u-1'] = User(
+        ..byId['u-1'] = const User(
           id: 'u-1',
           email: 'ana@example.com',
           passwordHash: 'phc:vieja-clave',
@@ -430,5 +434,5 @@ void main() {
 }
 
 extension<T> on Iterable<T> {
-  T? get firstOrNull => this.isEmpty ? null : this.first;
+  T? get firstOrNull => this.isEmpty ? null : first;
 }

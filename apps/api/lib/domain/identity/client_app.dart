@@ -9,7 +9,7 @@ enum ClientApp {
   ),
   webAdmin(audience: 'paseo-web-admin', refreshCookieName: '__Secure-rt_admin');
 
-  const ClientApp({required this.audience, required this.refreshCookieName});
+  new({required this.audience, required this.refreshCookieName});
 
   /// Claim `aud` del access token; tambien el `audience` del refresh.
   final String audience;

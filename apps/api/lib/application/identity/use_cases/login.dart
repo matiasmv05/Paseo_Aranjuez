@@ -5,28 +5,20 @@ import 'package:paseo_api/domain/identity/identity.dart';
 /// Credenciales invalidas: `CREDENTIALS_INVALID` uniforme (exista o no el
 /// correo). `paseo-web-admin` solo con `role=admin` -> 403 `FORBIDDEN`.
 final class Login {
-  const Login({
-    required UserRepository users,
+  const new({
+    required this._users,
     required CustomerRepository customers,
-    required RefreshTokenRepository refreshTokens,
-    required PasswordHasher hasher,
-    required TokenSigner signer,
-    required TokenGenerator tokens,
-    required IdGenerator ids,
-    required Clock clock,
-    required AuditLogWriter audit,
+    required this._refreshTokens,
+    required this._hasher,
+    required this._signer,
+    required this._tokens,
+    required this._ids,
+    required this._clock,
+    required this._audit,
     this.issuer = 'paseo-api',
     this.refreshLifetime = const Duration(days: 30),
     this.refreshTokenBytes = 32,
-  }) : _users = users,
-       _customers = customers,
-       _refreshTokens = refreshTokens,
-       _hasher = hasher,
-       _signer = signer,
-       _tokens = tokens,
-       _ids = ids,
-       _clock = clock,
-       _audit = audit;
+  }) : _customers = customers;
 
   final UserRepository _users;
   final CustomerRepository _customers;
