@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/di/injection.dart';
 import 'identity_state.dart';
-import 'profile_screen.dart';
+import '../customer/profile_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   LoginScreen({Key? key, IdentityNotifier? notifier})
@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
         _navigatorKey.currentState?.push(
-          MaterialPageRoute<Widget>(builder: (_) => const ProfileScreen()),
+          MaterialPageRoute<Widget>(builder: (_) => ProfileScreen()),
         );
       });
     }
