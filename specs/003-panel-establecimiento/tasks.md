@@ -46,25 +46,25 @@ Verificación global tras cada tarea: `fvm dart format --set-exit-if-changed . &
 
 ### Value Objects y entidades
 
-- [ ] T020 [P] [US-D1] `apps/api/lib/domain/loyalty/cents.dart`: VO entero, no negativo, `==`, `hashCode`, `toString`. Operaciones necesarias.
-- [ ] T021 [P] [US-D2] `apps/api/lib/domain/loyalty/points.dart`: VO entero >= 0.
-- [ ] T022 [P] [US-D3] `apps/api/lib/domain/loyalty/rounding.dart`: enum `floor|round|ceil` con método `apply(double|int)` usando aritmética entera (evitar float). Tabla de casos.
-- [ ] T023 [P] [US-D4] `apps/api/lib/domain/loyalty/points_rule.dart`: entidades/typedefs para `PointsRule` (scope/type/priority/params/validity). Immutable.
-- [ ] T024 [P] [US-D5] `apps/api/lib/domain/loyalty/loyalty_errors.dart`: `LoyaltyException` mapeando a `ApiErrorCode` (`NO_APPLICABLE_RULE`, `INVALID_IDENTIFICATION_TICKET`, `INVALID_QR_TOKEN`, etc.).
+- [x] T020 [P] [US-D1] `apps/api/lib/domain/loyalty/cents.dart`: VO entero, no negativo, `==`, `hashCode`, `toString`. Operaciones necesarias.
+- [x] T021 [P] [US-D2] `apps/api/lib/domain/loyalty/points.dart`: VO entero >= 0.
+- [x] T022 [P] [US-D3] `apps/api/lib/domain/loyalty/rounding.dart`: enum `floor|round|ceil` con método `apply(double|int)` usando aritmética entera (evitar float). Tabla de casos.
+- [x] T023 [P] [US-D4] `apps/api/lib/domain/loyalty/points_rule.dart`: entidades/typedefs para `PointsRule` (scope/type/priority/params/validity). Immutable.
+- [x] T024 [P] [US-D5] `apps/api/lib/domain/loyalty/loyalty_errors.dart`: `LoyaltyException` mapeando a `ApiErrorCode` (`NO_APPLICABLE_RULE`, `INVALID_IDENTIFICATION_TICKET`, `INVALID_QR_TOKEN`, etc.).
 
 ### Lógica de conversión (crítica)
 
-- [ ] T025 [US-D6] [P1] `apps/api/lib/domain/loyalty/rule_resolver.dart`: precedencia `ESTABLISHMENT > CATEGORY > GLOBAL`, desempate por `priority`, como máximo 1 `CAMPAIGN` activa, no acumulación. Devuelve `(base, campaign?)` o lanza `LoyaltyException(NO_APPLICABLE_RULE)`.
-- [ ] T026 [US-D7] [P1] `apps/api/lib/domain/loyalty/points_calculator.dart`: orden FR-012: `puntos_base = redondear(net_cents * puntos_otorgados / monto_por_tramo_centavos)`; `puntos = redondear(puntos_base * multiplicador_bp / 10000)`; `min(puntos, tope_puntos_por_compra)` si aplica; `0` si `net_cents < compra_minima`. Todo entero. Comparte lógica con preview/registro.
-- [ ] T027 [P] [US-D8] `apps/api/lib/domain/loyalty/purchase.dart`: entidad `Purchase` + invariantes (`net_cents == gross-discount`, no negativos, `invoice_ref` obligatorio). `rule_snapshot` JSON.
+- [x] T025 [US-D6] [P1] `apps/api/lib/domain/loyalty/rule_resolver.dart`: precedencia `ESTABLISHMENT > CATEGORY > GLOBAL`, desempate por `priority`, como máximo 1 `CAMPAIGN` activa, no acumulación. Devuelve `(base, campaign?)` o lanza `LoyaltyException(NO_APPLICABLE_RULE)`.
+- [x] T026 [US-D7] [P1] `apps/api/lib/domain/loyalty/points_calculator.dart`: orden FR-012: `puntos_base = redondear(net_cents * puntos_otorgados / monto_por_tramo_centavos)`; `puntos = redondear(puntos_base * multiplicador_bp / 10000)`; `min(puntos, tope_puntos_por_compra)` si aplica; `0` si `net_cents < compra_minima`. Todo entero. Comparte lógica con preview/registro.
+- [x] T027 [P] [US-D8] `apps/api/lib/domain/loyalty/purchase.dart`: entidad `Purchase` + invariantes (`net_cents == gross-discount`, no negativos, `invoice_ref` obligatorio). `rule_snapshot` JSON.
 - [x] T028 [P] [US-D9] `apps/api/lib/domain/loyalty/identification.dart`: tipos puros para ticket QR y ticket identificación (claims), sin firma. TTLs (60s QR, 300s ticket) documentados.
 
 ### Tests dominio
 
-- [ ] T029 [P] [US-TD1] Tests tabla: `rule_resolver_test.dart` cubre precedencia, desempate, campaña única, no acumulación, sin regla aplicable.
-- [ ] T030 [P] [US-TD2] Tests tabla: `points_calculator_test.dart` cubre 3 redondeos, tope, mínima, multiplicador bp, empates `.5`, casos bordes.
-- [ ] T031 [P] [US-TD3] Tests: `identification_test.dart` (firma inalterable, TTL 60/300, reloj falso).
-- [ ] T032 [P] [US-TD4] Tests: `purchase_test.dart` (invariantes, `invoice_ref` obligatorio).
+- [x] T029 [P] [US-TD1] Tests tabla: `rule_resolver_test.dart` cubre precedencia, desempate, campaña única, no acumulación, sin regla aplicable.
+- [x] T030 [P] [US-TD2] Tests tabla: `points_calculator_test.dart` cubre 3 redondeos, tope, mínima, multiplicador bp, empates `.5`, casos bordes.
+- [x] T031 [P] [US-TD3] Tests: `identification_test.dart` (firma inalterable, TTL 60/300, reloj falso).
+- [x] T032 [P] [US-TD4] Tests: `purchase_test.dart` (invariantes, `invoice_ref` obligatorio).
 
 **Checkpoint D1:** `cd apps/api && fvm dart test test/domain` verde.
 
