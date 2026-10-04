@@ -38,6 +38,11 @@ tags:
     description: Saldo y movimientos del cliente (feature 002, HU-04/HU-05)
   - name: catalog
     description: Catálogo de beneficios y establecimientos (feature 002, HU-06/HU-09)
+  - name: comercio
+    description: |
+      Panel del comercio: identificar cliente, previsualizar y registrar compra,
+      y consultar los movimientos del local (AGENTS.md §7, §8 y §10.1).
+      Requiere `aud = paseo-web-merchant`.
 
 paths:
   /health:
@@ -589,6 +594,201 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /merchant/customers/identify:
+    post:
+      tags: [comercio]
+      summary: Identificar a un cliente y emitir un ticket de compra
+      description: |
+        Acerca el ticket al comercio y, si el llamador es un cajero, también a su
+        sucursal: **el mismo ticket no sirve en otro comercio**. El ticket es
+        **opaco y firmado**, dura ~5 minutos y es lo único que acepta
+        `POST /merchant/purchases`.
+
+        El nombre vuelve **enmascarado** (`"Carlos M."`). No se devuelve el
+        teléfono, el nombre completo, el `customer_id` ni el saldo (FR-003).
+
+        `method = QR` **valida** firma y edad del token (~60 s) pero **no lo
+        emite**: la emisión es HU-03 de Persona 1. `method = PHONE` exige E.164
+        exacto; no hay búsqueda parcial ni difusa (FR-005).
+      operationId: identifyCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IdentifyRequest' }
+            examples:
+              porTelefono:
+                summary: Por teléfono (E.164)
+                value: { method: PHONE, phone: '+59171234567' }
+              porQr:
+                summary: Por QR que muestra el cliente
+                value: { method: QR, qr_token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...' }
+      responses:
+        '200':
+          description: Cliente identificado; ticket emitido.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IdentifyResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403':
+          description: |
+            `FORBIDDEN` si el token no es de comercio, o `PHONE_NOT_VERIFIED` si
+            el cliente existe pero no verificó su teléfono (`pv=false`). Un
+            teléfono sin verificar no acumula ni se identifica (FR-004).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              examples:
+                forbidden: { $ref: '#/components/examples/Forbidden' }
+                phoneNotVerified: { $ref: '#/components/examples/PhoneNotVerified' }
+        '404': { $ref: '#/components/responses/CustomerNotFound' }
+        '422':
+          description: |
+            `PHONE_NOT_SUPPORTED` (prefijo distinto de `+591`), `INVALID_QR_TOKEN`
+            (firma inválida, malformado o de más de ~60 s) o `VALIDATION_FAILED`.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              examples:
+                phoneNotSupported: { $ref: '#/components/examples/PhoneNotSupported' }
+                invalidQrToken: { $ref: '#/components/examples/InvalidQrToken' }
+                validationFailed: { $ref: '#/components/examples/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /merchant/purchases/preview:
+    post:
+      tags: [comercio]
+      summary: Previsualizar cuántos puntos se acreditarían
+      description: |
+        **No escribe nada**: no toca `purchases`, `points_ledger` ni
+        `customer_balances` (FR-011). Llama al **mismo** `PointsCalculator` y
+        `RuleResolver` que el registro, así que `points` de esta respuesta es
+        idéntico a `points_credited` del registro con los mismos valores
+        (FR-012).
+
+        El servidor calcula los puntos; el panel solo los muestra (FR-010).
+      operationId: previewPurchase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PreviewRequest' }
+      responses:
+        '200':
+          description: Cálculo sin efectos secundarios.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchasePreviewResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/NoApplicableRule' }
+        '422':
+          description: |
+            `INVALID_IDENTIFICATION_TICKET` (vencido, de otro comercio o
+            manipulado) o `VALIDATION_FAILED` (montos negativos,
+            `net_cents != gross_cents - discount_cents`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              examples:
+                invalidTicket: { $ref: '#/components/examples/InvalidIdentificationTicket' }
+                validationFailed: { $ref: '#/components/examples/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /merchant/purchases:
+    post:
+      tags: [comercio]
+      summary: Registrar una compra y acreditar sus puntos
+      description: |
+        Acepta **solo el ticket** emitido por `identify`: nunca un teléfono ni un
+        `customer_id` (FR-007).
+
+        La sucursal la deriva el servidor del claim `br` del cajero, o de la
+        sucursal del comercio si quien firma es el dueño; **el cliente no elige
+        `branch_id`** (FR-017).
+
+        Con `points_credited > 0` la compra, la fila `CREDIT` de `points_ledger` y
+        el `audit_log` se escriben **en una transacción**. Con
+        `points_credited = 0` (bajo `compra_minima`) la compra se guarda y **no**
+        se inserta ledger (FR-018).
+      operationId: registerPurchase
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PurchaseRequest' }
+      responses:
+        '200':
+          description: |
+            Reintento con la misma `Idempotency-Key` y el mismo cuerpo: devuelve
+            **la respuesta original**, sin segunda compra, sin segundo `CREDIT` y
+            sin doble saldo (FR-008). Cuerpo idéntico al de `201`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchaseResponse' }
+        '201':
+          description: Compra registrada; `points_credited` acreditados.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchaseResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: |
+            `DUPLICATE_INVOICE` (ese `invoice_ref` ya se usó **en este** comercio)
+            o `NO_APPLICABLE_RULE` (ninguna regla `BASE` ni `CAMPAIGN` aplicable;
+            nunca se acredita un valor por defecto, FR-014).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              examples:
+                duplicateInvoice: { $ref: '#/components/examples/DuplicateInvoice' }
+                noApplicableRule: { $ref: '#/components/examples/NoApplicableRule' }
+        '422':
+          description: |
+            `INVALID_IDENTIFICATION_TICKET` (vencido, de otro comercio o
+            manipulado) o `VALIDATION_FAILED` (montos negativos,
+            `net_cents != gross_cents - discount_cents`, `invoice_ref` ausente o
+            en blanco).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              examples:
+                invalidTicket: { $ref: '#/components/examples/InvalidIdentificationTicket' }
+                validationFailed: { $ref: '#/components/examples/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /merchant/movements:
+    get:
+      tags: [comercio]
+      summary: Listar los movimientos del local
+      description: |
+        Página de compras del comercio, en orden **determinista**
+        `created_at DESC, id DESC` — el cursor depende de ese orden (FR-019).
+
+        Un `merchant_owner` ve todas las compras de su comercio; un
+        `merchant_cashier` **solo las que él registró** (FR-020). Un comercio ajeno
+        devuelve una lista **vacía**, nunca un error ni una pista de que hay datos
+        (aislamiento en la capa de aplicación, regla 2.7).
+
+        El DTO expone el `customer_name` **enmascarado** y nunca el teléfono, el
+        `customer_id` completo ni el saldo del cliente.
+      operationId: listMovements
+      parameters:
+        - $ref: '#/components/parameters/MovementLimit'
+        - $ref: '#/components/parameters/MovementCursor'
+      responses:
+        '200':
+          description: Página de movimientos; `next_cursor` es `null` en la última.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MovementPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -846,6 +1046,247 @@ components:
         address:
           type: string
 
+    # --- Merchant (Panel del comercio) schemas ---
+    MaskedName:
+      type: string
+      maxLength: 120
+      example: Carlos M.
+      description: |
+        Nombre del cliente **enmascarado**: el comercio nunca recibe el nombre
+        completo (AGENTS.md §8). El teléfono completo tampoco viaja en esta API
+        (FR-003, FR-020).
+
+    IdentificationTicket:
+      type: string
+      minLength: 1
+      maxLength: 2048
+      description: |
+        Ticket **opaque y firmado** que devuelve `identify`, atado al
+        `establishment_id` del llamador y a su `branch_id` si es cajero. Dura
+        ~5 minutos.
+
+        Vencido, de otro comercio o manipulado → 422
+        `INVALID_IDENTIFICATION_TICKET`. Es lo único que aceptan `preview` y
+        `POST /merchant/purchases`; nunca un teléfono ni un `customer_id`.
+
+    IdentifyRequest:
+      oneOf:
+        - $ref: '#/components/schemas/IdentifyByPhoneRequest'
+        - $ref: '#/components/schemas/IdentifyByQrRequest'
+      discriminator:
+        propertyName: method
+        mapping:
+          PHONE: '#/components/schemas/IdentifyByPhoneRequest'
+          QR: '#/components/schemas/IdentifyByQrRequest'
+
+    IdentifyByPhoneRequest:
+      type: object
+      additionalProperties: false
+      required: [method, phone]
+      properties:
+        method: { type: string, enum: [PHONE] }
+        phone: { $ref: '#/components/schemas/PhoneBO' }
+
+    IdentifyByQrRequest:
+      type: object
+      additionalProperties: false
+      required: [method, qr_token]
+      properties:
+        method: { type: string, enum: [QR] }
+        qr_token:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: |
+            Token opaco que el cliente muestra en pantalla (HU-03, Persona 1).
+            Aquí **solo se valida** su firma y su edad de ~60 s; esta feature no
+            lo emite.
+
+    IdentifyResponse:
+      type: object
+      required: [ticket, expires_at, customer_name]
+      properties:
+        ticket: { $ref: '#/components/schemas/IdentificationTicket' }
+        expires_at:
+          type: string
+          format: date-time
+          description: Vencimiento del ticket, ISO 8601 UTC (~5 min).
+        customer_name: { $ref: '#/components/schemas/MaskedName' }
+
+    PreviewRequest:
+      type: object
+      additionalProperties: false
+      required: [ticket, gross_cents, discount_cents, net_cents]
+      description: |
+        Los mismos parámetros económicos que el registro. `net_cents` **debe**
+        ser igual a `gross_cents - discount_cents` (FR-009) y los tres son enteros
+        `>= 0`.
+
+        `preview` no escribe nada, así que no pide `invoice_ref` ni
+        `Idempotency-Key`.
+      properties:
+        ticket: { $ref: '#/components/schemas/IdentificationTicket' }
+        gross_cents:
+          allOf: [{ $ref: '#/components/schemas/MoneyCents' }]
+          minimum: 0
+        discount_cents:
+          allOf: [{ $ref: '#/components/schemas/MoneyCents' }]
+          minimum: 0
+        net_cents:
+          allOf: [{ $ref: '#/components/schemas/MoneyCents' }]
+          minimum: 0
+
+    PurchaseRequest:
+      type: object
+      additionalProperties: false
+      required: [ticket, gross_cents, discount_cents, net_cents, invoice_ref]
+      description: |
+        Acepta **solo el ticket**: nunca un teléfono ni un `customer_id`
+        (FR-007). La sucursal la deriva el servidor (FR-017), por eso no hay
+        `branch_id` en el cuerpo.
+      properties:
+        ticket: { $ref: '#/components/schemas/IdentificationTicket' }
+        gross_cents:
+          allOf: [{ $ref: '#/components/schemas/MoneyCents' }]
+          minimum: 0
+        discount_cents:
+          allOf: [{ $ref: '#/components/schemas/MoneyCents' }]
+          minimum: 0
+        net_cents:
+          allOf: [{ $ref: '#/components/schemas/MoneyCents' }]
+          minimum: 0
+        invoice_ref:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: '^\S(.*\S)?$'
+          description: |
+            Número de factura **obligatorio** (decisión 03/10/2026, FR-016) y
+            único por `(establishment_id, invoice_ref)`: repetido en el mismo
+            comercio → 409 `DUPLICATE_INVOICE`. Ausente o en blanco → 422.
+
+            **No identifica al cliente**, así que el mismo número puede existir en
+            otro comercio; por eso la unicidad es por par y no global.
+
+    CalculationBreakdown:
+      type: object
+      description: |
+        Desglose del cálculo **entero**, para que el panel muestre de dónde sale
+        la cifra. Refleja el orden de FR-012: base → multiplicador → tope →
+        compra mínima.
+      required:
+        [points_base, multiplier_bp, points_after_multiplier, points_before_cap, cap_applied, below_min_purchase, rounding]
+      properties:
+        points_base:
+          type: integer
+          minimum: 0
+          description: |
+            `redondear(net_cents × puntos_otorgados / amount_per_tier_cents)` con el
+            redondeo de la regla.
+        multiplier_bp:
+          type: integer
+          minimum: 0
+          description: |
+            Basis points: `10000` es ×1 (valor por defecto), `20000` es ×2. Un `0`
+            significa «sin multiplicador», **no** «cero puntos».
+        points_after_multiplier:
+          type: integer
+          minimum: 0
+          description: '`redondear(points_base × multiplicador_bp / 10000)`.'
+        points_before_cap:
+          type: integer
+          minimum: 0
+          description: |
+            Valor antes de aplicar `tope_puntos_por_compra`. Queda en
+            `rule_snapshot` aunque no se acredite, para poder auditar el tope
+            (US2 escenario 7).
+        cap_applied: { type: boolean }
+        below_min_purchase:
+          type: boolean
+          description: '`true` → los puntos son `0` por estar bajo `compra_minima`.'
+        rounding: { type: string, enum: [FLOOR, ROUND, CEIL] }
+
+    PurchasePreviewResponse:
+      type: object
+      required: [points, rule_id, campaign_rule_id, breakdown]
+      properties:
+        points:
+          type: integer
+          minimum: 0
+          description: |
+            Puntos que se acreditarían. Con los mismos valores, el registro
+            devuelve esta misma cifra en `points_credited` (FR-011).
+        rule_id:
+          type: string
+          format: uuid
+          description: |
+            Regla `BASE` aplicada: `ESTABLISHMENT` > `CATEGORY` > `GLOBAL`, con
+            desempate por `priority`.
+        campaign_rule_id:
+          type: [string, 'null']
+          description: |
+            Campaña vigente aplicada, o `null`. Como máximo una, y las campañas
+            **no se acumulan** entre sí.
+        breakdown: { $ref: '#/components/schemas/CalculationBreakdown' }
+
+    PurchaseResponse:
+      type: object
+      required:
+        [id, invoice_ref, gross_cents, discount_cents, net_cents, points_credited, rule_id, campaign_rule_id, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        invoice_ref: { type: string }
+        gross_cents: { $ref: '#/components/schemas/MoneyCents' }
+        discount_cents: { $ref: '#/components/schemas/MoneyCents' }
+        net_cents: { $ref: '#/components/schemas/MoneyCents' }
+        points_credited:
+          type: integer
+          minimum: 0
+          description: |
+            Puntos acreditados. `0` cuando el importe quedó bajo
+            `compra_minima`; en ese caso no se insertó fila en `points_ledger`.
+        rule_id:
+          type: string
+          format: uuid
+          description: |
+            Regla usada. Los parámetros efectivos quedan congelados en
+            `rule_snapshot` en el servidor, para que una versión nueva de la
+            regla no vuelva ilegible esta compra.
+        campaign_rule_id:
+          type: [string, 'null']
+          description: Campaña aplicada, o `null` si ninguna.
+        created_at: { type: string, format: date-time }
+
+    Movement:
+      type: object
+      required:
+        [id, created_at, invoice_ref, gross_cents, discount_cents, net_cents, points_credited, customer_name, branch_id]
+      properties:
+        id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+        invoice_ref: { type: string }
+        gross_cents: { $ref: '#/components/schemas/MoneyCents' }
+        discount_cents: { $ref: '#/components/schemas/MoneyCents' }
+        net_cents: { $ref: '#/components/schemas/MoneyCents' }
+        points_credited: { type: integer, minimum: 0 }
+        customer_name: { $ref: '#/components/schemas/MaskedName' }
+        branch_id:
+          type: string
+          format: uuid
+          description: |
+            Sucursal donde se registró la compra, siempre del servidor. El dueño
+            cuadra caja por sucursal; el cajero ve solo la suya.
+
+    MovementPage:
+      allOf:
+        - $ref: '#/components/schemas/CursorPage'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Movement' }
+
   responses:
     Unauthorized:
       description: Sin sesión válida.
@@ -897,6 +1338,150 @@ components:
             title: Error interno
             status: 500
             code: INTERNAL_ERROR
+
+    # --- Merchant responses ---
+    Forbidden:
+      description: |
+        El token no es de comercio, o su `role` no habilita esta operación
+        (`role` ∈ {`merchant_owner`, `merchant_cashier`}; FR-024).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          examples:
+            forbidden:
+              $ref: '#/components/examples/Forbidden'
+
+    ValidationFailed:
+      description: |
+        El cuerpo o la query no cumplen el contrato; `detail` señala el campo.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          examples:
+            validationFailed:
+              $ref: '#/components/examples/ValidationFailed'
+
+    CustomerNotFound:
+      description: El cliente no existe o no pertenece al comercio del llamador.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          examples:
+            customerNotFound:
+              $ref: '#/components/examples/CustomerNotFound'
+
+    NoApplicableRule:
+      description: |
+        No hay regla de conversión aplicable (`BASE` ni `CAMPAIGN`); nunca se
+        acredita un valor por defecto (FR-014).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          examples:
+            noApplicableRule:
+              $ref: '#/components/examples/NoApplicableRule'
+
+    PhoneNotVerified:
+      description: El cliente existe pero no verificó su teléfono (`pv=false`).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          examples:
+            phoneNotVerified:
+              $ref: '#/components/examples/PhoneNotVerified'
+
+    PhoneNotSupported:
+      description: Prefijo de teléfono distinto de `+591` (solo Bolivia).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          examples:
+            phoneNotSupported:
+              $ref: '#/components/examples/PhoneNotSupported'
+
+    InvalidQrToken:
+      description: Firma inválida, malformado o token QR de más de ~60 s.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          examples:
+            invalidQrToken:
+              $ref: '#/components/examples/InvalidQrToken'
+
+    InvalidIdentificationTicket:
+      description: Ticket vencido, de otro comercio o manipulado.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          examples:
+            invalidIdentificationTicket:
+              $ref: '#/components/examples/InvalidIdentificationTicket'
+
+    DuplicateInvoice:
+      description: Ese `invoice_ref` ya se usó en este comercio.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          examples:
+            duplicateInvoice:
+              $ref: '#/components/examples/DuplicateInvoice'
+
+components:
+  examples:
+    Forbidden:
+      value:
+        type: about:blank
+        title: Sin permiso
+        status: 403
+        code: FORBIDDEN
+    ValidationFailed:
+      value:
+        type: about:blank
+        title: Validación fallida
+        status: 422
+        code: VALIDATION_FAILED
+    CustomerNotFound:
+      value:
+        type: about:blank
+        title: Cliente no encontrado
+        status: 404
+        code: CUSTOMER_NOT_FOUND
+    NoApplicableRule:
+      value:
+        type: about:blank
+        title: Regla no aplicable
+        status: 409
+        code: NO_APPLICABLE_RULE
+    PhoneNotVerified:
+      value:
+        type: about:blank
+        title: Teléfono no verificado
+        status: 403
+        code: PHONE_NOT_VERIFIED
+    PhoneNotSupported:
+      value:
+        type: about:blank
+        title: Teléfono no soportado
+        status: 422
+        code: PHONE_NOT_SUPPORTED
+    InvalidQrToken:
+      value:
+        type: about:blank
+        title: QR inválido
+        status: 422
+        code: INVALID_QR_TOKEN
+    InvalidIdentificationTicket:
+      value:
+        type: about:blank
+        title: Ticket de identificación inválido
+        status: 422
+        code: INVALID_IDENTIFICATION_TICKET
+    DuplicateInvoice:
+      value:
+        type: about:blank
+        title: Factura duplicada
+        status: 409
+        code: DUPLICATE_INVOICE
 
 security:
   - bearerAuth: []

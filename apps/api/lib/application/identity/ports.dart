@@ -206,6 +206,15 @@ abstract interface class TokenSigner {
   String sign(AuthClaims claims);
 }
 
+/// Verifica un access token HS256 y reconstruye sus claims.
+///
+/// Devuelve `null` si la firma, el `alg`, el `iss` o el `exp` no son
+/// validos. NO consulta la base: la frescura de `status`/`token_version` la
+/// comprueba el middleware contra `app.users` (AGENTS.md §6).
+abstract interface class TokenVerifier {
+  AuthClaims? verify(String token, {required DateTime now});
+}
+
 abstract interface class OtpSender {
   Future<void> sendOtp({required PhoneBO phone, required String code});
 }

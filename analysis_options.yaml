@@ -5,3 +5,11 @@ analyzer:
     - '**/*.g.dart'
     - '**/*.freezed.dart'
     - 'apps/mobile/.dart_tool/**'
+
+linter:
+  rules:
+    # very_good_analysis 11 habilita esta regla para la nueva sintaxis de
+    # constructores de Dart 3.13 (`new()`), que el repositorio no adopta:
+    # todo el codigo usa `const Clase(...)`. Se desactiva para mantener un
+    # unico estilo; el resto de reglas de VGA 11 siguen activas.
+    unnecessary_type_name_in_constructor: false

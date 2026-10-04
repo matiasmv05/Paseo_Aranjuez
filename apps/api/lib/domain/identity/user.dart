@@ -15,6 +15,7 @@ final class User {
     required this.status,
     required this.tokenVersion,
     required this.emailVerified,
+    this.phoneVerified = false,
     this.establishmentId,
     this.branchId,
   });
@@ -33,6 +34,9 @@ final class User {
   /// contrasena) para invalidar tokens vivos (claim `tv`).
   final int tokenVersion;
   final bool emailVerified;
+
+  /// `users.phone_verified`: con `false` no hay QR ni acumulacion (FR-004).
+  final bool phoneVerified;
 
   /// Solo comercios (`est`); `null` en customer y admin.
   final String? establishmentId;

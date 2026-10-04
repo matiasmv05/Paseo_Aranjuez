@@ -8,7 +8,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_riverpod: ^3.4.3
   http: ^1.6.0
+  paseo_shared:
+    path: ../../packages/paseo_shared
 
 dev_dependencies:
   flutter_test:

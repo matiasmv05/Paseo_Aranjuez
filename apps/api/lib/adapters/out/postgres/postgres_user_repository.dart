@@ -14,7 +14,7 @@ final class PostgresUserRepository implements UserRepository {
   // citext/uuid llegan como bytes genericos del driver: se castean a text.
   static const _columns =
       'id::text AS id, email::text AS email, password_hash, role, status, '
-      'token_version, email_verified_at';
+      'token_version, phone_verified, email_verified_at';
 
   @override
   Future<User?> findByEmail(Email email) async {
@@ -113,6 +113,7 @@ final class PostgresUserRepository implements UserRepository {
       // OBSERVED y POINTS_SUSPENDED no bloquean el login (antifraude MVP).
       status: status == 'BLOCKED' ? UserStatus.blocked : UserStatus.active,
       tokenVersion: row['token_version']! as int,
+      phoneVerified: row['phone_verified']! as bool,
       emailVerified: emailVerifiedAt != null,
     );
   }
