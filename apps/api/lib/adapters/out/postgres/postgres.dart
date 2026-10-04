@@ -16,6 +16,7 @@ export 'postgres_movements_repository.dart';
 export 'postgres_password_reset_repository.dart';
 export 'postgres_points_idempotency_repository.dart';
 export 'postgres_points_ledger_repository.dart';
+export 'postgres_points_purchase_repository.dart';
 export 'postgres_points_rule_repository.dart';
 export 'postgres_purchase_repository.dart';
 export 'postgres_refresh_token_repository.dart';

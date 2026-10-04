@@ -19,11 +19,10 @@ Middleware customerAuth({bool requirePhoneVerified = false}) {
       final token = authHeader.substring(7);
 
       final secret = Platform.environment['JWT_SECRET'] ?? '';
-      final kid = Platform.environment['JWT_KID'] ?? 'dev-key-1';
-      final verifier = JwtTokenVerifier(secret: secret, kid: kid);
+      final verifier = JwtTokenVerifier(secret: secret);
 
-      final claims = verifier.verify(token);
-      if (claims == null) {
+      final claims = verifier.verify(token, now: DateTime.now().toUtc());
+      if (claims == null || claims.audience != ClientApp.mobile.audience) {
         return problemJson(
           status: HttpStatus.unauthorized,
           title: 'Unauthorized',

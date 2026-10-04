@@ -82,7 +82,7 @@ void main() {
       '1. crédito OK: compra + CREDIT atómicos, balance_after del trigger',
       () async {
         final customerId = await newCustomer();
-        final purchases = PostgresPurchaseRepository(db);
+        final purchases = PostgresPointsPurchaseRepository(db);
         final engine = CreditPoints(
           ledger: ledger,
           idempotency: idempotency,
@@ -96,6 +96,15 @@ void main() {
           establishmentId: 'e0000000-0000-4000-8000-000000000001',
           branchId: 'b0000000-0000-4000-8000-000000000001',
           customerId: customerId,
+          sellerUserId: '11111111-1111-1111-1111-111111111111',
+          ruleId: 'f0000000-0000-0000-0000-000000000001',
+          ruleSnapshot: const {
+            'scope': 'GLOBAL',
+            'points_awarded': 10,
+            'amount_per_tier_cents': 10000,
+            'multiplier_bp': 10000,
+            'rounding': 'FLOOR',
+          },
           grossCents: 12000,
           discountCents: 0,
           netCents: 12000,
@@ -126,7 +135,7 @@ void main() {
         final engine = CreditPoints(
           ledger: ledger,
           idempotency: idempotency,
-          purchases: PostgresPurchaseRepository(db),
+          purchases: PostgresPointsPurchaseRepository(db),
           audit: PostgresAuditLogWriter(db),
           tx: PostgresTransactionRunner(db),
           clock: const SystemClock(),
@@ -163,7 +172,7 @@ void main() {
         final engine = CreditPoints(
           ledger: ledger,
           idempotency: idempotency,
-          purchases: PostgresPurchaseRepository(db),
+          purchases: PostgresPointsPurchaseRepository(db),
           audit: PostgresAuditLogWriter(db),
           tx: PostgresTransactionRunner(db),
           clock: const SystemClock(),

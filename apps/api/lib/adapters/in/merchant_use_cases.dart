@@ -30,7 +30,7 @@ typedef RegisterPurchaseFn = Future<RegisterPurchaseOutcome> Function({
 });
 
 /// Firma de `ListMovements.call`.
-typedef ListMovementsFn = Future<contract.MovementPage> Function({
+typedef ListMovementsFn = Future<contract.MerchantMovementPage> Function({
   required MerchantContext context,
   int? limit,
   String? cursor,

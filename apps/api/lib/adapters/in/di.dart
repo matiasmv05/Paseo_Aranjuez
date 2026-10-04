@@ -208,7 +208,7 @@ final class AppDependencies implements AuthUseCases, MerchantUseCases {
     final establishments = PostgresEstablishmentRepository(db);
     final pointsRules = PostgresPointsRuleRepository(db);
     final purchases = PostgresPurchaseRepository(db);
-    final movements = PostgresMovementRepository(db);
+    final merchantMovements = PostgresMovementRepository(db);
     final ticketSigner = IdentificationSigner(
       secret: env['IDENTIFICATION_SECRET'] ?? '',
     );
@@ -236,7 +236,7 @@ final class AppDependencies implements AuthUseCases, MerchantUseCases {
       purchases: purchases,
       clock: clock,
     );
-    final listMovements = ListMovements(movements: movements);
+    final listMovements = ListMovements(movements: merchantMovements);
     final merchant = MerchantDependencies(
       identifyCustomer: identifyCustomer.call,
       previewPurchase: previewPurchase.call,
@@ -260,7 +260,7 @@ final class AppDependencies implements AuthUseCases, MerchantUseCases {
       establishments: establishments,
       pointsRules: pointsRules,
       purchases: purchases,
-      movements: movements,
+      movements: merchantMovements,
       ticketSigner: ticketSigner,
       verifier: verifier,
       rateLimiter: rateLimiter,

@@ -174,7 +174,10 @@ final class MerchantApiClient {
   }
 
   /// `GET /merchant/movements` (HU-13), paginado por cursor.
-  Future<contract.MovementPage> movements({int? limit, String? cursor}) async {
+  Future<contract.MerchantMovementPage> movements({
+    int? limit,
+    String? cursor,
+  }) async {
     final query = <String, String>{
       'limit': ?limit?.toString(),
       'cursor': ?cursor,
@@ -184,7 +187,7 @@ final class MerchantApiClient {
         .replace(queryParameters: query.isEmpty ? null : query);
     final response = await _http.get(uri, headers: _headers());
     final json = _decode(response, expected: 200);
-    return contract.MovementPage.fromJson(json);
+    return contract.MerchantMovementPage.fromJson(json);
   }
 
   Future<http.Response> _post(String path, Map<String, Object?> body) {

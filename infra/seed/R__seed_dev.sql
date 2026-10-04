@@ -32,8 +32,8 @@ ON CONFLICT (user_id) DO NOTHING;
 -- ============================================================================
 -- Comercio demo (el trigger de V004 crea la sucursal "Principal")
 -- ============================================================================
-INSERT INTO app.establishments (id, name, address, city, status, compliance_status)
-VALUES ('e0000000-0000-0000-0000-000000000001', 'Comercio Demo', 'Av. Demo 123 #45', 'La Paz', 'ACTIVE', 'ACTIVE')
+INSERT INTO app.establishments (id, name, address, city, status, compliance_status, category)
+VALUES ('e0000000-0000-0000-0000-000000000001', 'Comercio Demo', 'Av. Demo 123 #45', 'La Paz', 'ACTIVE', 'ACTIVE', 'OTRO')
 ON CONFLICT (id) DO NOTHING;
 
 -- Personal: el dueño opera en todas las sucursales (branch_id NULL); el cajero
@@ -85,23 +85,29 @@ VALUES (
 INSERT INTO app.customers (user_id, phone, full_name, phone_verified_at)
 VALUES (
     'd0000000-0000-4000-8000-000000000001',
-    '+59170000001',
+    '+59170000002',
     'Cliente Demo',
     now()
 ) ON CONFLICT (user_id) DO NOTHING;
 
--- Establecimientos y sucursales para 002 (categorías CAFE/FARMACIA)
-INSERT INTO app.establishments (id, name, category)
+-- Establecimientos para 002 (categorías CAFE/FARMACIA). El trigger de V004
+-- crea la sucursal "Principal" de cada uno con la dirección del comercio;
+-- abajo se les fija un UUID estable (los endpoints/tests los referencian).
+INSERT INTO app.establishments (id, name, category, address)
 VALUES
-    ('e0000000-0000-4000-8000-000000000001', 'Café Aranjuez',  'CAFE'),
-    ('e0000000-0000-4000-8000-000000000002', 'Farmacia Aranjuez', 'FARMACIA')
+    ('e0000000-0000-4000-8000-000000000001', 'Café Aranjuez',  'CAFE', 'Av. Aranjuez 100'),
+    ('e0000000-0000-4000-8000-000000000002', 'Farmacia Aranjuez', 'FARMACIA', 'Av. Aranjuez 250')
 ON CONFLICT (id) DO NOTHING;
+
+UPDATE app.branches SET id = 'b0000000-0000-4000-8000-000000000001'
+WHERE establishment_id = 'e0000000-0000-4000-8000-000000000001' AND name = 'Principal';
+
+UPDATE app.branches SET id = 'b0000000-0000-4000-8000-000000000003'
+WHERE establishment_id = 'e0000000-0000-4000-8000-000000000002' AND name = 'Principal';
 
 INSERT INTO app.branches (id, establishment_id, name, address)
 VALUES
-    ('b0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000001', 'Principal', 'Av. Aranjuez 100'),
-    ('b0000000-0000-4000-8000-000000000002', 'e0000000-0000-4000-8000-000000000001', 'Sucursal Sur', 'Calle Los Pinos 25'),
-    ('b0000000-0000-4000-8000-000000000003', 'e0000000-0000-4000-8000-000000000002', 'Principal', 'Av. Aranjuez 250')
+    ('b0000000-0000-4000-8000-000000000002', 'e0000000-0000-4000-8000-000000000001', 'Sucursal Sur', 'Calle Los Pinos 25')
 ON CONFLICT (id) DO NOTHING;
 
 -- Recompensas (V006): 3 canjeables + 1 sin stock + 1 vencida + 1 borrador
@@ -121,22 +127,30 @@ VALUES
      'Borrador interno', 'Pendiente de aprobación: no debe aparecer.', 'PERCENT', 1000, NULL, 80, 100, now(), now() + interval '90 days', 'DRAFT')
 ON CONFLICT (id) DO NOTHING;
 
--- Movimientos de demo (V005): 2 CREDIT + 1 REDEEM → saldo esperado 150.
-INSERT INTO app.purchases (id, establishment_id, branch_id, customer_id, gross_cents, discount_cents, net_cents, invoice_ref, idempotency_key, occurred_at)
+-- Movimientos de demo (V006/V009): 2 CREDIT + 1 REDEEM → saldo esperado 150.
+INSERT INTO app.purchases (id, establishment_id, branch_id, customer_id, seller_user_id, gross_cents, discount_cents, net_cents, invoice_ref, rule_id, campaign_rule_id, rule_snapshot, idempotency_key, points_credited, created_at)
 VALUES
     ('90000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001',
-     'd0000000-0000-4000-8000-000000000001', 12000, 0, 12000, 'FAC-1001', 'seed-purchase-1', now() - interval '3 days'),
+     'd0000000-0000-4000-8000-000000000001', '11111111-1111-1111-1111-111111111111', 12000, 0, 12000, 'FAC-1001',
+     'f0000000-0000-0000-0000-000000000001', NULL,
+     '{"scope":"GLOBAL","points_awarded":10,"amount_per_tier_cents":10000,"multiplier_bp":10000,"rounding":"FLOOR"}',
+     'seed-purchase-1', 120, now() - interval '3 days'),
     ('90000000-0000-4000-8000-000000000002', 'e0000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000003',
-     'd0000000-0000-4000-8000-000000000001', 8000, 0, 8000, 'FAC-2001', 'seed-purchase-2', now() - interval '1 day')
+     'd0000000-0000-4000-8000-000000000001', '11111111-1111-1111-1111-111111111111', 8000, 0, 8000, 'FAC-2001',
+     'f0000000-0000-0000-0000-000000000001', NULL,
+     '{"scope":"GLOBAL","points_awarded":10,"amount_per_tier_cents":10000,"multiplier_bp":10000,"rounding":"FLOOR"}',
+     'seed-purchase-2', 80, now() - interval '1 day')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO app.points_ledger (id, customer_id, delta, type, purchase_id, idempotency_key, occurred_at)
-VALUES ('70000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001', 120, 'CREDIT',
+INSERT INTO app.points_ledger (id, customer_id, establishment_id, delta, type, purchase_id, idempotency_key, occurred_at)
+VALUES ('70000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001',
+        'e0000000-0000-4000-8000-000000000001', 120, 'CREDIT',
         '90000000-0000-4000-8000-000000000001', 'seed-credit-1', now() - interval '3 days')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO app.points_ledger (id, customer_id, delta, type, purchase_id, idempotency_key, occurred_at)
-VALUES ('70000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000001', 80, 'CREDIT',
+INSERT INTO app.points_ledger (id, customer_id, establishment_id, delta, type, purchase_id, idempotency_key, occurred_at)
+VALUES ('70000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000001',
+        'e0000000-0000-4000-8000-000000000002', 80, 'CREDIT',
         '90000000-0000-4000-8000-000000000002', 'seed-credit-2', now() - interval '1 day')
 ON CONFLICT (id) DO NOTHING;
 

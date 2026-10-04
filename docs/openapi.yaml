@@ -777,14 +777,26 @@ paths:
         `customer_id` completo ni el saldo del cliente.
       operationId: listMovements
       parameters:
-        - $ref: '#/components/parameters/MovementLimit'
-        - $ref: '#/components/parameters/MovementCursor'
+        - name: cursor
+          in: query
+          required: false
+          description: Cursor opaco de la página anterior (`next_cursor`).
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
       responses:
         '200':
           description: Página de movimientos; `next_cursor` es `null` en la última.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/MovementPage' }
+              schema: { $ref: '#/components/schemas/MerchantMovementPage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '422': { $ref: '#/components/responses/ValidationFailed' }
@@ -1257,7 +1269,7 @@ components:
           description: Campaña aplicada, o `null` si ninguna.
         created_at: { type: string, format: date-time }
 
-    Movement:
+    MerchantMovement:
       type: object
       required:
         [id, created_at, invoice_ref, gross_cents, discount_cents, net_cents, points_credited, customer_name, branch_id]
@@ -1277,7 +1289,7 @@ components:
             Sucursal donde se registró la compra, siempre del servidor. El dueño
             cuadra caja por sucursal; el cajero ve solo la suya.
 
-    MovementPage:
+    MerchantMovementPage:
       allOf:
         - $ref: '#/components/schemas/CursorPage'
         - type: object
@@ -1285,7 +1297,7 @@ components:
           properties:
             items:
               type: array
-              items: { $ref: '#/components/schemas/Movement' }
+              items: { $ref: '#/components/schemas/MerchantMovement' }
 
   responses:
     Unauthorized:
@@ -1381,52 +1393,6 @@ components:
             noApplicableRule:
               $ref: '#/components/examples/NoApplicableRule'
 
-    PhoneNotVerified:
-      description: El cliente existe pero no verificó su teléfono (`pv=false`).
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/Problem' }
-          examples:
-            phoneNotVerified:
-              $ref: '#/components/examples/PhoneNotVerified'
-
-    PhoneNotSupported:
-      description: Prefijo de teléfono distinto de `+591` (solo Bolivia).
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/Problem' }
-          examples:
-            phoneNotSupported:
-              $ref: '#/components/examples/PhoneNotSupported'
-
-    InvalidQrToken:
-      description: Firma inválida, malformado o token QR de más de ~60 s.
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/Problem' }
-          examples:
-            invalidQrToken:
-              $ref: '#/components/examples/InvalidQrToken'
-
-    InvalidIdentificationTicket:
-      description: Ticket vencido, de otro comercio o manipulado.
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/Problem' }
-          examples:
-            invalidIdentificationTicket:
-              $ref: '#/components/examples/InvalidIdentificationTicket'
-
-    DuplicateInvoice:
-      description: Ese `invoice_ref` ya se usó en este comercio.
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/Problem' }
-          examples:
-            duplicateInvoice:
-              $ref: '#/components/examples/DuplicateInvoice'
-
-components:
   examples:
     Forbidden:
       value:

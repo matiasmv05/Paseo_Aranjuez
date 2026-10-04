@@ -19,11 +19,16 @@ import 'package:paseo_api/domain/points/points.dart';
 
 /// Entrada de una compra que el motor de crédito persiste junto al `CREDIT`
 /// (soporte del ledger; el endpoint `POST /merchant/purchases` es de 003).
-/// Dinero en centavos enteros (regla 2.9).
+/// Dinero en centavos enteros (regla 2.9). `ruleId`/`ruleSnapshot` documentan
+/// la regla aplicada (AGENTS.md §7); `sellerUserId` es quien registró la
+/// venta (V006).
 final class PurchaseInput {
   const new({
     required this.establishmentId,
     required this.customerId,
+    required this.sellerUserId,
+    required this.ruleId,
+    required this.ruleSnapshot,
     required this.grossCents,
     required this.discountCents,
     required this.netCents,
@@ -35,6 +40,18 @@ final class PurchaseInput {
   final String establishmentId;
   final String? branchId;
   final String customerId;
+
+  /// Usuario del comercio que registró la compra (`purchases.seller_user_id`).
+  final String sellerUserId;
+
+  /// Regla de conversión aplicada (`purchases.rule_id`, referencia a
+  /// `points_rules`).
+  final String ruleId;
+
+  /// Copia JSON de la regla vigente al momento de la compra
+  /// (`purchases.rule_snapshot`).
+  final Map<String, Object?> ruleSnapshot;
+
   final int grossCents;
   final int discountCents;
   final int netCents;
@@ -48,6 +65,8 @@ final class PurchaseInput {
           establishmentId == other.establishmentId &&
           branchId == other.branchId &&
           customerId == other.customerId &&
+          sellerUserId == other.sellerUserId &&
+          ruleId == other.ruleId &&
           grossCents == other.grossCents &&
           discountCents == other.discountCents &&
           netCents == other.netCents &&
@@ -59,6 +78,8 @@ final class PurchaseInput {
     establishmentId,
     branchId,
     customerId,
+    sellerUserId,
+    ruleId,
     grossCents,
     discountCents,
     netCents,
